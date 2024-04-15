@@ -56,6 +56,11 @@ pub fn poll_event(_: *Ncurses) !?events.Event {
         return .{ .Key = value };
     }
 
+    switch (ch) {
+        c.KEY_BTAB => return .{ .ShiftKey = .Tab },
+        else => {},
+    }
+
     return .{ .Char = @intCast(ch) };
 }
 

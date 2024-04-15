@@ -25,6 +25,8 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
 
         orientation: Orientation,
 
+        focused: ?usize = null,
+
         pub fn create(allocator: std.mem.Allocator) !*Self {
             var widgets = std.ArrayList(Widget).init(allocator);
             inline for (children) |child| {
@@ -171,9 +173,50 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
         }
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
-            _ = self;
-            _ = event;
-            unreachable;
+            if (self.focused == null) {
+                for (self.widgets.items, 0..) |w, i| {
+                    switch (try w.focus()) {
+                        .Consumed => {
+                            self.focused = i;
+                            break;
+                        },
+                        .Ignored => continue,
+                    }
+                } else {
+                    return .Ignored;
+                }
+            }
+
+            const active = self.focused.?;
+            const res = try self.widgets.items[active].handle_event(event);
+
+            switch (res) {
+                .Consumed => return .Consumed,
+                .Ignored => {
+                    switch (event) {
+                        .Key => |key| if (key == .Tab) {
+                            for (self.widgets.items[active + 1 ..], active + 1..) |w, i| {
+                                switch (try w.focus()) {
+                                    .Consumed => {
+                                        self.focused = i;
+                                        return .Consumed;
+                                    },
+                                    .Ignored => continue,
+                                }
+                            } else {
+                                self.focused = null;
+                                return .Ignored;
+                            }
+                        },
+                        else => {},
+                    }
+                },
+            }
+            return .Ignored;
+        }
+
+        pub fn focus(_: *Self) !events.EventResult {
+            return .Consumed;
         }
     };
 }

@@ -14,6 +14,7 @@ const VTable = struct {
     desired_size: *const fn (context: *anyopaque, available: Vec2) anyerror!Vec2,
     layout: *const fn (context: *anyopaque, bounds: Vec2) anyerror!void,
     handle_event: *const fn (context: *anyopaque, event: events.Event) anyerror!events.EventResult,
+    focus: *const fn (context: *anyopaque) anyerror!events.EventResult,
 };
 
 pub fn init(context: anytype) Widget {
@@ -45,6 +46,11 @@ pub fn init(context: anytype) Widget {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.handle_event(self, event);
         }
+
+        pub fn focus(pointer: *anyopaque) anyerror!events.EventResult {
+            const self: T = @ptrCast(@alignCast(pointer));
+            return ptr_info.Pointer.child.focus(self);
+        }
     };
 
     return Widget{
@@ -55,6 +61,7 @@ pub fn init(context: anytype) Widget {
             .desired_size = vtable.desired_size,
             .layout = vtable.layout,
             .handle_event = vtable.handle_event,
+            .focus = vtable.focus,
         },
     };
 }
@@ -77,4 +84,8 @@ pub fn layout(self: Widget, bounds: Vec2) anyerror!void {
 
 pub fn handle_event(self: Widget, event: events.Event) anyerror!events.EventResult {
     return self.vtable.handle_event(self.context, event);
+}
+
+pub fn focus(self: Widget) anyerror!events.EventResult {
+    return self.vtable.focus(self.context);
 }

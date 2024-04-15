@@ -34,6 +34,7 @@ pub fn main() !void {
             ),
             widgets.Label(.{ .text = "Label text 6" }),
             widgets.Label(.{ .text = "Label text 7" }),
+            widgets.StyledWidget(.{}, widgets.Radio(.{ .options = &.{ "Option 1", "Option 2", "Option 3" } })),
         },
     ).create(allocator);
 

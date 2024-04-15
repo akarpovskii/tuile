@@ -32,6 +32,7 @@ pub const Event = union(enum) {
     Char: u8,
     Key: Key,
     CtrlChar: u8,
+    ShiftKey: Key,
 };
 
 pub const EventResult = enum {

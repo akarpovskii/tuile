@@ -41,7 +41,7 @@ pub const Tuile = struct {
         while (self.is_running) {
             const event = try self.backend.poll_event();
             if (event) |value| {
-                self.propagate_event(value);
+                try self.propagate_event(value);
             }
 
             try self.redraw();
@@ -60,7 +60,7 @@ pub const Tuile = struct {
         try self.backend.refresh();
     }
 
-    pub fn propagate_event(self: *Tuile, event: events.Event) void {
+    pub fn propagate_event(self: *Tuile, event: events.Event) !void {
         switch (event) {
             .CtrlChar => |value| {
                 if (value == 'c') {
@@ -69,5 +69,6 @@ pub const Tuile = struct {
             },
             else => {},
         }
+        _ = try self.root.handle_event(event);
     }
 };

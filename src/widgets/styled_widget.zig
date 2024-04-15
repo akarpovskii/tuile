@@ -43,30 +43,15 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
         }
 
         pub fn draw(self: *Self, painter: *Painter) !void {
-            const start = painter.cursor;
-            const end = start.add(self.size.?).sub(.{ .x = 1, .y = 1 });
+            const min = painter.cursor;
+            const max = min.add(self.size.?).sub(.{ .x = 1, .y = 1 });
 
             painter.offset(.{ .x = 1, .y = 1 });
             try self.inner.draw(painter);
 
-            var x = start.x + 1;
-            while (x <= end.x - 1) : (x += 1) {
-                try painter.print_at(.{ .x = x, .y = start.y }, "-");
-                try painter.print_at(.{ .x = x, .y = end.y }, "-");
-            }
+            try draw_border(painter, min, max);
 
-            var y = start.y + 1;
-            while (y <= end.y - 1) : (y += 1) {
-                try painter.print_at(.{ .x = start.x, .y = y }, "|");
-                try painter.print_at(.{ .x = end.x, .y = y }, "|");
-            }
-
-            try painter.print_at(.{ .x = start.x, .y = start.y }, "+");
-            try painter.print_at(.{ .x = start.x, .y = end.y }, "+");
-            try painter.print_at(.{ .x = end.x, .y = start.y }, "+");
-            try painter.print_at(.{ .x = end.x, .y = end.y }, "+");
-
-            painter.move_to(end);
+            painter.move_to(max);
         }
 
         pub fn desired_size(self: *Self, available: Vec2) !Vec2 {
@@ -85,6 +70,29 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
             return self.inner.handle_event(event);
+        }
+
+        pub fn focus(self: *Self) !events.EventResult {
+            return self.inner.focus();
+        }
+
+        fn draw_border(painter: *Painter, min: Vec2, max: Vec2) !void {
+            var x = min.x + 1;
+            while (x <= max.x - 1) : (x += 1) {
+                try painter.print_at(.{ .x = x, .y = min.y }, "-");
+                try painter.print_at(.{ .x = x, .y = max.y }, "-");
+            }
+
+            var y = min.y + 1;
+            while (y <= max.y - 1) : (y += 1) {
+                try painter.print_at(.{ .x = min.x, .y = y }, "|");
+                try painter.print_at(.{ .x = max.x, .y = y }, "|");
+            }
+
+            try painter.print_at(.{ .x = min.x, .y = min.y }, "+");
+            try painter.print_at(.{ .x = min.x, .y = max.y }, "+");
+            try painter.print_at(.{ .x = max.x, .y = min.y }, "+");
+            try painter.print_at(.{ .x = max.x, .y = max.y }, "+");
         }
     };
 }

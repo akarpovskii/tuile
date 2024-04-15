@@ -42,7 +42,12 @@ pub fn Label(comptime config: Config) type {
         }
 
         pub fn draw(self: *Self, painter: *Painter) !void {
-            try painter.print(self.text);
+            const len = if (self.bounds) |bounds|
+                @min(bounds.x, self.text.len)
+            else
+                self.text.len;
+
+            try painter.print(self.text[0..len]);
         }
 
         pub fn desired_size(self: *Self, _: Vec2) !Vec2 {
@@ -56,10 +61,12 @@ pub fn Label(comptime config: Config) type {
             };
         }
 
-        pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
-            _ = self;
-            _ = event;
-            unreachable;
+        pub fn handle_event(_: *Self, _: events.Event) !events.EventResult {
+            return .Ignored;
+        }
+
+        pub fn focus(_: *Self) !events.EventResult {
+            return .Ignored;
         }
     };
 }

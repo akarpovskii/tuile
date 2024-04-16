@@ -74,17 +74,14 @@ pub fn Button(comptime config: Config) type {
                 .FocusIn => return .Consumed,
                 .FocusOut => {
                     self.focused = false;
-                    // std.debug.print("\r\nbutton - {any}", .{event});
                     return .Consumed;
                 },
 
                 .Key, .ShiftKey => {
                     if (!self.focused) {
                         self.focused = true;
-                        // std.debug.print("\r\nbutton - {any} consumed", .{event});
                         return .Consumed;
                     } else {
-                        // std.debug.print("\r\nbutton - {any} ignored", .{event});
                         return .Ignored;
                     }
                 },

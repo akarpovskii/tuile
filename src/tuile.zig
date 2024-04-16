@@ -52,7 +52,6 @@ pub const Tuile = struct {
         var painter = try Painter.init(&self.backend);
 
         const available = try self.backend.window_size();
-        // std.debug.print("\n\nava {any}\n\n", .{available});
         try self.root.layout(available);
 
         try self.root.draw(&painter);

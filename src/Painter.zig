@@ -1,6 +1,7 @@
 const std = @import("std");
 const Vec2 = @import("Vec2.zig");
 const Backend = @import("backends/Backend.zig");
+const Style = @import("Style.zig");
 
 const Painter = @This();
 
@@ -31,6 +32,25 @@ pub fn print(self: *Painter, text: []const u8) !void {
 pub fn print_at(self: *Painter, pos: Vec2, text: []const u8) !void {
     self.move_to(pos);
     try self.print(text);
+}
+
+pub fn print_border(self: *Painter, border: Style.Border, top_left: Vec2, bottom_right: Vec2) !void {
+    var x = top_left.x + 1;
+    while (x <= bottom_right.x - 1) : (x += 1) {
+        try self.print_at(.{ .x = x, .y = top_left.y }, border.top);
+        try self.print_at(.{ .x = x, .y = bottom_right.y }, border.bottom);
+    }
+
+    var y = top_left.y + 1;
+    while (y <= bottom_right.y - 1) : (y += 1) {
+        try self.print_at(.{ .x = top_left.x, .y = y }, border.left);
+        try self.print_at(.{ .x = bottom_right.x, .y = y }, border.right);
+    }
+
+    try self.print_at(.{ .x = top_left.x, .y = top_left.y }, border.top_left);
+    try self.print_at(.{ .x = bottom_right.x, .y = top_left.y }, border.top_right);
+    try self.print_at(.{ .x = top_left.x, .y = bottom_right.y }, border.bottom_left);
+    try self.print_at(.{ .x = bottom_right.x, .y = bottom_right.y }, border.bottom_right);
 }
 
 pub fn offset(self: *Painter, value: Vec2) void {

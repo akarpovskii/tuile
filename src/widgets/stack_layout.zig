@@ -64,13 +64,9 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
         pub fn draw(self: *Self, painter: *Painter) !void {
             var cursor = painter.cursor;
 
-            if (self.focused != null) try painter.backend.disable_effect(.Highlight);
-
-            for (self.widgets.items, self.widget_sizes.items, 0..) |w, s, idx| {
+            for (self.widgets.items, self.widget_sizes.items) |w, s| {
                 painter.move_to(cursor);
-                if (idx == self.focused) try painter.backend.enable_effect(.Highlight);
                 try w.draw(painter);
-                if (idx == self.focused) try painter.backend.disable_effect(.Highlight);
                 switch (self.orientation) {
                     .Horizontal => {
                         cursor.x += s.x;
@@ -217,6 +213,7 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
                                 if (try w.handle_event(.FocusIn) == .Consumed) {
                                     self.focused = uidx;
                                     _ = try active_w.handle_event(.FocusOut);
+                                    _ = try w.handle_event(event);
                                     return .Consumed;
                                 }
                             } else {

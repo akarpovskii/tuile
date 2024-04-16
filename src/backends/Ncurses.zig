@@ -6,6 +6,7 @@ const Style = @import("../Style.zig");
 
 const c = @cImport({
     @cInclude("ncurses.h");
+    @cInclude("locale.h");
 });
 
 const Ncurses = @This();
@@ -15,6 +16,9 @@ const NcursesError = error{GeneralError};
 scr: *c.struct__win_st,
 
 pub fn init() !Ncurses {
+    // Initialize the locale to get UTF-8 support, see `man ncurses` - Initialization
+    if (c.setlocale(c.LC_ALL, "") == null) return error.GeneralError;
+
     const scr = c.initscr();
     if (c.raw() == c.ERR) return error.GeneralError;
     if (c.noecho() == c.ERR) return error.GeneralError;

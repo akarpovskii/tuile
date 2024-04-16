@@ -60,8 +60,6 @@ pub fn Radio(comptime config: Config) type {
             const rows = if (self.bounds) |bounds| bounds.y else self.options.len;
             var cursor = painter.cursor;
 
-            if (self.focused != null) try painter.backend.disable_effect(.Highlight);
-
             for (self.options[0..rows], 0..) |option, idx| {
                 if (idx == self.focused) try painter.backend.enable_effect(.Highlight);
 
@@ -129,6 +127,7 @@ pub fn Radio(comptime config: Config) type {
                         return .Consumed;
                     }
                 },
+
                 .Char => |char| switch (char) {
                     ' ' => {
                         self.selected = self.focused;

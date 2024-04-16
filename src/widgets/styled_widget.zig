@@ -49,7 +49,7 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
             painter.offset(.{ .x = 1, .y = 1 });
             try self.inner.draw(painter);
 
-            try draw_border(painter, min, max);
+            try painter.print_border(self.style.border, min, max);
 
             painter.move_to(max);
         }
@@ -70,25 +70,6 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
             return self.inner.handle_event(event);
-        }
-
-        fn draw_border(painter: *Painter, min: Vec2, max: Vec2) !void {
-            var x = min.x + 1;
-            while (x <= max.x - 1) : (x += 1) {
-                try painter.print_at(.{ .x = x, .y = min.y }, "-");
-                try painter.print_at(.{ .x = x, .y = max.y }, "-");
-            }
-
-            var y = min.y + 1;
-            while (y <= max.y - 1) : (y += 1) {
-                try painter.print_at(.{ .x = min.x, .y = y }, "|");
-                try painter.print_at(.{ .x = max.x, .y = y }, "|");
-            }
-
-            try painter.print_at(.{ .x = min.x, .y = min.y }, "+");
-            try painter.print_at(.{ .x = min.x, .y = max.y }, "+");
-            try painter.print_at(.{ .x = max.x, .y = min.y }, "+");
-            try painter.print_at(.{ .x = max.x, .y = max.y }, "+");
         }
     };
 }

@@ -25,8 +25,11 @@ pub fn print(self: *Painter, text: []const u8) !void {
     {
         return;
     }
-    try self.backend.print_at(self.cursor, text);
-    self.cursor.addEq(.{ .x = @intCast(text.len), .y = 0 });
+
+    const space_left = self.screen_size.x - self.cursor.x;
+    const can_print = @min(text.len, space_left);
+    try self.backend.print_at(self.cursor, text[0..can_print]);
+    self.cursor.x += @intCast(text.len);
 }
 
 pub fn print_at(self: *Painter, pos: Vec2, text: []const u8) !void {

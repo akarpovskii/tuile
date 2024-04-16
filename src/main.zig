@@ -35,6 +35,13 @@ pub fn main() !void {
             widgets.Label(.{ .text = "Label text 6" }),
             widgets.Label(.{ .text = "Label text 7" }),
             widgets.StyledWidget(.{}, widgets.Radio(.{ .options = &.{ "Option 1", "Option 2", "Option 3" } })),
+            widgets.StackLayout(
+                .{ .orientation = .Horizontal },
+                .{
+                    widgets.Button(.{ .label = "Button 1" }),
+                    widgets.Button(.{ .label = "Button 2" }),
+                },
+            ),
         },
     ).create(allocator);
 

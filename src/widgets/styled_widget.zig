@@ -5,17 +5,17 @@ const events = @import("../events.zig");
 const Painter = @import("../Painter.zig");
 const Style = @import("../Style.zig");
 
-const Config = struct {
-    style: Style = .{},
-};
-
-pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
+pub fn StyledWidget(comptime Inner: anytype) type {
     return struct {
         const Self = @This();
 
+        pub const Config = struct {
+            style: Style = .{},
+        };
+
         allocator: std.mem.Allocator,
 
-        inner: Widget,
+        inner: *Inner,
 
         style: Style,
 
@@ -23,14 +23,13 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
 
         border_widths: struct { top: u32, bottom: u32, left: u32, right: u32 },
 
-        pub fn create(allocator: std.mem.Allocator) !*Self {
-            const inner_w = try inner.create(allocator);
+        pub fn create(allocator: std.mem.Allocator, config: Config, inner: *Inner) !*Self {
             const border = config.style.border;
 
             const self = try allocator.create(Self);
             self.* = Self{
                 .allocator = allocator,
-                .inner = inner_w.widget(),
+                .inner = inner,
                 .style = config.style,
                 .border_widths = .{
                     .top = if (border.top.len == 0 and border.top_left.len == 0 and border.top_right.len == 0) 0 else 1,

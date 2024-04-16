@@ -19,40 +19,52 @@ pub fn main() !void {
         };
     }
 
-    const layout = try widgets.StackLayout(
+    const layout = try widgets.StackLayout.create(
+        allocator,
         .{ .orientation = .Vertical },
         .{
-            widgets.StyledWidget(.{}, widgets.Label(.{ .text = "Label text 1" })),
-            widgets.Label(.{ .text = "Label text 2" }),
-            widgets.Label(.{ .text = "Label text 3" }),
-            widgets.StackLayout(
+            try widgets.StyledWidget(widgets.Label).create(
+                allocator,
+                .{},
+                try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
+            ),
+            try widgets.Label.create(allocator, .{ .text = "Label text 2" }),
+            try widgets.Label.create(allocator, .{ .text = "Label text 3" }),
+            try widgets.StackLayout.create(
+                allocator,
                 .{ .orientation = .Horizontal },
                 .{
-                    widgets.StyledWidget(.{}, widgets.Label(.{ .text = "Label text 4 aaaaaa" })),
-                    widgets.Label(.{ .text = "Label text 5" }),
+                    try widgets.StyledWidget(widgets.Label).create(
+                        allocator,
+                        .{},
+                        try widgets.Label.create(allocator, .{ .text = "Label text 4 aaaaaa" }),
+                    ),
+                    try widgets.Label.create(allocator, .{ .text = "Label text 5" }),
                 },
             ),
-            widgets.Label(.{ .text = "Label text 6" }),
-            widgets.Label(.{ .text = "Label text 7" }),
-            widgets.StyledWidget(.{}, widgets.Radio(.{ .options = &.{ "Option 1", "Option 2", "Option 3" } })),
-            widgets.StackLayout(
+            try widgets.Label.create(allocator, .{ .text = "Label text 6" }),
+            try widgets.Label.create(allocator, .{ .text = "Label text 7" }),
+            try widgets.StyledWidget(widgets.Radio).create(
+                allocator,
+                .{},
+                try widgets.Radio.create(allocator, .{ .options = &.{ "Option 1", "Option 2", "Option 3" } }),
+            ),
+            try widgets.StackLayout.create(
+                allocator,
                 .{ .orientation = .Horizontal },
                 .{
-                    widgets.Button(.{ .label = "Button 1" }),
-                    widgets.Button(.{ .label = "Button 2" }),
+                    try widgets.Button.create(allocator, .{ .label = "Button 1", .on_press = handle_press }),
+                    try widgets.Button.create(allocator, .{ .label = "Button 2", .on_press = handle_press }),
                 },
             ),
         },
-    ).create(allocator);
+    );
 
     try tui.add(layout.widget());
 
     try tui.run();
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
+fn handle_press(label: []const u8) void {
+    std.debug.print("\tPressed {s}", .{label});
 }

@@ -15,11 +15,11 @@ pub const Tuile = struct {
 
     is_running: bool = true,
 
-    root: *widgets.StackLayout(.{ .orientation = .Vertical }, .{}),
+    root: *widgets.StackLayout,
 
     pub fn init(allocator: std.mem.Allocator) !Tuile {
         var curses = try backends.Ncurses.init();
-        const root = try widgets.StackLayout(.{ .orientation = .Vertical }, .{}).create(allocator);
+        const root = try widgets.StackLayout.create(allocator, .{ .orientation = .Vertical }, .{});
 
         return .{
             .allocator = allocator,

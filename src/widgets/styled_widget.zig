@@ -21,14 +21,23 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
 
         size: ?Vec2 = null,
 
+        border_widths: struct { top: u32, bottom: u32, left: u32, right: u32 },
+
         pub fn create(allocator: std.mem.Allocator) !*Self {
             const inner_w = try inner.create(allocator);
+            const border = config.style.border;
 
             const self = try allocator.create(Self);
             self.* = Self{
                 .allocator = allocator,
                 .inner = inner_w.widget(),
                 .style = config.style,
+                .border_widths = .{
+                    .top = if (border.top.len == 0 and border.top_left.len == 0 and border.top_right.len == 0) 0 else 1,
+                    .bottom = if (border.bottom.len == 0 and border.bottom_left.len == 0 and border.bottom_right.len == 0) 0 else 1,
+                    .left = @intCast(try std.unicode.utf8CountCodepoints(border.left)),
+                    .right = @intCast(try std.unicode.utf8CountCodepoints(border.right)),
+                },
             };
             return self;
         }
@@ -46,7 +55,10 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
             const min = painter.cursor;
             const max = min.add(self.size.?).sub(.{ .x = 1, .y = 1 });
 
-            painter.offset(.{ .x = 1, .y = 1 });
+            painter.offset(.{
+                .x = self.border_widths.left,
+                .y = self.border_widths.top,
+            });
             try self.inner.draw(painter);
 
             try painter.print_border(self.style.border, min, max);
@@ -56,14 +68,17 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
 
         pub fn desired_size(self: *Self, available: Vec2) !Vec2 {
             const inner_size = try self.inner.desired_size(available);
-            return inner_size.add(.{ .x = 2, .y = 2 });
+            return inner_size.add(.{
+                .x = self.border_widths.left + self.border_widths.right,
+                .y = self.border_widths.top + self.border_widths.bottom,
+            });
         }
 
         pub fn layout(self: *Self, bounds: Vec2) !void {
             self.size = bounds;
             const inner_bounds = .{
-                .x = @max(2, bounds.x) - 2,
-                .y = @max(2, bounds.y) - 2,
+                .x = bounds.x -| (self.border_widths.left + self.border_widths.right),
+                .y = bounds.y -| (self.border_widths.top + self.border_widths.bottom),
             };
             try self.inner.layout(inner_bounds);
         }

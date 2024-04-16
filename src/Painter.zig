@@ -35,14 +35,17 @@ pub fn print_at(self: *Painter, pos: Vec2, text: []const u8) !void {
 }
 
 pub fn print_border(self: *Painter, border: Style.Border, top_left: Vec2, bottom_right: Vec2) !void {
-    var x = top_left.x + 1;
-    while (x <= bottom_right.x - 1) : (x += 1) {
+    // Corner points are printed twice: when printing edges, and when printing corners themselves.
+    // This handles the case when top_left.x == bottom_right.x or top_left.y == bottom_right.y (e.g. Button).
+
+    var x = top_left.x;
+    while (x <= bottom_right.x) : (x += 1) {
         try self.print_at(.{ .x = x, .y = top_left.y }, border.top);
         try self.print_at(.{ .x = x, .y = bottom_right.y }, border.bottom);
     }
 
-    var y = top_left.y + 1;
-    while (y <= bottom_right.y - 1) : (y += 1) {
+    var y = top_left.y;
+    while (y <= bottom_right.y) : (y += 1) {
         try self.print_at(.{ .x = top_left.x, .y = y }, border.left);
         try self.print_at(.{ .x = bottom_right.x, .y = y }, border.right);
     }

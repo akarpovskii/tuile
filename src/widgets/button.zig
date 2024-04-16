@@ -16,7 +16,16 @@ pub fn Button(comptime config: Config) type {
         const Self = @This();
 
         const ViewType = StyledWidget(
-            .{ .style = .{ .border = Style.Border.Solid } },
+            .{ .style = .{ .border = .{
+                .top = "",
+                .bottom = "",
+                .left = "[",
+                .right = "]",
+                .top_left = "",
+                .top_right = "",
+                .bottom_left = "",
+                .bottom_right = "",
+            } } },
             Label(.{ .text = config.label, .wrap = false }),
         );
 

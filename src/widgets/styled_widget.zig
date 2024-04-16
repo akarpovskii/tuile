@@ -72,10 +72,6 @@ pub fn StyledWidget(comptime config: Config, comptime inner: anytype) type {
             return self.inner.handle_event(event);
         }
 
-        pub fn focus(self: *Self) !events.EventResult {
-            return self.inner.focus();
-        }
-
         fn draw_border(painter: *Painter, min: Vec2, max: Vec2) !void {
             var x = min.x + 1;
             while (x <= max.x - 1) : (x += 1) {

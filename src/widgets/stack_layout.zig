@@ -64,9 +64,13 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
         pub fn draw(self: *Self, painter: *Painter) !void {
             var cursor = painter.cursor;
 
-            for (self.widgets.items, self.widget_sizes.items) |w, s| {
+            if (self.focused != null) try painter.backend.disable_effect(.Highlight);
+
+            for (self.widgets.items, self.widget_sizes.items, 0..) |w, s, idx| {
                 painter.move_to(cursor);
+                if (idx == self.focused) try painter.backend.enable_effect(.Highlight);
                 try w.draw(painter);
+                if (idx == self.focused) try painter.backend.disable_effect(.Highlight);
                 switch (self.orientation) {
                     .Horizontal => {
                         cursor.x += s.x;
@@ -173,9 +177,17 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
         }
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
+            if (event == .FocusIn) {
+                return .Consumed;
+            }
+            if (event == .FocusOut) {
+                self.focused = null;
+                return .Consumed;
+            }
+
             if (self.focused == null) {
                 for (self.widgets.items, 0..) |w, i| {
-                    switch (try w.focus()) {
+                    switch (try w.handle_event(.FocusIn)) {
                         .Consumed => {
                             self.focused = i;
                             break;
@@ -188,7 +200,8 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
             }
 
             const active = self.focused.?;
-            const res = try self.widgets.items[active].handle_event(event);
+            const active_w = self.widgets.items[active];
+            const res = try active_w.handle_event(event);
 
             switch (res) {
                 .Consumed => return .Consumed,
@@ -196,15 +209,17 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
                     switch (event) {
                         .Key => |key| if (key == .Tab) {
                             for (self.widgets.items[active + 1 ..], active + 1..) |w, i| {
-                                switch (try w.focus()) {
+                                switch (try w.handle_event(.FocusIn)) {
                                     .Consumed => {
                                         self.focused = i;
+                                        _ = try active_w.handle_event(.FocusOut);
                                         return .Consumed;
                                     },
                                     .Ignored => continue,
                                 }
                             } else {
                                 self.focused = null;
+                                _ = try active_w.handle_event(.FocusOut);
                                 return .Ignored;
                             }
                         },
@@ -213,10 +228,6 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
                 },
             }
             return .Ignored;
-        }
-
-        pub fn focus(_: *Self) !events.EventResult {
-            return .Consumed;
         }
     };
 }

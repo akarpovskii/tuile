@@ -1,6 +1,7 @@
 const std = @import("std");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
+const Style = @import("../Style.zig");
 
 const Backend = @This();
 
@@ -13,6 +14,8 @@ pub const VTable = struct {
     refresh: *const fn (context: *anyopaque) anyerror!void,
     print_at: *const fn (context: *anyopaque, pos: Vec2, text: []const u8) anyerror!void,
     window_size: *const fn (context: *anyopaque) anyerror!Vec2,
+    enable_effect: *const fn (context: *anyopaque, effect: Style.Effect) anyerror!void,
+    disable_effect: *const fn (context: *anyopaque, effect: Style.Effect) anyerror!void,
 };
 
 pub fn init(context: anytype) Backend {
@@ -44,6 +47,16 @@ pub fn init(context: anytype) Backend {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.window_size(self);
         }
+
+        pub fn enable_effect(pointer: *anyopaque, effect: Style.Effect) anyerror!void {
+            const self: T = @ptrCast(@alignCast(pointer));
+            return ptr_info.Pointer.child.enable_effect(self, effect);
+        }
+
+        pub fn disable_effect(pointer: *anyopaque, effect: Style.Effect) anyerror!void {
+            const self: T = @ptrCast(@alignCast(pointer));
+            return ptr_info.Pointer.child.disable_effect(self, effect);
+        }
     };
 
     return Backend{
@@ -54,6 +67,8 @@ pub fn init(context: anytype) Backend {
             .refresh = vtable.refresh,
             .print_at = vtable.print_at,
             .window_size = vtable.window_size,
+            .enable_effect = vtable.enable_effect,
+            .disable_effect = vtable.disable_effect,
         },
     };
 }
@@ -76,4 +91,12 @@ pub fn print_at(self: Backend, pos: Vec2, text: []const u8) anyerror!void {
 
 pub fn window_size(self: Backend) anyerror!Vec2 {
     return self.vtable.window_size(self.context);
+}
+
+pub fn enable_effect(self: Backend, effect: Style.Effect) anyerror!void {
+    return self.vtable.enable_effect(self.context, effect);
+}
+
+pub fn disable_effect(self: Backend, effect: Style.Effect) anyerror!void {
+    return self.vtable.disable_effect(self.context, effect);
 }

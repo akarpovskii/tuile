@@ -2,6 +2,7 @@ const std = @import("std");
 const Backend = @import("Backend.zig");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
+const Style = @import("../Style.zig");
 
 const c = @cImport({
     @cInclude("ncurses.h");
@@ -116,5 +117,27 @@ pub fn window_size(self: *Ncurses) !Vec2 {
     return .{
         .x = @intCast(x),
         .y = @intCast(y),
+    };
+}
+
+pub fn enable_effect(_: *Ncurses, effect: Style.Effect) !void {
+    const attr = attr_for_effect(effect);
+    if (c.attron(attr) == c.ERR) return error.GeneralError;
+}
+
+pub fn disable_effect(_: *Ncurses, effect: Style.Effect) !void {
+    const attr = attr_for_effect(effect);
+    if (c.attroff(attr) == c.ERR) return error.GeneralError;
+}
+
+fn attr_for_effect(effect: Style.Effect) c_int {
+    return switch (effect) {
+        .None => c.A_NORMAL,
+        .Highlight => c.A_STANDOUT,
+        .Underline => c.A_UNDERLINE,
+        .Reverse => c.A_REVERSE,
+        .Blink => c.A_BLINK,
+        .Dim => c.A_DIM,
+        .Bold => c.A_BOLD,
     };
 }

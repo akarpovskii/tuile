@@ -60,7 +60,11 @@ pub fn Radio(comptime config: Config) type {
             const rows = if (self.bounds) |bounds| bounds.y else self.options.len;
             var cursor = painter.cursor;
 
+            if (self.focused != null) try painter.backend.disable_effect(.Highlight);
+
             for (self.options[0..rows], 0..) |option, idx| {
+                if (idx == self.focused) try painter.backend.enable_effect(.Highlight);
+
                 painter.move_to(cursor);
 
                 const marker = if (idx == self.selected) Marker.Selected else Marker.Basic;
@@ -78,6 +82,8 @@ pub fn Radio(comptime config: Config) type {
                     try painter.print(marker);
                     try painter.print(option[0..@min(option.len, len - marker.len)]);
                 }
+
+                if (idx == self.focused) try painter.backend.disable_effect(.Highlight);
 
                 cursor.y += 1;
             }
@@ -98,6 +104,12 @@ pub fn Radio(comptime config: Config) type {
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
             switch (event) {
+                .FocusIn => return .Consumed,
+                .FocusOut => {
+                    self.focused = null;
+                    return .Consumed;
+                },
+
                 .Key, .ShiftKey => {
                     if (self.focused) |focused| {
                         const new_focused = if (event == .Key) focused + 1 else focused -% 1;
@@ -120,10 +132,6 @@ pub fn Radio(comptime config: Config) type {
                 else => {},
             }
             return .Ignored;
-        }
-
-        pub fn focus(_: *Self) !events.EventResult {
-            return .Consumed;
         }
     };
 }

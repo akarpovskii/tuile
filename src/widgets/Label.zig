@@ -64,9 +64,5 @@ pub fn Label(comptime config: Config) type {
         pub fn handle_event(_: *Self, _: events.Event) !events.EventResult {
             return .Ignored;
         }
-
-        pub fn focus(_: *Self) !events.EventResult {
-            return .Ignored;
-        }
     };
 }

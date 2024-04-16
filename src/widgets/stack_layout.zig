@@ -178,7 +178,15 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
             if (event == .FocusIn) {
-                return .Consumed;
+                for (self.widgets.items, 0..) |w, i| {
+                    const res = try w.handle_event(.FocusIn);
+                    if (res == .Consumed) {
+                        self.focused = i;
+                        return .Consumed;
+                    }
+                } else {
+                    return .Ignored;
+                }
             }
             if (event == .FocusOut) {
                 self.focused = null;
@@ -186,15 +194,7 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
             }
 
             if (self.focused == null) {
-                for (self.widgets.items, 0..) |w, i| {
-                    switch (try w.handle_event(.FocusIn)) {
-                        .Consumed => {
-                            self.focused = i;
-                            break;
-                        },
-                        .Ignored => continue,
-                    }
-                } else {
+                if (try self.handle_event(.FocusIn) == .Ignored) {
                     return .Ignored;
                 }
             }
@@ -207,15 +207,17 @@ pub fn StackLayout(comptime config: Config, comptime children: anytype) type {
                 .Consumed => return .Consumed,
                 .Ignored => {
                     switch (event) {
-                        .Key => |key| if (key == .Tab) {
-                            for (self.widgets.items[active + 1 ..], active + 1..) |w, i| {
-                                switch (try w.handle_event(.FocusIn)) {
-                                    .Consumed => {
-                                        self.focused = i;
-                                        _ = try active_w.handle_event(.FocusOut);
-                                        return .Consumed;
-                                    },
-                                    .Ignored => continue,
+                        .Key, .ShiftKey => |key| if (key == .Tab) {
+                            const step: isize = if (event == .Key) 1 else -1;
+                            var idx = @as(isize, @intCast(active)) + step;
+                            while (0 <= idx and idx < self.widgets.items.len) : (idx += step) {
+                                const uidx: usize = @intCast(idx);
+                                const w = self.widgets.items[uidx];
+
+                                if (try w.handle_event(.FocusIn) == .Consumed) {
+                                    self.focused = uidx;
+                                    _ = try active_w.handle_event(.FocusOut);
+                                    return .Consumed;
                                 }
                             } else {
                                 self.focused = null;

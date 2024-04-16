@@ -116,9 +116,16 @@ pub fn Radio(comptime config: Config) type {
                         if (new_focused < self.options.len) {
                             self.focused = new_focused;
                             return .Consumed;
+                        } else {
+                            self.focused = null;
+                            return .Ignored;
                         }
                     } else {
-                        self.focused = 0;
+                        if (event == .Key) {
+                            self.focused = 0;
+                        } else {
+                            self.focused = self.options.len - 1;
+                        }
                         return .Consumed;
                     }
                 },

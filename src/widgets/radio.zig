@@ -15,15 +15,13 @@ pub const Config = struct {
 pub const Radio = @This();
 
 const Marker = struct {
-    const Selected: []const u8 = "[x] ";
+    const Selected: []const u8 = "[*] ";
     const Basic: []const u8 = "[ ] ";
 };
 
 allocator: std.mem.Allocator,
 
 options: []const []const u8,
-
-bounds: ?Vec2 = null,
 
 selected: ?usize,
 
@@ -57,7 +55,7 @@ pub fn widget(self: *Radio) Widget {
 }
 
 pub fn render(self: *Radio, area: Rect, frame: *Frame) !void {
-    const rows = @min(self.bounds.?.y, self.options.len);
+    const rows = @min(area.max.y - area.min.y, self.options.len);
 
     var row_area = Rect{
         .min = area.min,
@@ -70,7 +68,7 @@ pub fn render(self: *Radio, area: Rect, frame: *Frame) !void {
         const marker = if (idx == self.selected) Marker.Selected else Marker.Basic;
 
         const to_write: [2][]const u8 = .{ marker, option };
-        var len: usize = self.bounds.?.x;
+        var len: usize = area.max.x - area.min.x;
         var cursor = row_area.min;
         for (to_write) |bytes| {
             if (len <= 0) break;
@@ -88,13 +86,14 @@ pub fn desired_size(self: *Radio, _: Vec2) !Vec2 {
     const y = self.options.len;
     var x: usize = 0;
     for (self.options) |option| {
-        x = @max(x, option.len + Marker.Basic.len);
+        x = @max(x, try std.unicode.utf8CountCodepoints(option) + Marker.Basic.len);
     }
     return .{ .x = @intCast(x), .y = @intCast(y) };
 }
 
 pub fn layout(self: *Radio, bounds: Vec2) !void {
-    self.bounds = bounds;
+    _ = self;
+    _ = bounds;
 }
 
 pub fn handle_event(self: *Radio, event: events.Event) !events.EventResult {

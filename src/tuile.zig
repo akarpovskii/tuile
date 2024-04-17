@@ -4,12 +4,12 @@ pub const widgets = @import("widgets/widgets.zig");
 pub const backends = @import("backends/backends.zig");
 pub const render = @import("render/render.zig");
 
-pub const Style = @import("Style.zig");
 pub const Vec2 = @import("Vec2.zig");
 pub const Rect = @import("Rect.zig");
 
 pub const events = @import("events.zig");
 
+pub const Style = @import("Style.zig");
 pub const Color = @import("color.zig").Color;
 pub const border = @import("border.zig");
 

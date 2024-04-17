@@ -4,7 +4,7 @@ const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 
-const Widget = @This();
+pub const Widget = @This();
 
 context: *anyopaque,
 vtable: *const VTable,

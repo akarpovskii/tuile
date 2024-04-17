@@ -4,7 +4,7 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
-const Label = @import("label.zig").Label;
+const Label = @import("Label.zig").Label;
 const Style = @import("../Style.zig");
 
 pub const Config = struct {

@@ -5,8 +5,8 @@ const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Style = @import("../Style.zig");
-const StackLayout = @import("stack_layout.zig");
-const Checkbox = @import("checkbox.zig");
+const StackLayout = @import("StackLayout.zig");
+const Checkbox = @import("Checkbox.zig");
 
 pub const Config = struct {
     multiselect: bool = false,

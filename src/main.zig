@@ -40,17 +40,45 @@ pub fn main() !void {
             ),
             try widgets.Label.create(allocator, .{ .text = "Label text 6" }),
             try widgets.Label.create(allocator, .{ .text = "Label text 7" }),
-            try widgets.Block(widgets.Radio).create(
-                allocator,
-                .{ .border = tuile.border.Border.all(), .border_type = .double },
-                try widgets.Radio.create(allocator, .{ .options = &.{ "Option 1", "Option 2", "Option 3" } }),
-            ),
             try widgets.StackLayout.create(
                 allocator,
                 .{ .orientation = .Horizontal },
                 .{
                     try widgets.Button.create(allocator, .{ .label = "Button 1", .on_press = handle_press }),
                     try widgets.Button.create(allocator, .{ .label = "Button 2", .on_press = handle_press }),
+                },
+            ),
+
+            try widgets.StackLayout.create(
+                allocator,
+                .{ .orientation = .Horizontal },
+                .{
+                    try widgets.Block(widgets.CheckboxGroup).create(
+                        allocator,
+                        .{ .border = tuile.border.Border.all(), .border_type = .double },
+                        try widgets.CheckboxGroup.create(
+                            allocator,
+                            .{ .multiselect = false },
+                            .{
+                                try widgets.Checkbox.create(allocator, .{ .label = "Option 1" }),
+                                try widgets.Checkbox.create(allocator, .{ .label = "Option 2" }),
+                                try widgets.Checkbox.create(allocator, .{ .label = "Option 3" }),
+                            },
+                        ),
+                    ),
+                    try widgets.Block(widgets.CheckboxGroup).create(
+                        allocator,
+                        .{ .border = tuile.border.Border.all(), .border_type = .double },
+                        try widgets.CheckboxGroup.create(
+                            allocator,
+                            .{ .multiselect = true },
+                            .{
+                                try widgets.Checkbox.create(allocator, .{ .label = "Option 1" }),
+                                try widgets.Checkbox.create(allocator, .{ .label = "Option 2" }),
+                                try widgets.Checkbox.create(allocator, .{ .label = "Option 3" }),
+                            },
+                        ),
+                    ),
                 },
             ),
         },

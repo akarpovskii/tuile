@@ -135,13 +135,13 @@ pub fn disable_effect(_: *Ncurses, effect: Style.Effect) !void {
 }
 
 fn attr_for_effect(effect: Style.Effect) c_int {
-    return switch (effect) {
-        .none => c.A_NORMAL,
-        .highlight => c.A_STANDOUT,
-        .underline => c.A_UNDERLINE,
-        .reverse => c.A_REVERSE,
-        .blink => c.A_BLINK,
-        .dim => c.A_DIM,
-        .bold => c.A_BOLD,
-    };
+    var attr = c.A_NORMAL;
+    if (effect.highlight) attr |= c.A_STANDOUT;
+    if (effect.underline) attr |= c.A_UNDERLINE;
+    if (effect.reverse) attr |= c.A_REVERSE;
+    if (effect.blink) attr |= c.A_BLINK;
+    if (effect.dim) attr |= c.A_DIM;
+    if (effect.bold) attr |= c.A_BOLD;
+    if (effect.italic) attr |= c.A_ITALIC;
+    return @bitCast(attr);
 }

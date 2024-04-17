@@ -1,5 +1,4 @@
 const std = @import("std");
-const dotenv = @import("dotenv.zig");
 
 const tuile = @import("tuile.zig");
 const widgets = tuile.widgets;
@@ -8,9 +7,6 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
-
-    var env = try dotenv.load(allocator);
-    defer env.deinit();
 
     var tui = try tuile.Tuile.init(allocator);
     defer {

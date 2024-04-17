@@ -1,8 +1,10 @@
 const std = @import("std");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
+const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
-const Painter = @import("../Painter.zig");
+const Frame = @import("../render/Frame.zig");
+const Style = @import("../Style.zig");
 
 pub const Config = struct {
     options: []const []const u8,
@@ -13,8 +15,8 @@ pub const Config = struct {
 pub const Radio = @This();
 
 const Marker = struct {
-    const Selected = "[x] ";
-    const Basic = "[ ] ";
+    const Selected: []const u8 = "[x] ";
+    const Basic: []const u8 = "[ ] ";
 };
 
 allocator: std.mem.Allocator,
@@ -54,34 +56,31 @@ pub fn widget(self: *Radio) Widget {
     return Widget.init(self);
 }
 
-pub fn draw(self: *Radio, painter: *Painter) !void {
-    const rows = if (self.bounds) |bounds| bounds.y else self.options.len;
-    var cursor = painter.cursor;
+pub fn render(self: *Radio, area: Rect, frame: *Frame) !void {
+    const rows = @min(self.bounds.?.y, self.options.len);
+
+    var row_area = Rect{
+        .min = area.min,
+        .max = .{ .x = area.max.x, .y = area.min.y + 1 },
+    };
 
     for (self.options[0..rows], 0..) |option, idx| {
-        if (idx == self.focused) try painter.backend.enable_effect(.highlight);
-
-        painter.move_to(cursor);
+        if (idx == self.focused) frame.set_style(row_area, .{ .add_effect = .{ .highlight = true } });
 
         const marker = if (idx == self.selected) Marker.Selected else Marker.Basic;
-        const desired_len = marker.len + option.len;
 
-        const len = if (self.bounds) |bounds|
-            @min(bounds.x, desired_len)
-        else
-            desired_len;
-
-        if (len <= marker.len) {
-            // Only marker is visible
-            try painter.print(marker[0..len]);
-        } else {
-            try painter.print(marker);
-            try painter.print(option[0..@min(option.len, len - marker.len)]);
+        const to_write: [2][]const u8 = .{ marker, option };
+        var len: usize = self.bounds.?.x;
+        var cursor = row_area.min;
+        for (to_write) |bytes| {
+            if (len <= 0) break;
+            const written = try frame.write_symbols(cursor, bytes, len);
+            len -= written;
+            cursor.x += @intCast(written);
         }
 
-        if (idx == self.focused) try painter.backend.disable_effect(.highlight);
-
-        cursor.y += 1;
+        row_area.min.y += 1;
+        row_area.max.y += 1;
     }
 }
 

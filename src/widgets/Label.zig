@@ -1,8 +1,9 @@
 const std = @import("std");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
+const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
-const Painter = @import("../Painter.zig");
+const Frame = @import("../render/Frame.zig");
 
 pub const Config = struct {
     text: []const u8,
@@ -39,13 +40,8 @@ pub fn widget(self: *Label) Widget {
     return Widget.init(self);
 }
 
-pub fn draw(self: *Label, painter: *Painter) !void {
-    const len = if (self.bounds) |bounds|
-        @min(bounds.x, self.text.len)
-    else
-        self.text.len;
-
-    try painter.print(self.text[0..len]);
+pub fn render(self: *Label, area: Rect, frame: *Frame) !void {
+    _ = try frame.write_symbols(area.min, self.text, self.bounds.?.x);
 }
 
 pub fn desired_size(self: *Label, _: Vec2) !Vec2 {

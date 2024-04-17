@@ -1,7 +1,8 @@
 const std = @import("std");
 const Vec2 = @import("../Vec2.zig");
+const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
-const Painter = @import("../Painter.zig");
+const Frame = @import("../render/Frame.zig");
 
 const Widget = @This();
 
@@ -10,7 +11,7 @@ vtable: *const VTable,
 
 const VTable = struct {
     destroy: *const fn (context: *anyopaque) void,
-    draw: *const fn (context: *anyopaque, painter: *Painter) anyerror!void,
+    render: *const fn (context: *anyopaque, area: Rect, frame: *Frame) anyerror!void,
     desired_size: *const fn (context: *anyopaque, available: Vec2) anyerror!Vec2,
     layout: *const fn (context: *anyopaque, bounds: Vec2) anyerror!void,
     handle_event: *const fn (context: *anyopaque, event: events.Event) anyerror!events.EventResult,
@@ -26,9 +27,9 @@ pub fn init(context: anytype) Widget {
             return ptr_info.Pointer.child.destroy(self);
         }
 
-        pub fn draw(pointer: *anyopaque, painter: *Painter) anyerror!void {
+        pub fn render(pointer: *anyopaque, area: Rect, frame: *Frame) anyerror!void {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.draw(self, painter);
+            return ptr_info.Pointer.child.render(self, area, frame);
         }
 
         pub fn desired_size(pointer: *anyopaque, available: Vec2) anyerror!Vec2 {
@@ -51,7 +52,7 @@ pub fn init(context: anytype) Widget {
         .context = context,
         .vtable = &.{
             .destroy = vtable.destroy,
-            .draw = vtable.draw,
+            .render = vtable.render,
             .desired_size = vtable.desired_size,
             .layout = vtable.layout,
             .handle_event = vtable.handle_event,
@@ -63,8 +64,8 @@ pub fn destroy(self: Widget) void {
     return self.vtable.destroy(self.context);
 }
 
-pub fn draw(self: Widget, painter: *Painter) !void {
-    return self.vtable.draw(self.context, painter);
+pub fn render(self: Widget, area: Rect, frame: *Frame) !void {
+    return self.vtable.render(self.context, area, frame);
 }
 
 pub fn desired_size(self: Widget, available: Vec2) anyerror!Vec2 {

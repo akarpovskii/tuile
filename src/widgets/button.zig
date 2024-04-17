@@ -1,8 +1,9 @@
 const std = @import("std");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
+const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
-const Painter = @import("../Painter.zig");
+const Frame = @import("../render/Frame.zig");
 const Label = @import("label.zig").Label;
 const Style = @import("../Style.zig");
 
@@ -53,10 +54,9 @@ pub fn widget(self: *Button) Widget {
     return Widget.init(self);
 }
 
-pub fn draw(self: *Button, painter: *Painter) !void {
-    if (self.focused) try painter.backend.enable_effect(.highlight);
-    try self.view.draw(painter);
-    if (self.focused) try painter.backend.disable_effect(.highlight);
+pub fn render(self: *Button, area: Rect, frame: *Frame) !void {
+    if (self.focused) frame.set_style(area, .{ .add_effect = .{ .highlight = true } });
+    try self.view.render(area, frame);
 }
 
 pub fn desired_size(self: *Button, available: Vec2) !Vec2 {

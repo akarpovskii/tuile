@@ -2,9 +2,11 @@ const std = @import("std");
 
 pub const widgets = @import("widgets/widgets.zig");
 pub const backends = @import("backends/backends.zig");
+pub const render = @import("render/render.zig");
 
-pub const Painter = @import("Painter.zig");
 pub const Style = @import("Style.zig");
+pub const Vec2 = @import("Vec2.zig");
+pub const Rect = @import("Rect.zig");
 
 pub const events = @import("events.zig");
 
@@ -51,18 +53,23 @@ pub const Tuile = struct {
         }
     }
 
-    pub fn redraw(self: *Tuile) !void {
-        var painter = try Painter.init(&self.backend);
+    fn redraw(self: *Tuile) !void {
+        const window_size = try self.backend.window_size();
+        const area = Rect{
+            .min = Vec2.zero(),
+            .max = window_size,
+        };
+        var frame = try render.Frame.init(self.allocator, window_size);
+        defer frame.deinit();
 
-        const available = try self.backend.window_size();
-        try self.root.layout(available);
+        try self.root.layout(window_size);
 
-        try self.root.draw(&painter);
+        try self.root.render(area, &frame);
 
-        try self.backend.refresh();
+        try self.render_frame(&frame);
     }
 
-    pub fn propagate_event(self: *Tuile, event: events.Event) !void {
+    fn propagate_event(self: *Tuile, event: events.Event) !void {
         switch (event) {
             .CtrlChar => |value| {
                 if (value == 'c') {
@@ -72,5 +79,20 @@ pub const Tuile = struct {
             else => {},
         }
         _ = try self.root.handle_event(event);
+    }
+
+    fn render_frame(self: *Tuile, frame: *render.Frame) !void {
+        for (0..frame.size.x) |x| {
+            for (0..frame.size.y) |y| {
+                const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
+                const cell = frame.at(pos);
+                try self.backend.enable_effect(cell.effect);
+                if (cell.symbol) |symbol| {
+                    try self.backend.print_at(pos, symbol);
+                }
+                try self.backend.disable_effect(cell.effect);
+            }
+        }
+        try self.backend.refresh();
     }
 };

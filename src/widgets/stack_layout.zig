@@ -1,8 +1,9 @@
 const std = @import("std");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
+const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
-const Painter = @import("../Painter.zig");
+const Frame = @import("../render/Frame.zig");
 
 const Orientation = enum {
     Horizontal,
@@ -59,12 +60,15 @@ pub fn widget(self: *StackLayout) Widget {
     return Widget.init(self);
 }
 
-pub fn draw(self: *StackLayout, painter: *Painter) !void {
-    var cursor = painter.cursor;
+pub fn render(self: *StackLayout, area: Rect, frame: *Frame) !void {
+    var cursor = area.min;
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {
-        painter.move_to(cursor);
-        try w.draw(painter);
+        const widget_area = Rect{
+            .min = cursor,
+            .max = cursor.add(s),
+        };
+        try w.render(widget_area, frame);
         switch (self.orientation) {
             .Horizontal => {
                 cursor.x += s.x;

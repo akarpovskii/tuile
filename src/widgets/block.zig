@@ -1,8 +1,9 @@
 const std = @import("std");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
+const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
-const Painter = @import("../Painter.zig");
+const Frame = @import("../render/Frame.zig");
 const border = @import("../border.zig");
 
 pub fn Block(comptime Inner: anytype) type {
@@ -55,19 +56,21 @@ pub fn Block(comptime Inner: anytype) type {
             return Widget.init(self);
         }
 
-        pub fn draw(self: *Self, painter: *Painter) !void {
-            const min = painter.cursor;
-            const max = min.add(self.size.?).sub(.{ .x = 1, .y = 1 });
+        pub fn render(self: *Self, area: Rect, frame: *Frame) !void {
+            const inner_area = .{
+                .min = area.min.add(.{
+                    .x = self.border_widths.left,
+                    .y = self.border_widths.top,
+                }),
+                .max = area.max.sub(.{
+                    .x = self.border_widths.right,
+                    .y = self.border_widths.bottom,
+                }),
+            };
 
-            painter.offset(.{
-                .x = self.border_widths.left,
-                .y = self.border_widths.top,
-            });
-            try self.inner.draw(painter);
+            try self.inner.render(inner_area, frame);
 
-            try self.print_border(painter, min, max);
-
-            painter.move_to(max);
+            self.render_border(area, frame);
         }
 
         pub fn desired_size(self: *Self, available: Vec2) !Vec2 {
@@ -91,34 +94,34 @@ pub fn Block(comptime Inner: anytype) type {
             return self.inner.handle_event(event);
         }
 
-        pub fn print_border(self: *Self, painter: *Painter, top_left: Vec2, bottom_right: Vec2) !void {
-            var x = top_left.x;
-            while (x <= bottom_right.x) : (x += 1) {
+        fn render_border(self: *Self, area: Rect, frame: *Frame) void {
+            var x = area.min.x;
+            while (x < area.max.x) : (x += 1) {
                 if (self.border.top)
-                    try painter.print_at(.{ .x = x, .y = top_left.y }, self.border_chars.top);
+                    frame.at(.{ .x = x, .y = area.min.y }).symbol = self.border_chars.top;
                 if (self.border.bottom)
-                    try painter.print_at(.{ .x = x, .y = bottom_right.y }, self.border_chars.bottom);
+                    frame.at(.{ .x = x, .y = area.max.y - 1 }).symbol = self.border_chars.bottom;
             }
 
-            var y = top_left.y;
-            while (y <= bottom_right.y) : (y += 1) {
+            var y = area.min.y;
+            while (y < area.max.y) : (y += 1) {
                 if (self.border.left)
-                    try painter.print_at(.{ .x = top_left.x, .y = y }, self.border_chars.left);
+                    frame.at(.{ .x = area.min.x, .y = y }).symbol = self.border_chars.left;
                 if (self.border.right)
-                    try painter.print_at(.{ .x = bottom_right.x, .y = y }, self.border_chars.right);
+                    frame.at(.{ .x = area.max.x - 1, .y = y }).symbol = self.border_chars.right;
             }
 
             if (self.border.top and self.border.left)
-                try painter.print_at(.{ .x = top_left.x, .y = top_left.y }, self.border_chars.top_left);
+                frame.at(.{ .x = area.min.x, .y = area.min.y }).symbol = self.border_chars.top_left;
 
             if (self.border.top and self.border.right)
-                try painter.print_at(.{ .x = bottom_right.x, .y = top_left.y }, self.border_chars.top_right);
+                frame.at(.{ .x = area.max.x - 1, .y = area.min.y }).symbol = self.border_chars.top_right;
 
             if (self.border.bottom and self.border.left)
-                try painter.print_at(.{ .x = top_left.x, .y = bottom_right.y }, self.border_chars.bottom_left);
+                frame.at(.{ .x = area.min.x, .y = area.max.y - 1 }).symbol = self.border_chars.bottom_left;
 
             if (self.border.bottom and self.border.right)
-                try painter.print_at(.{ .x = bottom_right.x, .y = bottom_right.y }, self.border_chars.bottom_right);
+                frame.at(.{ .x = area.max.x - 1, .y = area.max.y - 1 }).symbol = self.border_chars.bottom_right;
         }
     };
 }

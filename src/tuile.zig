@@ -8,6 +8,9 @@ pub const Style = @import("Style.zig");
 
 pub const events = @import("events.zig");
 
+pub const Color = @import("color.zig").Color;
+pub const border = @import("border.zig");
+
 pub const Tuile = struct {
     allocator: std.mem.Allocator,
 

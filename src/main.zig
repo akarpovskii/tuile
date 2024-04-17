@@ -23,9 +23,9 @@ pub fn main() !void {
         allocator,
         .{ .orientation = .Vertical },
         .{
-            try widgets.StyledWidget(widgets.Label).create(
+            try widgets.Block(widgets.Label).create(
                 allocator,
-                .{},
+                .{ .border = tuile.border.Border.all() },
                 try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
             ),
             try widgets.Label.create(allocator, .{ .text = "Label text 2" }),
@@ -34,9 +34,9 @@ pub fn main() !void {
                 allocator,
                 .{ .orientation = .Horizontal },
                 .{
-                    try widgets.StyledWidget(widgets.Label).create(
+                    try widgets.Block(widgets.Label).create(
                         allocator,
-                        .{},
+                        .{ .border = tuile.border.Border.all(), .border_type = .rounded },
                         try widgets.Label.create(allocator, .{ .text = "Label text 4 aaaaaa" }),
                     ),
                     try widgets.Label.create(allocator, .{ .text = "Label text 5" }),
@@ -44,9 +44,9 @@ pub fn main() !void {
             ),
             try widgets.Label.create(allocator, .{ .text = "Label text 6" }),
             try widgets.Label.create(allocator, .{ .text = "Label text 7" }),
-            try widgets.StyledWidget(widgets.Radio).create(
+            try widgets.Block(widgets.Radio).create(
                 allocator,
-                .{},
+                .{ .border = tuile.border.Border.all(), .border_type = .double },
                 try widgets.Radio.create(allocator, .{ .options = &.{ "Option 1", "Option 2", "Option 3" } }),
             ),
             try widgets.StackLayout.create(

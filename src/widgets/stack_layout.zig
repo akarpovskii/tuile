@@ -171,6 +171,7 @@ pub fn layout(self: *StackLayout, bounds: Vec2) !void {
 }
 
 pub fn handle_event(self: *StackLayout, event: events.Event) !events.EventResult {
+    // TODO: Fix focusing on Shift+Tab
     if (event == .FocusIn) {
         for (self.widgets.items, 0..) |w, i| {
             const res = try w.handle_event(.FocusIn);

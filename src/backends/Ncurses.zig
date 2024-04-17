@@ -136,12 +136,12 @@ pub fn disable_effect(_: *Ncurses, effect: Style.Effect) !void {
 
 fn attr_for_effect(effect: Style.Effect) c_int {
     return switch (effect) {
-        .None => c.A_NORMAL,
-        .Highlight => c.A_STANDOUT,
-        .Underline => c.A_UNDERLINE,
-        .Reverse => c.A_REVERSE,
-        .Blink => c.A_BLINK,
-        .Dim => c.A_DIM,
-        .Bold => c.A_BOLD,
+        .none => c.A_NORMAL,
+        .highlight => c.A_STANDOUT,
+        .underline => c.A_UNDERLINE,
+        .reverse => c.A_REVERSE,
+        .blink => c.A_BLINK,
+        .dim => c.A_DIM,
+        .bold => c.A_BOLD,
     };
 }

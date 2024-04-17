@@ -3,7 +3,6 @@ const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
 const Painter = @import("../Painter.zig");
-const StyledWidget = @import("styled_widget.zig").StyledWidget;
 const Label = @import("label.zig").Label;
 const Style = @import("../Style.zig");
 
@@ -17,29 +16,23 @@ pub const Button = @This();
 
 allocator: std.mem.Allocator,
 
-view: *StyledWidget(Label),
+view: *Label,
 
 focused: bool = false,
 
 on_press: ?*const fn (label: []const u8) void,
 
 pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
-    const view = try StyledWidget(Label).create(
+    var label = try allocator.alloc(u8, config.label.len + 2);
+    defer allocator.free(label);
+
+    std.mem.copyForwards(u8, label[1..], config.label);
+    label[0] = '[';
+    label[label.len - 1] = ']';
+
+    const view = try Label.create(
         allocator,
-        .{ .style = .{ .border = .{
-            .top = "",
-            .bottom = "",
-            .left = "[",
-            .right = "]",
-            .top_left = "",
-            .top_right = "",
-            .bottom_left = "",
-            .bottom_right = "",
-        } } },
-        try Label.create(
-            allocator,
-            .{ .text = config.label, .wrap = false },
-        ),
+        .{ .text = label, .wrap = false },
     );
 
     const self = try allocator.create(Button);
@@ -61,9 +54,9 @@ pub fn widget(self: *Button) Widget {
 }
 
 pub fn draw(self: *Button, painter: *Painter) !void {
-    if (self.focused) try painter.backend.enable_effect(.Highlight);
+    if (self.focused) try painter.backend.enable_effect(.highlight);
     try self.view.draw(painter);
-    if (self.focused) try painter.backend.disable_effect(.Highlight);
+    if (self.focused) try painter.backend.disable_effect(.highlight);
 }
 
 pub fn desired_size(self: *Button, available: Vec2) !Vec2 {
@@ -94,7 +87,7 @@ pub fn handle_event(self: *Button, event: events.Event) !events.EventResult {
         .Char => |char| switch (char) {
             ' ' => {
                 if (self.on_press) |on_press| {
-                    on_press(self.view.inner.text);
+                    on_press(self.view.text);
                 }
                 return .Consumed;
             },

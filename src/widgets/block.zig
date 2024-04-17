@@ -3,39 +3,44 @@ const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
 const Painter = @import("../Painter.zig");
-const Style = @import("../Style.zig");
+const border = @import("../border.zig");
 
-pub fn StyledWidget(comptime Inner: anytype) type {
+pub fn Block(comptime Inner: anytype) type {
     return struct {
         const Self = @This();
 
         pub const Config = struct {
-            style: Style = .{},
+            border: border.Border = border.Border.none(),
+
+            border_type: border.BorderType = .solid,
         };
 
         allocator: std.mem.Allocator,
 
         inner: *Inner,
 
-        style: Style,
+        border: border.Border,
+
+        border_chars: border.BorderCharacters,
 
         size: ?Vec2 = null,
 
         border_widths: struct { top: u32, bottom: u32, left: u32, right: u32 },
 
         pub fn create(allocator: std.mem.Allocator, config: Config, inner: *Inner) !*Self {
-            const border = config.style.border;
+            const border_chars = border.BorderCharacters.from_type(config.border_type);
 
             const self = try allocator.create(Self);
             self.* = Self{
                 .allocator = allocator,
                 .inner = inner,
-                .style = config.style,
+                .border = config.border,
+                .border_chars = border_chars,
                 .border_widths = .{
-                    .top = if (border.top.len == 0 and border.top_left.len == 0 and border.top_right.len == 0) 0 else 1,
-                    .bottom = if (border.bottom.len == 0 and border.bottom_left.len == 0 and border.bottom_right.len == 0) 0 else 1,
-                    .left = @intCast(try std.unicode.utf8CountCodepoints(border.left)),
-                    .right = @intCast(try std.unicode.utf8CountCodepoints(border.right)),
+                    .top = @intFromBool(config.border.top),
+                    .bottom = @intFromBool(config.border.bottom),
+                    .left = @intFromBool(config.border.left),
+                    .right = @intFromBool(config.border.right),
                 },
             };
             return self;
@@ -60,7 +65,7 @@ pub fn StyledWidget(comptime Inner: anytype) type {
             });
             try self.inner.draw(painter);
 
-            try painter.print_border(self.style.border, min, max);
+            try self.print_border(painter, min, max);
 
             painter.move_to(max);
         }
@@ -84,6 +89,36 @@ pub fn StyledWidget(comptime Inner: anytype) type {
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
             return self.inner.handle_event(event);
+        }
+
+        pub fn print_border(self: *Self, painter: *Painter, top_left: Vec2, bottom_right: Vec2) !void {
+            var x = top_left.x;
+            while (x <= bottom_right.x) : (x += 1) {
+                if (self.border.top)
+                    try painter.print_at(.{ .x = x, .y = top_left.y }, self.border_chars.top);
+                if (self.border.bottom)
+                    try painter.print_at(.{ .x = x, .y = bottom_right.y }, self.border_chars.bottom);
+            }
+
+            var y = top_left.y;
+            while (y <= bottom_right.y) : (y += 1) {
+                if (self.border.left)
+                    try painter.print_at(.{ .x = top_left.x, .y = y }, self.border_chars.left);
+                if (self.border.right)
+                    try painter.print_at(.{ .x = bottom_right.x, .y = y }, self.border_chars.right);
+            }
+
+            if (self.border.top and self.border.left)
+                try painter.print_at(.{ .x = top_left.x, .y = top_left.y }, self.border_chars.top_left);
+
+            if (self.border.top and self.border.right)
+                try painter.print_at(.{ .x = bottom_right.x, .y = top_left.y }, self.border_chars.top_right);
+
+            if (self.border.bottom and self.border.left)
+                try painter.print_at(.{ .x = top_left.x, .y = bottom_right.y }, self.border_chars.bottom_left);
+
+            if (self.border.bottom and self.border.right)
+                try painter.print_at(.{ .x = bottom_right.x, .y = bottom_right.y }, self.border_chars.bottom_right);
         }
     };
 }

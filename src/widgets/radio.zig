@@ -59,7 +59,7 @@ pub fn draw(self: *Radio, painter: *Painter) !void {
     var cursor = painter.cursor;
 
     for (self.options[0..rows], 0..) |option, idx| {
-        if (idx == self.focused) try painter.backend.enable_effect(.Highlight);
+        if (idx == self.focused) try painter.backend.enable_effect(.highlight);
 
         painter.move_to(cursor);
 
@@ -79,7 +79,7 @@ pub fn draw(self: *Radio, painter: *Painter) !void {
             try painter.print(option[0..@min(option.len, len - marker.len)]);
         }
 
-        if (idx == self.focused) try painter.backend.disable_effect(.Highlight);
+        if (idx == self.focused) try painter.backend.disable_effect(.highlight);
 
         cursor.y += 1;
     }

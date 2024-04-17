@@ -46,10 +46,7 @@ pub fn desired_size(self: *Label, _: Vec2) !Vec2 {
     return .{ .x = @intCast(try std.unicode.utf8CountCodepoints(self.text)), .y = 1 };
 }
 
-pub fn layout(self: *Label, bounds: Vec2) !void {
-    _ = self;
-    _ = bounds;
-}
+pub fn layout(_: *Label, _: Vec2) !void {}
 
 pub fn handle_event(_: *Label, _: events.Event) !events.EventResult {
     return .Ignored;

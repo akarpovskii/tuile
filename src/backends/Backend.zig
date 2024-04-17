@@ -2,6 +2,7 @@ const std = @import("std");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
 const Style = @import("../Style.zig");
+const ColorPair = @import("../color.zig").ColorPair;
 
 const Backend = @This();
 
@@ -9,13 +10,14 @@ context: *anyopaque,
 vtable: *const VTable,
 
 pub const VTable = struct {
-    deinit: *const fn (context: *anyopaque) anyerror!void,
+    destroy: *const fn (context: *anyopaque) anyerror!void,
     poll_event: *const fn (context: *anyopaque) anyerror!?events.Event,
     refresh: *const fn (context: *anyopaque) anyerror!void,
     print_at: *const fn (context: *anyopaque, pos: Vec2, text: []const u8) anyerror!void,
     window_size: *const fn (context: *anyopaque) anyerror!Vec2,
     enable_effect: *const fn (context: *anyopaque, effect: Style.Effect) anyerror!void,
     disable_effect: *const fn (context: *anyopaque, effect: Style.Effect) anyerror!void,
+    use_color: *const fn (context: *anyopaque, color: ColorPair) anyerror!void,
 };
 
 pub fn init(context: anytype) Backend {
@@ -23,9 +25,9 @@ pub fn init(context: anytype) Backend {
     const ptr_info = @typeInfo(T);
 
     const vtable = struct {
-        pub fn deinit(pointer: *anyopaque) anyerror!void {
+        pub fn destroy(pointer: *anyopaque) anyerror!void {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.deinit(self);
+            return ptr_info.Pointer.child.destroy(self);
         }
 
         pub fn poll_event(pointer: *anyopaque) anyerror!?events.Event {
@@ -57,24 +59,30 @@ pub fn init(context: anytype) Backend {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.disable_effect(self, effect);
         }
+
+        pub fn use_color(pointer: *anyopaque, color: ColorPair) anyerror!void {
+            const self: T = @ptrCast(@alignCast(pointer));
+            return ptr_info.Pointer.child.use_color(self, color);
+        }
     };
 
     return Backend{
         .context = context,
         .vtable = &.{
-            .deinit = vtable.deinit,
+            .destroy = vtable.destroy,
             .poll_event = vtable.poll_event,
             .refresh = vtable.refresh,
             .print_at = vtable.print_at,
             .window_size = vtable.window_size,
             .enable_effect = vtable.enable_effect,
             .disable_effect = vtable.disable_effect,
+            .use_color = vtable.use_color,
         },
     };
 }
 
-pub fn deinit(self: Backend) anyerror!void {
-    return self.vtable.deinit(self.context);
+pub fn destroy(self: Backend) anyerror!void {
+    return self.vtable.destroy(self.context);
 }
 
 pub fn poll_event(self: Backend) anyerror!?events.Event {
@@ -99,4 +107,8 @@ pub fn enable_effect(self: Backend, effect: Style.Effect) anyerror!void {
 
 pub fn disable_effect(self: Backend, effect: Style.Effect) anyerror!void {
     return self.vtable.disable_effect(self.context, effect);
+}
+
+pub fn use_color(self: Backend, color: ColorPair) anyerror!void {
+    return self.vtable.use_color(self.context, color);
 }

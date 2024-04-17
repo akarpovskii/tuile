@@ -75,7 +75,7 @@ pub fn handle_event(self: *Button, event: events.Event) !events.EventResult {
             return .Consumed;
         },
 
-        .Key, .ShiftKey => {
+        .Key, .ShiftKey => |key| if (key == .Tab) {
             if (!self.focused) {
                 self.focused = true;
                 return .Consumed;

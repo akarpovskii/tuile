@@ -68,10 +68,7 @@ pub fn desired_size(self: *Checkbox, _: Vec2) !Vec2 {
     return .{ .x = @intCast(x), .y = 1 };
 }
 
-pub fn layout(self: *Checkbox, bounds: Vec2) !void {
-    _ = self;
-    _ = bounds;
-}
+pub fn layout(_: *Checkbox, _: Vec2) !void {}
 
 pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
     switch (event) {
@@ -81,7 +78,7 @@ pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
             return .Consumed;
         },
 
-        .Key, .ShiftKey => {
+        .Key, .ShiftKey => |key| if (key == .Tab) {
             if (!self.focused) {
                 self.focused = true;
                 return .Consumed;

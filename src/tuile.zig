@@ -23,7 +23,7 @@ pub const Tuile = struct {
     root: *widgets.StackLayout,
 
     pub fn init(allocator: std.mem.Allocator) !Tuile {
-        var curses = try backends.Ncurses.init();
+        const curses = try backends.Ncurses.create(allocator);
         const root = try widgets.StackLayout.create(allocator, .{ .orientation = .Vertical }, .{});
 
         return .{
@@ -34,7 +34,7 @@ pub const Tuile = struct {
     }
 
     pub fn deinit(self: *Tuile) !void {
-        try self.backend.deinit();
+        try self.backend.destroy();
         self.root.destroy();
     }
 
@@ -87,8 +87,11 @@ pub const Tuile = struct {
                 const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
                 const cell = frame.at(pos);
                 try self.backend.enable_effect(cell.effect);
+                try self.backend.use_color(.{ .fg = cell.fg, .bg = cell.bg });
                 if (cell.symbol) |symbol| {
                     try self.backend.print_at(pos, symbol);
+                } else {
+                    try self.backend.print_at(pos, " ");
                 }
                 try self.backend.disable_effect(cell.effect);
             }

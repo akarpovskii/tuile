@@ -81,6 +81,7 @@ pub fn main() !void {
                     ),
                 },
             ),
+            try widgets.Input.create(allocator, .{ .placeholder = "placeholder" }),
         },
     );
 

@@ -3,6 +3,9 @@ const Backend = @import("Backend.zig");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
 const Style = @import("../Style.zig");
+const color = @import("../color.zig");
+const Color = color.Color;
+const ColorPair = color.ColorPair;
 
 const c = @cImport({
     @cInclude("ncurses.h");
@@ -13,9 +16,15 @@ const Ncurses = @This();
 
 const NcursesError = error{ LocaleError, GeneralError };
 
+allocator: std.mem.Allocator,
+
 scr: *c.struct__win_st,
 
-pub fn init() !Ncurses {
+has_colors: bool,
+
+color_pairs: std.AutoHashMap(u8, i16),
+
+pub fn create(allocator: std.mem.Allocator) !*Ncurses {
     // Initialize the locale to get UTF-8 support, see `man ncurses` - Initialization
     if (c.setlocale(c.LC_ALL, "") == null) return error.LocaleError;
 
@@ -24,19 +33,34 @@ pub fn init() !Ncurses {
     if (c.noecho() == c.ERR) return error.GeneralError;
     if (c.keypad(scr, true) == c.ERR) return error.GeneralError;
 
+    var has_colors = false;
+    if (c.has_colors()) {
+        if (c.start_color() == c.ERR) return error.GeneralError;
+        has_colors = true;
+    }
+
     const Visibility = enum(c_int) {
         Invisible = 0,
         Visible = 1,
         VeryVisible = 2,
     };
     if (c.curs_set(@intFromEnum(Visibility.Invisible)) == c.ERR) return error.GeneralError;
+
     c.timeout(0);
-    return .{
+
+    const self = try allocator.create(Ncurses);
+    self.* = .{
+        .allocator = allocator,
         .scr = scr.?,
+        .has_colors = has_colors,
+        .color_pairs = std.AutoHashMap(u8, i16).init(allocator),
     };
+    return self;
 }
 
-pub fn deinit(_: *Ncurses) !void {
+pub fn destroy(self: *Ncurses) !void {
+    defer self.allocator.destroy(self);
+    defer self.color_pairs.deinit();
     if (c.endwin() == c.ERR) return error.GeneralError;
 }
 
@@ -144,4 +168,54 @@ fn attr_for_effect(effect: Style.Effect) c_int {
     if (effect.bold) attr |= c.A_BOLD;
     if (effect.italic) attr |= c.A_ITALIC;
     return @bitCast(attr);
+}
+
+pub fn use_color(self: *Ncurses, color_pair: ColorPair) !void {
+    if (!self.has_colors) {
+        return;
+    }
+    const pair = try self.get_or_init_color(color_pair);
+    if (c.attron(c.COLOR_PAIR(pair)) == c.ERR) return error.GeneralError;
+}
+
+fn get_or_init_color(self: *Ncurses, color_pair: ColorPair) !c_int {
+    const key: u8 = @bitCast(color_pair);
+    if (self.color_pairs.get(key)) |pair| {
+        return pair;
+    }
+
+    var pair: c_short = @intCast(self.color_pairs.count() + 1);
+    if (c.COLOR_PAIRS <= pair) {
+        pair -= 1;
+    }
+
+    const init_res = c.init_pair(
+        @intCast(pair),
+        color_for_enum(color_pair.fg),
+        color_for_enum(color_pair.bg),
+    );
+    if (init_res == c.ERR) return error.GeneralError;
+    try self.color_pairs.put(key, pair);
+    return pair;
+}
+
+fn color_for_enum(col: Color) c_short {
+    return switch (col) {
+        .black => c.COLOR_BLACK,
+        .red => c.COLOR_RED,
+        .green => c.COLOR_GREEN,
+        .yellow => c.COLOR_YELLOW,
+        .blue => c.COLOR_BLUE,
+        .magenta => c.COLOR_MAGENTA,
+        .cyan => c.COLOR_CYAN,
+        .gray => c.COLOR_WHITE,
+        .dark_gray => (8 + c.COLOR_BLACK),
+        .light_red => (8 + c.COLOR_RED),
+        .light_green => (8 + c.COLOR_GREEN),
+        .light_yellow => (8 + c.COLOR_YELLOW),
+        .light_blue => (8 + c.COLOR_BLUE),
+        .light_magenta => (8 + c.COLOR_MAGENTA),
+        .light_cyan => (8 + c.COLOR_CYAN),
+        .white => (8 + c.COLOR_WHITE),
+    };
 }

@@ -1,4 +1,4 @@
-pub const Color = enum {
+pub const Color = enum(u4) {
     black,
     red,
     green,
@@ -15,4 +15,9 @@ pub const Color = enum {
     light_magenta,
     light_cyan,
     white,
+};
+
+pub const ColorPair = packed struct(u8) {
+    fg: Color,
+    bg: Color,
 };

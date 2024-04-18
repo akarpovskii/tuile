@@ -26,6 +26,7 @@ pub const Key = enum {
     F10,
     F11,
     F12,
+    Resize,
 };
 
 pub const FocusDirection = enum { front, back };

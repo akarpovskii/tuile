@@ -76,8 +76,10 @@ pub const Tuile = struct {
                     self.is_running = false;
                 }
             },
+            .Key => |key| if (key == .Resize) return,
             else => {},
         }
+
         _ = try self.root.handle_event(event);
     }
 

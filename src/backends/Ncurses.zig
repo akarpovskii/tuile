@@ -124,6 +124,7 @@ fn parse_key(ch: c_int) ?events.Key {
         c.KEY_F(10) => return .F10,
         c.KEY_F(11) => return .F11,
         c.KEY_F(12) => return .F12,
+        c.KEY_RESIZE => return .Resize,
         else => {},
     }
     return null;

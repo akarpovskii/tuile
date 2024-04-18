@@ -21,9 +21,9 @@ value: std.ArrayList(u8),
 
 focus_handler: FocusHandler = .{},
 
-cursor: Vec2 = Vec2.zero(),
+cursor: u32 = 0,
 
-cursor_idx: usize = 0,
+view_start: usize = 0,
 
 pub fn create(allocator: std.mem.Allocator, config: Config) !*Input {
     const self = try allocator.create(Input);
@@ -53,14 +53,18 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
     if (render_placeholder) frame.set_style(area, .{ .add_effect = .{ .dim = true } });
 
     const text_to_render = if (render_placeholder) self.placeholder else self.value.items;
+    const visible = text_to_render[self.view_start..];
+    _ = try frame.write_symbols(area.min, visible, area.max.x - area.min.x);
 
-    // TODO: Handle Unicode input
-    _ = try frame.write_symbols(area.min, text_to_render, area.max.x - area.min.x);
     if (self.focus_handler.focused) {
         if (render_placeholder) {
             self.focus_handler.render(area, frame);
         } else {
-            const end_pos = area.min.add(self.cursor);
+            var end_pos = area.min;
+            end_pos.x += @intCast(self.cursor - self.view_start);
+            if (end_pos.x >= area.max.x) {
+                end_pos.x = area.max.x - 1;
+            }
             const end_area = Rect{
                 .min = end_pos,
                 .max = end_pos.add(.{ .x = 1, .y = 1 }),
@@ -72,11 +76,23 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
 
 pub fn desired_size(self: *Input, _: Vec2) !Vec2 {
     const text_to_render = if (self.value.items.len > 0) self.value.items else self.placeholder;
+    const len = try std.unicode.utf8CountCodepoints(text_to_render);
 
-    return .{ .x = @intCast(try std.unicode.utf8CountCodepoints(text_to_render)), .y = 1 };
+    // +1 for the cursor
+    return .{ .x = @intCast(len + 1), .y = 1 };
 }
 
-pub fn layout(_: *Input, _: Vec2) !void {}
+pub fn layout(self: *Input, size: Vec2) !void {
+    if (self.cursor < self.view_start) {
+        self.view_start = self.cursor;
+    } else {
+        // +1 is for the cursor itself
+        const visible = self.cursor - self.view_start + 1;
+        if (visible > size.x) {
+            self.view_start += visible - size.x;
+        }
+    }
+}
 
 pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
     if (self.focus_handler.handle_event(event) == .Consumed) {
@@ -86,28 +102,25 @@ pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
     switch (event) {
         .Key, .ShiftKey => |key| switch (key) {
             .Left => {
-                self.cursor.x -|= 1;
-                self.cursor_idx -|= 1;
+                self.cursor -|= 1;
                 return .Consumed;
             },
             .Right => {
-                if (self.cursor_idx < self.value.items.len) {
-                    self.cursor.x += 1;
-                    self.cursor_idx += 1;
+                if (self.cursor < self.value.items.len) {
+                    self.cursor += 1;
                 }
                 return .Consumed;
             },
             .Backspace => {
-                if (self.cursor_idx > 0) {
-                    _ = self.value.orderedRemove(self.cursor_idx - 1);
+                if (self.cursor > 0) {
+                    _ = self.value.orderedRemove(self.cursor - 1);
                 }
-                self.cursor.x -|= 1;
-                self.cursor_idx -|= 1;
+                self.cursor -|= 1;
                 return .Consumed;
             },
             .Delete => {
-                if (self.cursor_idx < self.value.items.len) {
-                    _ = self.value.orderedRemove(self.cursor_idx);
+                if (self.cursor < self.value.items.len) {
+                    _ = self.value.orderedRemove(self.cursor);
                 }
                 return .Consumed;
             },
@@ -115,9 +128,8 @@ pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
         },
 
         .Char => |char| {
-            try self.value.insert(self.cursor_idx, char);
-            self.cursor.x += 1;
-            self.cursor_idx += 1;
+            try self.value.insert(self.cursor, char);
+            self.cursor += 1;
             return .Consumed;
         },
         else => {},

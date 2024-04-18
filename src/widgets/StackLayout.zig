@@ -99,10 +99,11 @@ pub fn desired_size(self: *StackLayout, available: Vec2) !Vec2 {
     return size;
 }
 
-pub fn layout(self: *StackLayout, bounds: Vec2) !void {
+pub fn layout(self: *StackLayout, bounds_: Vec2) !void {
     if (self.widgets.items.len == 0) {
         return;
     }
+    var bounds = bounds_;
 
     const len: u32 = @intCast(self.widgets.items.len);
 
@@ -113,56 +114,43 @@ pub fn layout(self: *StackLayout, bounds: Vec2) !void {
         self.widget_sizes.append(size) catch unreachable;
     }
 
-    switch (self.orientation) {
-        .Horizontal => {
-            // Limit in cross axis
-            for (self.widget_sizes.items) |*s| {
-                s.y = @min(s.y, bounds.y);
-            }
+    // Transpose
+    if (self.orientation == .Horizontal) {
+        bounds = bounds.transpose();
+        for (self.widget_sizes.items) |*s| {
+            s.* = s.transpose();
+        }
+    }
 
-            // Layout in main axis
-            var total: u32 = 0;
-            for (self.widget_sizes.items) |s| {
-                total += s.x;
-            }
+    // Limit in cross axis
+    for (self.widget_sizes.items) |*s| {
+        s.x = bounds.x;
+    }
 
-            if (total > bounds.x) {
-                var extra = total - bounds.x;
-                var reverse = std.mem.reverseIterator(self.widget_sizes.items);
-                while (reverse.nextPtr()) |s| {
-                    if (extra == 0) break;
-                    const sub = @min(extra, s.x);
-                    extra -= sub;
-                    s.x -= sub;
-                }
-                std.debug.assert(extra == 0);
-            }
-        },
+    // Layout in main axis
+    var total: u32 = 0;
+    for (self.widget_sizes.items) |s| {
+        total += s.y;
+    }
 
-        .Vertical => {
-            // Limit in cross axis
-            for (self.widget_sizes.items) |*s| {
-                s.x = @min(s.x, bounds.x);
-            }
+    if (total > bounds.y) {
+        var extra = total - bounds.y;
+        var reverse = std.mem.reverseIterator(self.widget_sizes.items);
+        while (reverse.nextPtr()) |s| {
+            if (extra == 0) break;
+            const sub = @min(extra, s.y);
+            extra -= sub;
+            s.y -= sub;
+        }
+        std.debug.assert(extra == 0);
+    }
 
-            // Layout in main axis
-            var total: u32 = 0;
-            for (self.widget_sizes.items) |s| {
-                total += s.y;
-            }
-
-            if (total > bounds.y) {
-                var extra = total - bounds.y;
-                var reverse = std.mem.reverseIterator(self.widget_sizes.items);
-                while (reverse.nextPtr()) |s| {
-                    if (extra == 0) break;
-                    const sub = @min(extra, s.y);
-                    extra -= sub;
-                    s.y -= sub;
-                }
-                std.debug.assert(extra == 0);
-            }
-        },
+    // Transpose back
+    if (self.orientation == .Horizontal) {
+        bounds = bounds.transpose();
+        for (self.widget_sizes.items) |*s| {
+            s.* = s.transpose();
+        }
     }
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {

@@ -51,3 +51,7 @@ pub fn divFloor(self: Vec2, denominator: u32) Vec2 {
         .y = @divFloor(self.y, denominator),
     };
 }
+
+pub fn transpose(self: Vec2) Vec2 {
+    return .{ .x = self.y, .y = self.x };
+}

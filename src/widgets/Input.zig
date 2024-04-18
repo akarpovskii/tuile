@@ -20,6 +20,10 @@ value: std.ArrayList(u8),
 
 focused: bool = false,
 
+cursor: Vec2 = Vec2.zero(),
+
+cursor_idx: usize = 0,
+
 pub fn create(allocator: std.mem.Allocator, config: Config) !*Input {
     const self = try allocator.create(Input);
     self.* = Input{
@@ -46,18 +50,19 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
 
     const text_to_render = if (render_placeholder) self.placeholder else self.value.items;
 
-    const written = try frame.write_symbols(area.min, text_to_render, area.max.x - area.min.x);
+    // TODO: Handle Unicode input
+    _ = try frame.write_symbols(area.min, text_to_render, area.max.x - area.min.x);
     if (self.focused) {
         if (render_placeholder) {
             frame.set_style(area, .{ .add_effect = .{ .highlight = true } });
         } else {
-            const end_pos = area.min.add(.{ .x = @intCast(written), .y = 0 });
+            const end_pos = area.min.add(self.cursor);
             const end_area = Rect{
                 .min = end_pos,
                 .max = end_pos.add(.{ .x = 1, .y = 1 }),
             };
-            frame.set_style(end_area, .{ .fg = Color.dark_gray, .add_effect = .{ .blink = true } });
-            _ = try frame.write_symbols(end_pos, "█", area.max.x - area.min.x);
+            frame.set_style(end_area, .{ .fg = Color.dark_gray, .add_effect = .{ .reverse = true } });
+            // _ = try frame.write_symbols(end_pos, "█", area.max.x - area.min.x);
         }
     }
 }
@@ -87,15 +92,39 @@ pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
                     return .Ignored;
                 }
             },
+            .Left => {
+                self.cursor.x -|= 1;
+                self.cursor_idx -|= 1;
+                return .Consumed;
+            },
+            .Right => {
+                if (self.cursor_idx < self.value.items.len) {
+                    self.cursor.x += 1;
+                    self.cursor_idx += 1;
+                }
+                return .Consumed;
+            },
             .Backspace => {
-                _ = self.value.popOrNull();
+                if (self.cursor_idx > 0) {
+                    _ = self.value.orderedRemove(self.cursor_idx - 1);
+                }
+                self.cursor.x -|= 1;
+                self.cursor_idx -|= 1;
+                return .Consumed;
+            },
+            .Delete => {
+                if (self.cursor_idx < self.value.items.len) {
+                    _ = self.value.orderedRemove(self.cursor_idx);
+                }
                 return .Consumed;
             },
             else => {},
         },
 
         .Char => |char| {
-            try self.value.append(char);
+            try self.value.insert(self.cursor_idx, char);
+            self.cursor.x += 1;
+            self.cursor_idx += 1;
             return .Consumed;
         },
         else => {},

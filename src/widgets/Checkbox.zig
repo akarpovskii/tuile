@@ -49,6 +49,9 @@ pub fn widget(self: *Checkbox) Widget {
 }
 
 pub fn render(self: *Checkbox, area: Rect, frame: *Frame) !void {
+    if (area.max.y - area.min.y < 1) {
+        return;
+    }
     self.focus_handler.render(area, frame);
 
     const marker = if (self.checked) Marker.Checked else Marker.Basic;

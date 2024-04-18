@@ -46,6 +46,9 @@ pub fn widget(self: *Input) Widget {
 }
 
 pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
+    if (area.max.y - area.min.y < 1) {
+        return;
+    }
     const render_placeholder = self.value.items.len == 0;
     if (render_placeholder) frame.set_style(area, .{ .add_effect = .{ .dim = true } });
 
@@ -63,7 +66,6 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
                 .max = end_pos.add(.{ .x = 1, .y = 1 }),
             };
             frame.set_style(end_area, .{ .fg = Color.dark_gray, .add_effect = .{ .reverse = true } });
-            // _ = try frame.write_symbols(end_pos, "█", area.max.x - area.min.x);
         }
     }
 }

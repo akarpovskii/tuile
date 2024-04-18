@@ -65,9 +65,12 @@ pub fn Block(comptime Inner: anytype) type {
                 }),
             };
 
-            try self.inner.render(inner_area, frame);
-
-            self.render_border(area, frame);
+            if (inner_area.min.x > inner_area.max.x or inner_area.min.y > inner_area.max.y) {
+                try self.inner.render(area, frame);
+            } else {
+                try self.inner.render(inner_area, frame);
+                self.render_border(area, frame);
+            }
         }
 
         pub fn desired_size(self: *Self, available: Vec2) !Vec2 {

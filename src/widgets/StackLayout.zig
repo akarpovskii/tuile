@@ -128,16 +128,14 @@ pub fn layout(self: *StackLayout, bounds: Vec2) !void {
 
             if (total > bounds.x) {
                 var extra = total - bounds.x;
-                const per_widget = std.math.divCeil(u32, extra, len) catch 0;
-                for (self.widget_sizes.items) |*s| {
-                    if (extra > per_widget) {
-                        s.x -= @min(per_widget, s.x);
-                        extra -= per_widget;
-                    } else {
-                        s.x -= @min(extra, s.x);
-                        break;
-                    }
+                var reverse = std.mem.reverseIterator(self.widget_sizes.items);
+                while (reverse.nextPtr()) |s| {
+                    if (extra == 0) break;
+                    const sub = @min(extra, s.x);
+                    extra -= sub;
+                    s.x -= sub;
                 }
+                std.debug.assert(extra == 0);
             }
         },
 
@@ -155,16 +153,14 @@ pub fn layout(self: *StackLayout, bounds: Vec2) !void {
 
             if (total > bounds.y) {
                 var extra = total - bounds.y;
-                const per_widget = std.math.divCeil(u32, extra, len) catch 0;
-                for (self.widget_sizes.items) |*s| {
-                    if (extra > per_widget) {
-                        s.y -= @min(per_widget, s.x);
-                        extra -= per_widget;
-                    } else {
-                        s.y -= @min(extra, s.x);
-                        break;
-                    }
+                var reverse = std.mem.reverseIterator(self.widget_sizes.items);
+                while (reverse.nextPtr()) |s| {
+                    if (extra == 0) break;
+                    const sub = @min(extra, s.y);
+                    extra -= sub;
+                    s.y -= sub;
                 }
+                std.debug.assert(extra == 0);
             }
         },
     }

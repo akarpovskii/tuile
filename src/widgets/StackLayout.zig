@@ -175,17 +175,9 @@ pub fn layout(self: *StackLayout, bounds: Vec2) !void {
 }
 
 pub fn handle_event(self: *StackLayout, event: events.Event) !events.EventResult {
-    // TODO: Fix focusing on Shift+Tab
     if (event == .FocusIn) {
-        for (self.widgets.items, 0..) |w, i| {
-            const res = try w.handle_event(.FocusIn);
-            if (res == .Consumed) {
-                self.focused = i;
-                return .Consumed;
-            }
-        } else {
-            return .Ignored;
-        }
+        var iter = WidgetsIterator.in_direction(self.widgets.items, event.FocusIn);
+        return self.focus_on_next(&iter, event.FocusIn);
     }
     if (event == .FocusOut) {
         self.focused = null;
@@ -193,37 +185,47 @@ pub fn handle_event(self: *StackLayout, event: events.Event) !events.EventResult
     }
 
     if (self.focused == null) {
-        if (try self.handle_event(.FocusIn) == .Ignored) {
+        // If nothing is focused, pressing Tab or Shift+Tab
+        // technically generates two events: FocusIn and Key/ShiftKey.
+        // If this is the case, we only need to pass down FocusIn to avoid changing the focus twice.
+        var supress_further: bool = undefined;
+        var direction: events.FocusDirection = undefined;
+
+        switch (event) {
+            .Key, .ShiftKey => |key| if (key == .Tab) {
+                supress_further = true;
+                direction = if (event == .Key) .front else .back;
+            },
+            else => {
+                supress_further = false;
+                direction = .front;
+            },
+        }
+
+        if (try self.handle_event(.{ .FocusIn = direction }) == .Ignored) {
             return .Ignored;
+        }
+        if (supress_further) {
+            return .Consumed;
         }
     }
 
     const active = self.focused.?;
     const active_w = self.widgets.items[active];
-    const res = try active_w.handle_event(event);
 
-    switch (res) {
+    switch (try active_w.handle_event(event)) {
         .Consumed => return .Consumed,
         .Ignored => {
             switch (event) {
                 .Key, .ShiftKey => |key| if (key == .Tab) {
-                    const step: isize = if (event == .Key) 1 else -1;
-                    var idx = @as(isize, @intCast(active)) + step;
-                    while (0 <= idx and idx < self.widgets.items.len) : (idx += step) {
-                        const uidx: usize = @intCast(idx);
-                        const w = self.widgets.items[uidx];
+                    const direction: events.FocusDirection = if (event == .Key) .front else .back;
 
-                        if (try w.handle_event(.FocusIn) == .Consumed) {
-                            self.focused = uidx;
-                            _ = try active_w.handle_event(.FocusOut);
-                            _ = try w.handle_event(event);
-                            return .Consumed;
-                        }
-                    } else {
-                        self.focused = null;
-                        _ = try active_w.handle_event(.FocusOut);
-                        return .Ignored;
-                    }
+                    var iter = WidgetsIterator.in_direction(self.widgets.items, direction);
+                    iter.current = @as(isize, @intCast(active)) + iter.step;
+
+                    const focused = self.focus_on_next(&iter, direction);
+                    _ = try active_w.handle_event(.FocusOut);
+                    return focused;
                 },
                 else => {},
             }
@@ -231,3 +233,61 @@ pub fn handle_event(self: *StackLayout, event: events.Event) !events.EventResult
     }
     return .Ignored;
 }
+
+fn focus_on_next(self: *StackLayout, iter: *WidgetsIterator, direction: events.FocusDirection) !events.EventResult {
+    while (iter.peek()) |w| : (_ = iter.next()) {
+        if (try w.handle_event(.{ .FocusIn = direction }) == .Consumed) {
+            self.focused = @intCast(iter.current);
+            return .Consumed;
+        }
+    } else {
+        self.focused = null;
+        return .Ignored;
+    }
+}
+
+const WidgetsIterator = struct {
+    widgets: []Widget,
+
+    step: isize,
+
+    current: isize,
+
+    pub fn in_direction(widgets: []Widget, direction: events.FocusDirection) WidgetsIterator {
+        return switch (direction) {
+            .front => forward(widgets),
+            .back => backward(widgets),
+        };
+    }
+
+    pub fn forward(widgets: []Widget) WidgetsIterator {
+        return WidgetsIterator{
+            .widgets = widgets,
+            .step = 1,
+            .current = 0,
+        };
+    }
+
+    pub fn backward(widgets: []Widget) WidgetsIterator {
+        return WidgetsIterator{
+            .widgets = widgets,
+            .step = -1,
+            .current = @as(isize, @intCast(widgets.len)) - 1,
+        };
+    }
+
+    pub fn next(self: *WidgetsIterator) ?*Widget {
+        if (self.current < 0 or self.current >= self.widgets.len) {
+            return null;
+        }
+        defer self.current += self.step;
+        return &self.widgets[@intCast(self.current)];
+    }
+
+    pub fn peek(self: *WidgetsIterator) ?*Widget {
+        if (self.current < 0 or self.current >= self.widgets.len) {
+            return null;
+        }
+        return &self.widgets[@intCast(self.current)];
+    }
+};

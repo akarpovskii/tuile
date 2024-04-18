@@ -28,13 +28,15 @@ pub const Key = enum {
     F12,
 };
 
+pub const FocusDirection = enum { front, back };
+
 pub const Event = union(enum) {
     Char: u8,
     Key: Key,
     CtrlChar: u8,
     ShiftKey: Key,
 
-    FocusIn,
+    FocusIn: FocusDirection,
     FocusOut,
 };
 

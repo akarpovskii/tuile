@@ -77,21 +77,16 @@ pub fn layout(_: *Input, _: Vec2) !void {}
 
 pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
     switch (event) {
-        .FocusIn => return .Consumed,
+        .FocusIn => {
+            self.focused = true;
+            return .Consumed;
+        },
         .FocusOut => {
             self.focused = false;
             return .Consumed;
         },
 
         .Key, .ShiftKey => |key| switch (key) {
-            .Tab => {
-                if (!self.focused) {
-                    self.focused = true;
-                    return .Consumed;
-                } else {
-                    return .Ignored;
-                }
-            },
             .Left => {
                 self.cursor.x -|= 1;
                 self.cursor_idx -|= 1;

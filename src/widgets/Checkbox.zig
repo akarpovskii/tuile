@@ -72,19 +72,13 @@ pub fn layout(_: *Checkbox, _: Vec2) !void {}
 
 pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
     switch (event) {
-        .FocusIn => return .Consumed,
+        .FocusIn => {
+            self.focused = true;
+            return .Consumed;
+        },
         .FocusOut => {
             self.focused = false;
             return .Consumed;
-        },
-
-        .Key, .ShiftKey => |key| if (key == .Tab) {
-            if (!self.focused) {
-                self.focused = true;
-                return .Consumed;
-            } else {
-                return .Ignored;
-            }
         },
 
         .Char => |char| switch (char) {

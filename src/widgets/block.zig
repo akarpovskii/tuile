@@ -5,16 +5,13 @@ const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const border = @import("../border.zig");
+const Padding = @import("Padding.zig");
 
 pub fn Block(comptime Inner: anytype) type {
     return struct {
         const Self = @This();
 
-        pub const Config = struct {
-            border: border.Border = border.Border.none(),
-
-            border_type: border.BorderType = .solid,
-        };
+        pub const Config = struct { border: border.Border = border.Border.none(), border_type: border.BorderType = .solid, padding: Padding = .{} };
 
         allocator: std.mem.Allocator,
 
@@ -26,7 +23,7 @@ pub fn Block(comptime Inner: anytype) type {
 
         size: ?Vec2 = null,
 
-        border_widths: struct { top: u32, bottom: u32, left: u32, right: u32 },
+        border_widths: Padding,
 
         pub fn create(allocator: std.mem.Allocator, config: Config, inner: *Inner) !*Self {
             const border_chars = border.BorderCharacters.from_type(config.border_type);
@@ -38,10 +35,10 @@ pub fn Block(comptime Inner: anytype) type {
                 .border = config.border,
                 .border_chars = border_chars,
                 .border_widths = .{
-                    .top = @intFromBool(config.border.top),
-                    .bottom = @intFromBool(config.border.bottom),
-                    .left = @intFromBool(config.border.left),
-                    .right = @intFromBool(config.border.right),
+                    .top = @intFromBool(config.border.top) + config.padding.top,
+                    .bottom = @intFromBool(config.border.bottom) + config.padding.bottom,
+                    .left = @intFromBool(config.border.left) + config.padding.left,
+                    .right = @intFromBool(config.border.right) + config.padding.right,
                 },
             };
             return self;

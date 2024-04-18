@@ -40,8 +40,20 @@ pub fn main() !void {
             ),
             try widgets.Block(widgets.Label).create(
                 allocator,
-                .{ .border = tuile.border.Border.all(), .border_type = .rounded },
+                .{
+                    .border = tuile.border.Border.all(),
+                    .border_type = .rounded,
+                    .padding = .{ .top = 1, .bottom = 2, .left = 3, .right = 0 },
+                },
                 try widgets.Label.create(allocator, .{ .text = "Multiline\nlabel text" }),
+            ),
+            try widgets.Block(widgets.Label).create(
+                allocator,
+                .{
+                    .border = tuile.border.Border.none(),
+                    .padding = .{ .top = 1, .bottom = 1, .left = 1, .right = 1 },
+                },
+                try widgets.Label.create(allocator, .{ .text = "Padding\nwithout borders" }),
             ),
             try widgets.StackLayout.create(
                 allocator,

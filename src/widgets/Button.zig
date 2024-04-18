@@ -6,6 +6,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig");
 const Style = @import("../Style.zig");
+const FocusHandler = @import("FocusHandler.zig");
 
 pub const Config = struct {
     label: []const u8,
@@ -19,7 +20,7 @@ allocator: std.mem.Allocator,
 
 view: *Label,
 
-focused: bool = false,
+focus_handler: FocusHandler = .{},
 
 on_press: ?*const fn (label: []const u8) void,
 
@@ -55,7 +56,7 @@ pub fn widget(self: *Button) Widget {
 }
 
 pub fn render(self: *Button, area: Rect, frame: *Frame) !void {
-    if (self.focused) frame.set_style(area, .{ .add_effect = .{ .highlight = true } });
+    self.focus_handler.render(area, frame);
     try self.view.render(area, frame);
 }
 
@@ -68,16 +69,11 @@ pub fn layout(self: *Button, bounds: Vec2) !void {
 }
 
 pub fn handle_event(self: *Button, event: events.Event) !events.EventResult {
-    switch (event) {
-        .FocusIn => {
-            self.focused = true;
-            return .Consumed;
-        },
-        .FocusOut => {
-            self.focused = false;
-            return .Consumed;
-        },
+    if (self.focus_handler.handle_event(event) == .Consumed) {
+        return .Consumed;
+    }
 
+    switch (event) {
         .Char => |char| switch (char) {
             ' ' => {
                 if (self.on_press) |on_press| {

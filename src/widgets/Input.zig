@@ -5,6 +5,7 @@ const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Color = @import("../color.zig").Color;
+const FocusHandler = @import("FocusHandler.zig");
 
 pub const Config = struct {
     placeholder: []const u8 = "",
@@ -18,7 +19,7 @@ placeholder: []const u8,
 
 value: std.ArrayList(u8),
 
-focused: bool = false,
+focus_handler: FocusHandler = .{},
 
 cursor: Vec2 = Vec2.zero(),
 
@@ -52,9 +53,9 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
 
     // TODO: Handle Unicode input
     _ = try frame.write_symbols(area.min, text_to_render, area.max.x - area.min.x);
-    if (self.focused) {
+    if (self.focus_handler.focused) {
         if (render_placeholder) {
-            frame.set_style(area, .{ .add_effect = .{ .highlight = true } });
+            self.focus_handler.render(area, frame);
         } else {
             const end_pos = area.min.add(self.cursor);
             const end_area = Rect{
@@ -76,16 +77,11 @@ pub fn desired_size(self: *Input, _: Vec2) !Vec2 {
 pub fn layout(_: *Input, _: Vec2) !void {}
 
 pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
-    switch (event) {
-        .FocusIn => {
-            self.focused = true;
-            return .Consumed;
-        },
-        .FocusOut => {
-            self.focused = false;
-            return .Consumed;
-        },
+    if (self.focus_handler.handle_event(event) == .Consumed) {
+        return .Consumed;
+    }
 
+    switch (event) {
         .Key, .ShiftKey => |key| switch (key) {
             .Left => {
                 self.cursor.x -|= 1;

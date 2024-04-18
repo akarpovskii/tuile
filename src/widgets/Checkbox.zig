@@ -6,6 +6,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig").Label;
 const Style = @import("../Style.zig");
+const FocusHandler = @import("FocusHandler.zig");
 
 pub const Config = struct {
     label: []const u8,
@@ -24,7 +25,7 @@ allocator: std.mem.Allocator,
 
 label: []const u8,
 
-focused: bool = false,
+focus_handler: FocusHandler = .{},
 
 checked: bool,
 
@@ -48,7 +49,7 @@ pub fn widget(self: *Checkbox) Widget {
 }
 
 pub fn render(self: *Checkbox, area: Rect, frame: *Frame) !void {
-    if (self.focused) frame.set_style(area, .{ .add_effect = .{ .highlight = true } });
+    self.focus_handler.render(area, frame);
 
     const marker = if (self.checked) Marker.Checked else Marker.Basic;
 
@@ -71,16 +72,10 @@ pub fn desired_size(self: *Checkbox, _: Vec2) !Vec2 {
 pub fn layout(_: *Checkbox, _: Vec2) !void {}
 
 pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
+    if (self.focus_handler.handle_event(event) == .Consumed) {
+        return .Consumed;
+    }
     switch (event) {
-        .FocusIn => {
-            self.focused = true;
-            return .Consumed;
-        },
-        .FocusOut => {
-            self.focused = false;
-            return .Consumed;
-        },
-
         .Char => |char| switch (char) {
             ' ' => {
                 self.checked = !self.checked;

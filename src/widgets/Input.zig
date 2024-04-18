@@ -49,6 +49,8 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
     if (area.max.y - area.min.y < 1) {
         return;
     }
+    frame.set_style(area, .{ .add_effect = .{ .underline = true } });
+
     const render_placeholder = self.value.items.len == 0;
     if (render_placeholder) frame.set_style(area, .{ .add_effect = .{ .dim = true } });
 
@@ -57,20 +59,16 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
     _ = try frame.write_symbols(area.min, visible, area.max.x - area.min.x);
 
     if (self.focus_handler.focused) {
-        if (render_placeholder) {
-            self.focus_handler.render(area, frame);
-        } else {
-            var end_pos = area.min;
-            end_pos.x += @intCast(self.cursor - self.view_start);
-            if (end_pos.x >= area.max.x) {
-                end_pos.x = area.max.x - 1;
-            }
-            const end_area = Rect{
-                .min = end_pos,
-                .max = end_pos.add(.{ .x = 1, .y = 1 }),
-            };
-            frame.set_style(end_area, .{ .fg = Color.dark_gray, .add_effect = .{ .reverse = true } });
+        var end_pos = area.min;
+        end_pos.x += @intCast(self.cursor - self.view_start);
+        if (end_pos.x >= area.max.x) {
+            end_pos.x = area.max.x - 1;
         }
+        const end_area = Rect{
+            .min = end_pos,
+            .max = end_pos.add(.{ .x = 1, .y = 1 }),
+        };
+        frame.set_style(end_area, .{ .fg = Color.dark_gray, .add_effect = .{ .reverse = true } });
     }
 }
 

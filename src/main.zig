@@ -38,8 +38,11 @@ pub fn main() !void {
                     try widgets.Label.create(allocator, .{ .text = "Label text 5" }),
                 },
             ),
-            try widgets.Label.create(allocator, .{ .text = "Label text 6" }),
-            try widgets.Label.create(allocator, .{ .text = "Label text 7" }),
+            try widgets.Block(widgets.Label).create(
+                allocator,
+                .{ .border = tuile.border.Border.all(), .border_type = .rounded },
+                try widgets.Label.create(allocator, .{ .text = "Multiline\nlabel text" }),
+            ),
             try widgets.StackLayout.create(
                 allocator,
                 .{ .orientation = .Horizontal },

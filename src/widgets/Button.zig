@@ -33,7 +33,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
 
     const view = try Label.create(
         allocator,
-        .{ .text = label, .wrap = false },
+        .{ .text = label },
     );
 
     const self = try allocator.create(Button);

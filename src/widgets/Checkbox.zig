@@ -7,7 +7,7 @@ const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig").Label;
 const Style = @import("../Style.zig");
 const FocusHandler = @import("FocusHandler.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
@@ -15,7 +15,7 @@ pub const Config = struct {
 
     checked: bool = false,
 
-    sized: Sized = .{},
+    layout: LayoutProperties = .{},
 };
 
 pub const Checkbox = @This();
@@ -31,7 +31,7 @@ label: []const u8,
 
 focus_handler: FocusHandler = .{},
 
-sized: Sized,
+layout_properties: LayoutProperties,
 
 checked: bool,
 
@@ -41,7 +41,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Checkbox {
         .allocator = allocator,
         .label = try allocator.dupe(u8, config.label),
         .checked = config.checked,
-        .sized = config.sized,
+        .layout_properties = config.layout,
     };
     return self;
 }
@@ -81,7 +81,7 @@ pub fn layout(self: *Checkbox, constraints: Constraints) !Vec2 {
         .y = 1,
     };
 
-    const self_constraints = Constraints.from_sized(self.sized);
+    const self_constraints = Constraints.from_props(self.layout_properties);
     size = self_constraints.apply(size);
     size = constraints.apply(size);
     return size;
@@ -102,4 +102,8 @@ pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
         else => {},
     }
     return .Ignored;
+}
+
+pub fn layout_props(self: *Checkbox) LayoutProperties {
+    return self.layout_properties;
 }

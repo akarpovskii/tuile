@@ -1,6 +1,6 @@
 const std = @import("std");
 const Vec2 = @import("../Vec2.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 
 const Constraints = @This();
 
@@ -27,11 +27,11 @@ pub fn clamp_height(self: Constraints, value: u32) u32 {
     return std.math.clamp(value, self.min_height, self.max_height);
 }
 
-pub fn from_sized(sized: Sized) Constraints {
+pub fn from_props(props: LayoutProperties) Constraints {
     return .{
-        .min_width = sized.min_width,
-        .min_height = sized.min_height,
-        .max_width = sized.max_width,
-        .max_height = sized.max_height,
+        .min_width = props.min_width,
+        .min_height = props.min_height,
+        .max_width = props.max_width,
+        .max_height = props.max_height,
     };
 }

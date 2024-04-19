@@ -7,24 +7,22 @@ const Frame = @import("../render/Frame.zig");
 const Style = @import("../Style.zig");
 const StackLayout = @import("StackLayout.zig");
 const Checkbox = @import("Checkbox.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     multiselect: bool = false,
 
-    sized: Sized = .{},
+    layout: LayoutProperties = .{},
 };
 
 pub const CheckboxGroup = @This();
 
 allocator: std.mem.Allocator,
 
-options: *StackLayout,
+view: *StackLayout,
 
 multiselect: bool,
-
-sized: Sized,
 
 pub fn create(allocator: std.mem.Allocator, config: Config, options: anytype) !*CheckboxGroup {
     inline for (options) |opt| {
@@ -34,19 +32,18 @@ pub fn create(allocator: std.mem.Allocator, config: Config, options: anytype) !*
     const self = try allocator.create(CheckboxGroup);
     self.* = CheckboxGroup{
         .allocator = allocator,
-        .options = try StackLayout.create(
+        .view = try StackLayout.create(
             allocator,
-            .{ .sized = .{} },
+            .{ .layout = config.layout },
             options,
         ),
         .multiselect = config.multiselect,
-        .sized = config.sized,
     };
     return self;
 }
 
 pub fn destroy(self: *CheckboxGroup) void {
-    self.options.destroy();
+    self.view.destroy();
     self.allocator.destroy(self);
 }
 
@@ -55,15 +52,15 @@ pub fn widget(self: *CheckboxGroup) Widget {
 }
 
 pub fn render(self: *CheckboxGroup, area: Rect, frame: Frame) !void {
-    try self.options.render(area, frame);
+    try self.view.render(area, frame);
 }
 
 pub fn layout(self: *CheckboxGroup, constraints: Constraints) !Vec2 {
-    return try self.options.layout(constraints);
+    return try self.view.layout(constraints);
 }
 
 pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResult {
-    const res = try self.options.handle_event(event);
+    const res = try self.view.handle_event(event);
     if (res == .Ignored) {
         return res;
     }
@@ -73,9 +70,9 @@ pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResu
             ' ' => {
                 if (!self.multiselect) {
                     // This option received the event
-                    const focused = self.options.focused.?;
+                    const focused = self.view.focused.?;
                     // Uncheck everything else
-                    for (self.options.widgets.items, 0..) |*opt_w, idx| {
+                    for (self.view.widgets.items, 0..) |*opt_w, idx| {
                         if (idx == focused) {
                             continue;
                         }
@@ -92,4 +89,8 @@ pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResu
         else => {},
     }
     return res;
+}
+
+pub fn layout_props(self: *CheckboxGroup) LayoutProperties {
+    return self.view.layout_props();
 }

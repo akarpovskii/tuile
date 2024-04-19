@@ -4,13 +4,13 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     text: []const u8,
 
-    sized: Sized = .{},
+    layout: LayoutProperties = .{},
 };
 
 pub const Label = @This();
@@ -21,7 +21,7 @@ text: []const u8,
 
 lines: [][]const u8,
 
-sized: Sized,
+layout_properties: LayoutProperties,
 
 pub fn create(allocator: std.mem.Allocator, config: Config) !*Label {
     const text = try allocator.dupe(u8, config.text);
@@ -38,7 +38,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Label {
         .allocator = allocator,
         .text = text,
         .lines = try lines.toOwnedSlice(),
-        .sized = config.sized,
+        .layout_properties = config.layout,
     };
     return self;
 }
@@ -73,7 +73,7 @@ pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
         .y = @intCast(self.lines.len),
     };
 
-    const self_constraints = Constraints.from_sized(self.sized);
+    const self_constraints = Constraints.from_props(self.layout_properties);
     size = self_constraints.apply(size);
     size = constraints.apply(size);
     return size;
@@ -81,4 +81,8 @@ pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
 
 pub fn handle_event(_: *Label, _: events.Event) !events.EventResult {
     return .Ignored;
+}
+
+pub fn layout_props(self: *Label) LayoutProperties {
+    return self.layout_properties;
 }

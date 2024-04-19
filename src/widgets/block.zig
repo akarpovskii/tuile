@@ -6,7 +6,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const border = @import("../border.zig");
 const Padding = @import("Padding.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 
 pub fn Block(comptime Inner: anytype) type {
@@ -22,7 +22,7 @@ pub fn Block(comptime Inner: anytype) type {
 
             fit_content: bool = false,
 
-            sized: Sized = .{},
+            layout: LayoutProperties = .{},
         };
 
         allocator: std.mem.Allocator,
@@ -37,7 +37,7 @@ pub fn Block(comptime Inner: anytype) type {
 
         fit_content: bool,
 
-        sized: Sized,
+        layout_properties: LayoutProperties,
 
         pub fn create(allocator: std.mem.Allocator, config: Config, inner: *Inner) !*Self {
             const border_chars = border.BorderCharacters.from_type(config.border_type);
@@ -55,7 +55,7 @@ pub fn Block(comptime Inner: anytype) type {
                     .right = @intFromBool(config.border.right) + config.padding.right,
                 },
                 .fit_content = config.fit_content,
-                .sized = config.sized,
+                .layout_properties = config.layout,
             };
             return self;
         }
@@ -90,11 +90,12 @@ pub fn Block(comptime Inner: anytype) type {
         }
 
         pub fn layout(self: *Self, constraints: Constraints) !Vec2 {
+            const props = self.layout_properties;
             const self_constraints = Constraints{
-                .min_width = @max(self.sized.min_width, constraints.min_width),
-                .min_height = @max(self.sized.min_height, constraints.min_height),
-                .max_width = @min(self.sized.max_width, constraints.max_width),
-                .max_height = @min(self.sized.max_height, constraints.max_height),
+                .min_width = @max(props.min_width, constraints.min_width),
+                .min_height = @max(props.min_height, constraints.min_height),
+                .max_width = @min(props.max_width, constraints.max_width),
+                .max_height = @min(props.max_height, constraints.max_height),
             };
             const border_size = Vec2{
                 .x = self.border_widths.left + self.border_widths.right,
@@ -124,6 +125,10 @@ pub fn Block(comptime Inner: anytype) type {
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {
             return self.inner.handle_event(event);
+        }
+
+        pub fn layout_props(self: *Self) LayoutProperties {
+            return self.layout_properties;
         }
 
         fn render_border(self: *Self, area: Rect, frame: Frame) void {

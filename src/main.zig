@@ -17,11 +17,11 @@ pub fn main() !void {
 
     const layout = try widgets.StackLayout.create(
         allocator,
-        .{ .orientation = .vertical, .sized = .{ .flex = 1 } },
+        .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
         .{
             try widgets.Block(widgets.Label).create(
                 allocator,
-                .{ .border = tuile.border.Border.all(), .sized = .{ .flex = 1 } },
+                .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
                 try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
             ),
             try widgets.Label.create(allocator, .{ .text = "Label text 2" }),
@@ -100,7 +100,7 @@ pub fn main() !void {
                 allocator,
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Input.create(allocator, .{ .placeholder = "placeholder", .sized = .{ .flex = 1 } }),
+                    try widgets.Input.create(allocator, .{ .placeholder = "placeholder", .layout = .{ .flex = 1 } }),
                     try widgets.Button.create(allocator, .{ .label = "Submit" }),
                 },
             ),

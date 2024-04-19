@@ -6,13 +6,13 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Color = @import("../color.zig").Color;
 const FocusHandler = @import("FocusHandler.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     placeholder: []const u8 = "",
 
-    sized: Sized = .{},
+    layout: LayoutProperties = .{},
 };
 
 const Input = @This();
@@ -25,7 +25,7 @@ value: std.ArrayList(u8),
 
 focus_handler: FocusHandler = .{},
 
-sized: Sized,
+layout_properties: LayoutProperties,
 
 cursor: u32 = 0,
 
@@ -37,7 +37,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Input {
         .allocator = allocator,
         .placeholder = try allocator.dupe(u8, config.placeholder),
         .value = std.ArrayList(u8).init(allocator),
-        .sized = config.sized,
+        .layout_properties = config.layout,
     };
     return self;
 }
@@ -84,7 +84,7 @@ pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
         self.view_start = self.cursor;
     } else {
         // +1 is for the cursor itself
-        const max_width = std.math.clamp(self.sized.max_width, constraints.min_width, constraints.max_width);
+        const max_width = std.math.clamp(self.layout_properties.max_width, constraints.min_width, constraints.max_width);
         const visible = self.cursor - self.view_start + 1;
         if (visible > max_width) {
             self.view_start += visible - max_width;
@@ -100,7 +100,7 @@ pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
         .y = 1,
     };
 
-    const self_constraints = Constraints.from_sized(self.sized);
+    const self_constraints = Constraints.from_props(self.layout_properties);
     size = self_constraints.apply(size);
     size = constraints.apply(size);
     return size;
@@ -156,4 +156,8 @@ fn current_text(self: *Input) []const u8 {
 
 fn visible_text(self: *Input) []const u8 {
     return self.current_text()[self.view_start..];
+}
+
+pub fn layout_props(self: *Input) LayoutProperties {
+    return self.layout_properties;
 }

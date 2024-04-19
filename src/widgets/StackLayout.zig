@@ -4,7 +4,7 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 
 pub const Orientation = enum {
@@ -15,7 +15,7 @@ pub const Orientation = enum {
 pub const Config = struct {
     orientation: Orientation = .vertical,
 
-    sized: Sized = .{},
+    layout: LayoutProperties = .{},
 };
 
 pub const StackLayout = @This();
@@ -30,7 +30,7 @@ orientation: Orientation,
 
 focused: ?usize = null,
 
-sized: Sized,
+layout_properties: LayoutProperties,
 
 pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !*StackLayout {
     var widgets = std.ArrayList(Widget).init(allocator);
@@ -45,7 +45,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !
         .widgets = widgets,
         .widget_sizes = std.ArrayList(Vec2).init(allocator),
         .orientation = config.orientation,
-        .sized = config.sized,
+        .layout_properties = config.layout,
     };
     return self;
 }
@@ -135,7 +135,8 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
     defer fixed_indices.deinit();
 
     for (self.widgets.items, 0..) |w, idx| {
-        const fixed = w.flex() == 0;
+        const props = w.layout_props();
+        const fixed = props.flex == 0;
         if (fixed or @field(constraints, max_main) == std.math.maxInt(u32)) {
             try fixed_indices.append(idx);
         } else {
@@ -161,12 +162,14 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
     var total_flex: u32 = 0;
     for (flex_indices.items) |idx| {
         const w = self.widgets.items[idx];
-        total_flex += w.flex();
+        const props = w.layout_props();
+        total_flex += props.flex;
     }
     var remaining = @field(constraints, max_main) -| fixed_size;
     for (flex_indices.items) |idx| {
         const w = self.widgets.items[idx];
-        const flex = w.flex();
+        const props = w.layout_props();
+        const flex = props.flex;
         const weight = @as(f64, @floatFromInt(flex)) / @as(f64, @floatFromInt(total_flex));
         const main_size_f = @as(f64, @floatFromInt(remaining)) * weight;
         const widget_main_size = @as(u32, @intFromFloat(@round(main_size_f)));
@@ -308,3 +311,7 @@ const WidgetsIterator = struct {
         return &self.widgets[@intCast(self.current)];
     }
 };
+
+pub fn layout_props(self: *StackLayout) LayoutProperties {
+    return self.layout_properties;
+}

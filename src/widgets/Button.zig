@@ -7,7 +7,7 @@ const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig");
 const Style = @import("../Style.zig");
 const FocusHandler = @import("FocusHandler.zig");
-const Sized = @import("Sized.zig");
+const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
@@ -15,7 +15,7 @@ pub const Config = struct {
 
     on_press: ?*const fn (label: []const u8) void = null,
 
-    sized: Sized = .{},
+    layout: LayoutProperties = .{},
 };
 
 pub const Button = @This();
@@ -25,8 +25,6 @@ allocator: std.mem.Allocator,
 view: *Label,
 
 focus_handler: FocusHandler = .{},
-
-sized: Sized,
 
 on_press: ?*const fn (label: []const u8) void,
 
@@ -40,14 +38,13 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
 
     const view = try Label.create(
         allocator,
-        .{ .text = label, .sized = .{} },
+        .{ .text = label, .layout = config.layout },
     );
 
     const self = try allocator.create(Button);
     self.* = Button{
         .allocator = allocator,
         .view = view,
-        .sized = config.sized,
         .on_press = config.on_press,
     };
     return self;
@@ -89,4 +86,8 @@ pub fn handle_event(self: *Button, event: events.Event) !events.EventResult {
         else => {},
     }
     return .Ignored;
+}
+
+pub fn layout_props(self: *Button) LayoutProperties {
+    return self.view.layout_props();
 }

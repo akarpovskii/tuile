@@ -12,4 +12,4 @@ preferred_width: ?u32 = 0,
 
 preferred_height: ?u32 = 0,
 
-flex: u32 = 1,
+flex: u32 = 0,

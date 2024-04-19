@@ -55,22 +55,30 @@ pub const Tuile = struct {
 
     fn redraw(self: *Tuile) !void {
         const window_size = try self.backend.window_size();
-        const area = Rect{
+        const window_area = Rect{
             .min = Vec2.zero(),
             .max = window_size,
         };
-        var frame = try render.Frame.init(self.allocator, window_size);
-        defer frame.deinit();
+
+        var buffer = try std.ArrayList(render.Cell).initCapacity(self.allocator, window_size.x * window_size.y);
+        defer buffer.deinit();
+        buffer.appendNTimesAssumeCapacity(.{}, buffer.capacity);
+
+        var frame = render.Frame{
+            .buffer = buffer.items,
+            .size = window_size,
+            .area = window_area,
+        };
 
         const constraints = .{
             .max_width = window_size.x,
             .max_height = window_size.y,
         };
-        try self.root.layout(constraints);
+        _ = try self.root.layout(constraints);
 
-        try self.root.render(area, &frame);
+        try self.root.render(window_area, frame);
 
-        try self.render_frame(&frame);
+        try frame.render(self.backend);
     }
 
     fn propagate_event(self: *Tuile, event: events.Event) !void {
@@ -85,23 +93,5 @@ pub const Tuile = struct {
         }
 
         _ = try self.root.handle_event(event);
-    }
-
-    fn render_frame(self: *Tuile, frame: *render.Frame) !void {
-        for (0..frame.size.x) |x| {
-            for (0..frame.size.y) |y| {
-                const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
-                const cell = frame.at(pos);
-                try self.backend.enable_effect(cell.effect);
-                try self.backend.use_color(.{ .fg = cell.fg, .bg = cell.bg });
-                if (cell.symbol) |symbol| {
-                    try self.backend.print_at(pos, symbol);
-                } else {
-                    try self.backend.print_at(pos, " ");
-                }
-                try self.backend.disable_effect(cell.effect);
-            }
-        }
-        try self.backend.refresh();
     }
 };

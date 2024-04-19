@@ -52,7 +52,7 @@ pub fn widget(self: *Input) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
+pub fn render(self: *Input, area: Rect, frame: Frame) !void {
     if (area.max.y - area.min.y < 1) {
         return;
     }
@@ -61,7 +61,7 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
     const render_placeholder = self.value.items.len == 0;
     if (render_placeholder) frame.set_style(area, .{ .add_effect = .{ .dim = true } });
 
-    const text_to_render = if (render_placeholder) self.placeholder else self.value.items;
+    const text_to_render = self.current_text();
     const visible = text_to_render[self.view_start..];
     _ = try frame.write_symbols(area.min, visible, area.max.x - area.min.x);
 
@@ -79,24 +79,31 @@ pub fn render(self: *Input, area: Rect, frame: *Frame) !void {
     }
 }
 
-pub fn desired_size(self: *Input, _: Vec2) !Vec2 {
-    const text_to_render = if (self.value.items.len > 0) self.value.items else self.placeholder;
-    const len = try std.unicode.utf8CountCodepoints(text_to_render);
-
-    // +1 for the cursor
-    return .{ .x = @intCast(len + 1), .y = 1 };
-}
-
-pub fn layout(self: *Input, constraints: Constraints) !void {
+pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
     if (self.cursor < self.view_start) {
         self.view_start = self.cursor;
     } else {
         // +1 is for the cursor itself
+        const max_width = std.math.clamp(self.sized.max_width, constraints.min_width, constraints.max_width);
         const visible = self.cursor - self.view_start + 1;
-        if (visible > constraints.max_width) {
-            self.view_start += visible - constraints.max_width;
+        if (visible > max_width) {
+            self.view_start += visible - max_width;
         }
     }
+
+    const visible = self.visible_text();
+    // +1 for the cursor
+    const len = try std.unicode.utf8CountCodepoints(visible) + 1;
+
+    var size = Vec2{
+        .x = @intCast(len),
+        .y = 1,
+    };
+
+    const self_constraints = Constraints.from_sized(self.sized);
+    size = self_constraints.apply(size);
+    size = constraints.apply(size);
+    return size;
 }
 
 pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
@@ -140,4 +147,13 @@ pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
         else => {},
     }
     return .Ignored;
+}
+
+fn current_text(self: *Input) []const u8 {
+    const show_placeholder = self.value.items.len == 0;
+    return if (show_placeholder) self.placeholder else self.value.items;
+}
+
+fn visible_text(self: *Input) []const u8 {
+    return self.current_text()[self.view_start..];
 }

@@ -67,7 +67,7 @@ pub fn widget(self: *StackLayout) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *StackLayout, area: Rect, frame: *Frame) !void {
+pub fn render(self: *StackLayout, area: Rect, frame: Frame) !void {
     var cursor = area.min;
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {
@@ -75,7 +75,7 @@ pub fn render(self: *StackLayout, area: Rect, frame: *Frame) !void {
             .min = cursor,
             .max = cursor.add(s),
         };
-        try w.render(widget_area, frame);
+        try w.render(widget_area, frame.with_area(widget_area));
         switch (self.orientation) {
             .Horizontal => {
                 cursor.x += s.x;
@@ -87,87 +87,142 @@ pub fn render(self: *StackLayout, area: Rect, frame: *Frame) !void {
     }
 }
 
-pub fn desired_size(self: *StackLayout, available: Vec2) !Vec2 {
-    var size = Vec2.zero();
-    for (self.widgets.items) |w| {
-        const w_size = try w.desired_size(available);
-
-        switch (self.orientation) {
-            .Horizontal => {
-                size.x += w_size.x;
-                size.y = @max(size.y, w_size.y);
-            },
-            .Vertical => {
-                size.x = @max(size.x, w_size.x);
-                size.y += w_size.y;
-            },
-        }
-    }
-    return size;
-}
-
-pub fn layout(self: *StackLayout, constraints: Constraints) !void {
+pub fn layout(self: *StackLayout, constraints: Constraints) !Vec2 {
     if (self.widgets.items.len == 0) {
-        return;
-    }
-    var bounds = Vec2{
-        .x = constraints.max_width,
-        .y = constraints.max_height,
-    };
-
-    const len: u32 = @intCast(self.widgets.items.len);
-
-    self.widget_sizes.clearRetainingCapacity();
-    try self.widget_sizes.ensureTotalCapacity(len);
-    for (self.widgets.items) |w| {
-        const size = try w.desired_size(bounds);
-        self.widget_sizes.append(size) catch unreachable;
+        return .{ .x = constraints.min_width, .y = constraints.min_height };
     }
 
-    // Transpose
-    if (self.orientation == .Horizontal) {
-        bounds = bounds.transpose();
-        for (self.widget_sizes.items) |*s| {
-            s.* = s.transpose();
-        }
-    }
+    switch (self.orientation) {
+        .Vertical => {
+            self.widget_sizes.clearRetainingCapacity();
+            try self.widget_sizes.resize(self.widgets.items.len);
 
-    // Limit in cross axis
-    for (self.widget_sizes.items) |*s| {
-        s.x = bounds.x;
-    }
+            var flex_indices = std.ArrayList(usize).init(self.allocator);
+            defer flex_indices.deinit();
+            var fixed_indices = std.ArrayList(usize).init(self.allocator);
+            defer fixed_indices.deinit();
 
-    // Layout in main axis
-    var total: u32 = 0;
-    for (self.widget_sizes.items) |s| {
-        total += s.y;
-    }
+            for (self.widgets.items, 0..) |w, idx| {
+                const fixed = w.flex() == 0;
+                if (fixed or constraints.max_height == std.math.maxInt(u32)) {
+                    try fixed_indices.append(idx);
+                } else {
+                    try flex_indices.append(idx);
+                }
+            }
 
-    if (total > bounds.y) {
-        var extra = total - bounds.y;
-        var reverse = std.mem.reverseIterator(self.widget_sizes.items);
-        while (reverse.nextPtr()) |s| {
-            if (extra == 0) break;
-            const sub = @min(extra, s.y);
-            extra -= sub;
-            s.y -= sub;
-        }
-        std.debug.assert(extra == 0);
-    }
+            var self_size = Vec2.zero();
+            var fixed_height: u32 = 0;
+            for (fixed_indices.items) |idx| {
+                const w = &self.widgets.items[idx];
+                const size = try w.layout(.{
+                    .max_height = std.math.maxInt(u32),
+                    .max_width = constraints.max_width,
+                });
 
-    // Transpose back
-    if (self.orientation == .Horizontal) {
-        bounds = bounds.transpose();
-        for (self.widget_sizes.items) |*s| {
-            s.* = s.transpose();
-        }
-    }
+                self.widget_sizes.items[idx] = size;
+                fixed_height += size.y;
+                self_size.y += size.y;
+                self_size.x = @max(self_size.x, size.x);
+            }
 
-    for (self.widgets.items, self.widget_sizes.items) |w, s| {
-        try w.layout(.{
-            .max_width = s.x,
-            .max_height = s.y,
-        });
+            var total_flex: u32 = 0;
+            for (flex_indices.items) |idx| {
+                const w = self.widgets.items[idx];
+                total_flex += w.flex();
+            }
+            var remaining = constraints.max_height -| fixed_height;
+            for (flex_indices.items) |idx| {
+                const w = self.widgets.items[idx];
+                const flex = w.flex();
+                const weight = @as(f64, @floatFromInt(flex)) / @as(f64, @floatFromInt(total_flex));
+                const height_f = @as(f64, @floatFromInt(remaining)) * weight;
+                const widget_height = @as(u32, @intFromFloat(@round(height_f)));
+
+                const size = try w.layout(.{
+                    .min_height = widget_height,
+                    .max_height = widget_height,
+                    .max_width = constraints.max_width,
+                });
+
+                self.widget_sizes.items[idx] = size;
+                self_size.y += size.y;
+                self_size.x = @max(self_size.x, size.x);
+
+                remaining -= widget_height;
+                total_flex -= flex;
+            }
+            if (flex_indices.items.len > 0) std.debug.assert(remaining == 0);
+
+            self_size.x = @max(self_size.x, constraints.min_width);
+
+            return self_size;
+        },
+        .Horizontal => {
+            self.widget_sizes.clearRetainingCapacity();
+            try self.widget_sizes.resize(self.widgets.items.len);
+
+            var flex_indices = std.ArrayList(usize).init(self.allocator);
+            defer flex_indices.deinit();
+            var fixed_indices = std.ArrayList(usize).init(self.allocator);
+            defer fixed_indices.deinit();
+
+            for (self.widgets.items, 0..) |w, idx| {
+                const fixed = w.flex() == 0;
+                if (fixed or constraints.max_width == std.math.maxInt(u32)) {
+                    try fixed_indices.append(idx);
+                } else {
+                    try flex_indices.append(idx);
+                }
+            }
+
+            var self_size = Vec2.zero();
+            var fixed_width: u32 = 0;
+            for (fixed_indices.items) |idx| {
+                const w = &self.widgets.items[idx];
+                const size = try w.layout(.{
+                    .max_height = constraints.max_height,
+                    .max_width = std.math.maxInt(u32),
+                });
+
+                self.widget_sizes.items[idx] = size;
+                fixed_width += size.x;
+                self_size.x += size.x;
+                self_size.y = @max(self_size.y, size.y);
+            }
+
+            var total_flex: u32 = 0;
+            for (flex_indices.items) |idx| {
+                const w = self.widgets.items[idx];
+                total_flex += w.flex();
+            }
+            var remaining = constraints.max_width -| fixed_width;
+            for (flex_indices.items) |idx| {
+                const w = self.widgets.items[idx];
+                const flex = w.flex();
+                const weight = @as(f64, @floatFromInt(flex)) / @as(f64, @floatFromInt(total_flex));
+                const portion = @as(f64, @floatFromInt(remaining)) * weight;
+                const widget_width = @as(u32, @intFromFloat(@round(portion)));
+
+                const size = try w.layout(.{
+                    .min_width = widget_width,
+                    .max_width = widget_width,
+                    .max_height = constraints.max_height,
+                });
+
+                self.widget_sizes.items[idx] = size;
+                self_size.x += size.x;
+                self_size.y = @max(self_size.y, size.y);
+
+                remaining -= widget_width;
+                total_flex -= flex;
+            }
+            if (flex_indices.items.len > 0) std.debug.assert(remaining == 0);
+
+            self_size.y = @max(self_size.y, constraints.min_height);
+
+            return self_size;
+        },
     }
 }
 

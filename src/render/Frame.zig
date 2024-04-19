@@ -4,46 +4,53 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const Color = @import("../color.zig").Color;
 const Style = @import("../Style.zig");
+const Backend = @import("../backends/Backend.zig");
 
 const Frame = @This();
-
-allocator: std.mem.Allocator,
 
 buffer: []Cell,
 
 size: Vec2,
 
-pub fn init(allocator: std.mem.Allocator, size: Vec2) !Frame {
-    const buffer = try allocator.alloc(Cell, size.x * size.y);
-    for (buffer) |*cell| {
-        cell.* = .{};
-    }
-    return .{
-        .allocator = allocator,
-        .buffer = buffer,
-        .size = size,
-    };
-}
+area: Rect,
 
-pub fn deinit(self: *Frame) void {
-    self.allocator.free(self.buffer);
-}
-
-pub fn at(self: *Frame, pos: Vec2) *Cell {
+fn at(self: Frame, pos: Vec2) *Cell {
     return &self.buffer[pos.y * self.size.x + pos.x];
 }
 
-pub fn set_style(self: *Frame, area: Rect, style: Style) void {
+fn inside(self: Frame, pos: Vec2) bool {
+    return self.area.min.x <= pos.x and pos.x < self.area.max.x and
+        self.area.min.y <= pos.y and pos.y < self.area.max.y;
+}
+
+pub fn with_area(self: Frame, area: Rect) Frame {
+    return Frame{
+        .buffer = self.buffer,
+        .size = self.size,
+        .area = self.area.intersect(area),
+    };
+}
+
+pub fn set_style(self: Frame, area: Rect, style: Style) void {
     for (area.min.y..area.max.y) |y| {
         for (area.min.x..area.max.x) |x| {
-            self.at(.{ .x = @intCast(x), .y = @intCast(y) }).set_style(style);
+            const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
+            if (self.inside(pos)) {
+                self.at(pos).set_style(style);
+            }
         }
+    }
+}
+
+pub fn set_symbol(self: Frame, pos: Vec2, symbol: []const u8) void {
+    if (self.inside(pos)) {
+        self.at(pos).symbol = symbol;
     }
 }
 
 // Decodes text as UTF-8, writes all code points separately and returns the number of 'characters' written
 // TODO: Use graphemes instead of code points!
-pub fn write_symbols(self: *Frame, start: Vec2, bytes: []const u8, max: ?usize) !usize {
+pub fn write_symbols(self: Frame, start: Vec2, bytes: []const u8, max: ?usize) !usize {
     const utf8_view = try std.unicode.Utf8View.init(bytes);
     var iter = utf8_view.iterator();
     var limit = max orelse std.math.maxInt(usize);
@@ -53,10 +60,28 @@ pub fn write_symbols(self: *Frame, start: Vec2, bytes: []const u8, max: ?usize) 
         if (limit == 0) {
             break;
         }
-        self.at(cursor).symbol = cp;
+        self.set_symbol(cursor, cp);
         cursor.x += 1;
         limit -= 1;
         written += 1;
     }
     return written;
+}
+
+pub fn render(self: Frame, backend: Backend) !void {
+    for (0..self.size.x) |x| {
+        for (0..self.size.y) |y| {
+            const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
+            const cell = self.at(pos);
+            try backend.enable_effect(cell.effect);
+            try backend.use_color(.{ .fg = cell.fg, .bg = cell.bg });
+            if (cell.symbol) |symbol| {
+                try backend.print_at(pos, symbol);
+            } else {
+                try backend.print_at(pos, " ");
+            }
+            try backend.disable_effect(cell.effect);
+        }
+    }
+    try backend.refresh();
 }

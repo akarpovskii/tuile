@@ -36,7 +36,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, options: anytype) !*
         .allocator = allocator,
         .options = try StackLayout.create(
             allocator,
-            .{},
+            .{ .sized = .{} },
             options,
         ),
         .multiselect = config.multiselect,
@@ -54,16 +54,12 @@ pub fn widget(self: *CheckboxGroup) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *CheckboxGroup, area: Rect, frame: *Frame) !void {
+pub fn render(self: *CheckboxGroup, area: Rect, frame: Frame) !void {
     try self.options.render(area, frame);
 }
 
-pub fn desired_size(self: *CheckboxGroup, available: Vec2) !Vec2 {
-    return try self.options.desired_size(available);
-}
-
-pub fn layout(self: *CheckboxGroup, constraints: Constraints) !void {
-    try self.options.layout(constraints);
+pub fn layout(self: *CheckboxGroup, constraints: Constraints) !Vec2 {
+    return try self.options.layout(constraints);
 }
 
 pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResult {

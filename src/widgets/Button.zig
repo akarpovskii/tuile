@@ -40,7 +40,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
 
     const view = try Label.create(
         allocator,
-        .{ .text = label },
+        .{ .text = label, .sized = .{} },
     );
 
     const self = try allocator.create(Button);
@@ -62,16 +62,12 @@ pub fn widget(self: *Button) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Button, area: Rect, frame: *Frame) !void {
+pub fn render(self: *Button, area: Rect, frame: Frame) !void {
     self.focus_handler.render(area, frame);
     try self.view.render(area, frame);
 }
 
-pub fn desired_size(self: *Button, available: Vec2) !Vec2 {
-    return self.view.desired_size(available);
-}
-
-pub fn layout(self: *Button, constraints: Constraints) !void {
+pub fn layout(self: *Button, constraints: Constraints) !Vec2 {
     return self.view.layout(constraints);
 }
 

@@ -55,7 +55,7 @@ pub fn widget(self: *Checkbox) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Checkbox, area: Rect, frame: *Frame) !void {
+pub fn render(self: *Checkbox, area: Rect, frame: Frame) !void {
     if (area.max.y - area.min.y < 1) {
         return;
     }
@@ -74,12 +74,18 @@ pub fn render(self: *Checkbox, area: Rect, frame: *Frame) !void {
     }
 }
 
-pub fn desired_size(self: *Checkbox, _: Vec2) !Vec2 {
-    const x = try std.unicode.utf8CountCodepoints(self.label) + Marker.Basic.len;
-    return .{ .x = @intCast(x), .y = 1 };
-}
+pub fn layout(self: *Checkbox, constraints: Constraints) !Vec2 {
+    const len: u32 = @intCast(try std.unicode.utf8CountCodepoints(self.label) + Marker.Basic.len);
+    var size = Vec2{
+        .x = len,
+        .y = 1,
+    };
 
-pub fn layout(_: *Checkbox, _: Constraints) !void {}
+    const self_constraints = Constraints.from_sized(self.sized);
+    size = self_constraints.apply(size);
+    size = constraints.apply(size);
+    return size;
+}
 
 pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
     if (self.focus_handler.handle_event(event) == .Consumed) {

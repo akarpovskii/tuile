@@ -53,7 +53,7 @@ pub fn widget(self: *Label) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Label, area: Rect, frame: *Frame) !void {
+pub fn render(self: *Label, area: Rect, frame: Frame) !void {
     for (0..area.max.y - area.min.y) |y| {
         if (y >= self.lines.len) break;
         const pos = area.min.add(.{ .x = 0, .y = @intCast(y) });
@@ -61,16 +61,23 @@ pub fn render(self: *Label, area: Rect, frame: *Frame) !void {
     }
 }
 
-pub fn desired_size(self: *Label, _: Vec2) !Vec2 {
-    var x: usize = 0;
+pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
+    var max_len: usize = 0;
     for (self.lines) |line| {
         const len: usize = try std.unicode.utf8CountCodepoints(line);
-        x = @max(x, len);
+        max_len = @max(max_len, len);
     }
-    return .{ .x = @intCast(x), .y = @intCast(self.lines.len) };
-}
 
-pub fn layout(_: *Label, _: Constraints) !void {}
+    var size = Vec2{
+        .x = @intCast(max_len),
+        .y = @intCast(self.lines.len),
+    };
+
+    const self_constraints = Constraints.from_sized(self.sized);
+    size = self_constraints.apply(size);
+    size = constraints.apply(size);
+    return size;
+}
 
 pub fn handle_event(_: *Label, _: events.Event) !events.EventResult {
     return .Ignored;

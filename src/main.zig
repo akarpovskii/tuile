@@ -17,11 +17,11 @@ pub fn main() !void {
 
     const layout = try widgets.StackLayout.create(
         allocator,
-        .{ .orientation = .Vertical },
+        .{ .orientation = .Vertical, .sized = .{ .flex = 1 } },
         .{
             try widgets.Block(widgets.Label).create(
                 allocator,
-                .{ .border = tuile.border.Border.all() },
+                .{ .border = tuile.border.Border.all(), .sized = .{ .flex = 1 } },
                 try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
             ),
             try widgets.Label.create(allocator, .{ .text = "Label text 2" }),

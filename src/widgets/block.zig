@@ -6,12 +6,22 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const border = @import("../border.zig");
 const Padding = @import("Padding.zig");
+const Sized = @import("Sized.zig");
+const Constraints = @import("Constraints.zig");
 
 pub fn Block(comptime Inner: anytype) type {
     return struct {
         const Self = @This();
 
-        pub const Config = struct { border: border.Border = border.Border.none(), border_type: border.BorderType = .solid, padding: Padding = .{} };
+        pub const Config = struct {
+            border: border.Border = border.Border.none(),
+
+            border_type: border.BorderType = .solid,
+
+            padding: Padding = .{},
+
+            sized: Sized = .{},
+        };
 
         allocator: std.mem.Allocator,
 
@@ -21,9 +31,9 @@ pub fn Block(comptime Inner: anytype) type {
 
         border_chars: border.BorderCharacters,
 
-        size: ?Vec2 = null,
-
         border_widths: Padding,
+
+        sized: Sized,
 
         pub fn create(allocator: std.mem.Allocator, config: Config, inner: *Inner) !*Self {
             const border_chars = border.BorderCharacters.from_type(config.border_type);
@@ -40,6 +50,7 @@ pub fn Block(comptime Inner: anytype) type {
                     .left = @intFromBool(config.border.left) + config.padding.left,
                     .right = @intFromBool(config.border.right) + config.padding.right,
                 },
+                .sized = config.sized,
             };
             return self;
         }
@@ -81,13 +92,13 @@ pub fn Block(comptime Inner: anytype) type {
             });
         }
 
-        pub fn layout(self: *Self, bounds: Vec2) !void {
-            self.size = bounds;
-            const inner_bounds = .{
-                .x = bounds.x -| (self.border_widths.left + self.border_widths.right),
-                .y = bounds.y -| (self.border_widths.top + self.border_widths.bottom),
-            };
-            try self.inner.layout(inner_bounds);
+        pub fn layout(self: *Self, constraints: Constraints) !void {
+            try self.inner.layout(.{
+                .min_width = constraints.min_width,
+                .min_height = constraints.min_height,
+                .max_width = constraints.max_width -| (self.border_widths.left + self.border_widths.right),
+                .max_height = constraints.max_height -| (self.border_widths.top + self.border_widths.bottom),
+            });
         }
 
         pub fn handle_event(self: *Self, event: events.Event) !events.EventResult {

@@ -6,9 +6,13 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Color = @import("../color.zig").Color;
 const FocusHandler = @import("FocusHandler.zig");
+const Sized = @import("Sized.zig");
+const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     placeholder: []const u8 = "",
+
+    sized: Sized = .{},
 };
 
 const Input = @This();
@@ -21,6 +25,8 @@ value: std.ArrayList(u8),
 
 focus_handler: FocusHandler = .{},
 
+sized: Sized,
+
 cursor: u32 = 0,
 
 view_start: usize = 0,
@@ -31,6 +37,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Input {
         .allocator = allocator,
         .placeholder = try allocator.dupe(u8, config.placeholder),
         .value = std.ArrayList(u8).init(allocator),
+        .sized = config.sized,
     };
     return self;
 }
@@ -80,14 +87,14 @@ pub fn desired_size(self: *Input, _: Vec2) !Vec2 {
     return .{ .x = @intCast(len + 1), .y = 1 };
 }
 
-pub fn layout(self: *Input, size: Vec2) !void {
+pub fn layout(self: *Input, constraints: Constraints) !void {
     if (self.cursor < self.view_start) {
         self.view_start = self.cursor;
     } else {
         // +1 is for the cursor itself
         const visible = self.cursor - self.view_start + 1;
-        if (visible > size.x) {
-            self.view_start += visible - size.x;
+        if (visible > constraints.max_width) {
+            self.view_start += visible - constraints.max_width;
         }
     }
 }

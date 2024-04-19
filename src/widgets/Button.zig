@@ -7,11 +7,15 @@ const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig");
 const Style = @import("../Style.zig");
 const FocusHandler = @import("FocusHandler.zig");
+const Sized = @import("Sized.zig");
+const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     label: []const u8,
 
     on_press: ?*const fn (label: []const u8) void = null,
+
+    sized: Sized = .{},
 };
 
 pub const Button = @This();
@@ -21,6 +25,8 @@ allocator: std.mem.Allocator,
 view: *Label,
 
 focus_handler: FocusHandler = .{},
+
+sized: Sized,
 
 on_press: ?*const fn (label: []const u8) void,
 
@@ -41,6 +47,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
     self.* = Button{
         .allocator = allocator,
         .view = view,
+        .sized = config.sized,
         .on_press = config.on_press,
     };
     return self;
@@ -64,8 +71,8 @@ pub fn desired_size(self: *Button, available: Vec2) !Vec2 {
     return self.view.desired_size(available);
 }
 
-pub fn layout(self: *Button, bounds: Vec2) !void {
-    return self.view.layout(bounds);
+pub fn layout(self: *Button, constraints: Constraints) !void {
+    return self.view.layout(constraints);
 }
 
 pub fn handle_event(self: *Button, event: events.Event) !events.EventResult {

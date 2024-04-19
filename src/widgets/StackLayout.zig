@@ -4,6 +4,8 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
+const Sized = @import("Sized.zig");
+const Constraints = @import("Constraints.zig");
 
 const Orientation = enum {
     Horizontal,
@@ -12,6 +14,8 @@ const Orientation = enum {
 
 pub const Config = struct {
     orientation: Orientation = .Vertical,
+
+    sized: Sized = .{},
 };
 
 pub const StackLayout = @This();
@@ -26,6 +30,8 @@ orientation: Orientation,
 
 focused: ?usize = null,
 
+sized: Sized,
+
 pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !*StackLayout {
     var widgets = std.ArrayList(Widget).init(allocator);
     inline for (children) |child| {
@@ -39,6 +45,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !
         .widgets = widgets,
         .widget_sizes = std.ArrayList(Vec2).init(allocator),
         .orientation = config.orientation,
+        .sized = config.sized,
     };
     return self;
 }
@@ -99,11 +106,14 @@ pub fn desired_size(self: *StackLayout, available: Vec2) !Vec2 {
     return size;
 }
 
-pub fn layout(self: *StackLayout, bounds_: Vec2) !void {
+pub fn layout(self: *StackLayout, constraints: Constraints) !void {
     if (self.widgets.items.len == 0) {
         return;
     }
-    var bounds = bounds_;
+    var bounds = Vec2{
+        .x = constraints.max_width,
+        .y = constraints.max_height,
+    };
 
     const len: u32 = @intCast(self.widgets.items.len);
 
@@ -154,7 +164,10 @@ pub fn layout(self: *StackLayout, bounds_: Vec2) !void {
     }
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {
-        try w.layout(s);
+        try w.layout(.{
+            .max_width = s.x,
+            .max_height = s.y,
+        });
     }
 }
 

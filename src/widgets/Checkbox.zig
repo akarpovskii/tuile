@@ -7,11 +7,15 @@ const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig").Label;
 const Style = @import("../Style.zig");
 const FocusHandler = @import("FocusHandler.zig");
+const Sized = @import("Sized.zig");
+const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     label: []const u8,
 
     checked: bool = false,
+
+    sized: Sized = .{},
 };
 
 pub const Checkbox = @This();
@@ -27,6 +31,8 @@ label: []const u8,
 
 focus_handler: FocusHandler = .{},
 
+sized: Sized,
+
 checked: bool,
 
 pub fn create(allocator: std.mem.Allocator, config: Config) !*Checkbox {
@@ -35,6 +41,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Checkbox {
         .allocator = allocator,
         .label = try allocator.dupe(u8, config.label),
         .checked = config.checked,
+        .sized = config.sized,
     };
     return self;
 }
@@ -72,7 +79,7 @@ pub fn desired_size(self: *Checkbox, _: Vec2) !Vec2 {
     return .{ .x = @intCast(x), .y = 1 };
 }
 
-pub fn layout(_: *Checkbox, _: Vec2) !void {}
+pub fn layout(_: *Checkbox, _: Constraints) !void {}
 
 pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
     if (self.focus_handler.handle_event(event) == .Consumed) {

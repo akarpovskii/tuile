@@ -7,9 +7,13 @@ const Frame = @import("../render/Frame.zig");
 const Style = @import("../Style.zig");
 const StackLayout = @import("StackLayout.zig");
 const Checkbox = @import("Checkbox.zig");
+const Sized = @import("Sized.zig");
+const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     multiselect: bool = false,
+
+    sized: Sized = .{},
 };
 
 pub const CheckboxGroup = @This();
@@ -19,6 +23,8 @@ allocator: std.mem.Allocator,
 options: *StackLayout,
 
 multiselect: bool,
+
+sized: Sized,
 
 pub fn create(allocator: std.mem.Allocator, config: Config, options: anytype) !*CheckboxGroup {
     inline for (options) |opt| {
@@ -34,6 +40,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, options: anytype) !*
             options,
         ),
         .multiselect = config.multiselect,
+        .sized = config.sized,
     };
     return self;
 }
@@ -55,8 +62,8 @@ pub fn desired_size(self: *CheckboxGroup, available: Vec2) !Vec2 {
     return try self.options.desired_size(available);
 }
 
-pub fn layout(self: *CheckboxGroup, bounds: Vec2) !void {
-    try self.options.layout(bounds);
+pub fn layout(self: *CheckboxGroup, constraints: Constraints) !void {
+    try self.options.layout(constraints);
 }
 
 pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResult {

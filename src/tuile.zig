@@ -62,7 +62,11 @@ pub const Tuile = struct {
         var frame = try render.Frame.init(self.allocator, window_size);
         defer frame.deinit();
 
-        try self.root.layout(window_size);
+        const constraints = .{
+            .max_width = window_size.x,
+            .max_height = window_size.y,
+        };
+        try self.root.layout(constraints);
 
         try self.root.render(area, &frame);
 

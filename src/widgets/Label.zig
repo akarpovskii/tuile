@@ -4,9 +4,13 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
+const Sized = @import("Sized.zig");
+const Constraints = @import("Constraints.zig");
 
 pub const Config = struct {
     text: []const u8,
+
+    sized: Sized = .{},
 };
 
 pub const Label = @This();
@@ -16,6 +20,8 @@ allocator: std.mem.Allocator,
 text: []const u8,
 
 lines: [][]const u8,
+
+sized: Sized,
 
 pub fn create(allocator: std.mem.Allocator, config: Config) !*Label {
     const text = try allocator.dupe(u8, config.text);
@@ -32,6 +38,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Label {
         .allocator = allocator,
         .text = text,
         .lines = try lines.toOwnedSlice(),
+        .sized = config.sized,
     };
     return self;
 }
@@ -63,7 +70,7 @@ pub fn desired_size(self: *Label, _: Vec2) !Vec2 {
     return .{ .x = @intCast(x), .y = @intCast(self.lines.len) };
 }
 
-pub fn layout(_: *Label, _: Vec2) !void {}
+pub fn layout(_: *Label, _: Constraints) !void {}
 
 pub fn handle_event(_: *Label, _: events.Event) !events.EventResult {
     return .Ignored;

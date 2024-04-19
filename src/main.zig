@@ -96,7 +96,14 @@ pub fn main() !void {
                     ),
                 },
             ),
-            try widgets.Input.create(allocator, .{ .placeholder = "placeholder" }),
+            try widgets.StackLayout.create(
+                allocator,
+                .{ .orientation = .Horizontal },
+                .{
+                    try widgets.Input.create(allocator, .{ .placeholder = "placeholder" }),
+                    try widgets.Button.create(allocator, .{ .label = "Submit" }),
+                },
+            ),
         },
     );
 

@@ -1,4 +1,8 @@
 const Vec2 = @import("Vec2.zig");
+const LayoutProperties = @import("widgets/LayoutProperties.zig");
+const Align = LayoutProperties.Align;
+const HAlign = LayoutProperties.HAlign;
+const VAlign = LayoutProperties.VAlign;
 
 const Rect = @This();
 
@@ -25,4 +29,43 @@ pub fn width(self: Rect) u32 {
 
 pub fn height(self: Rect) u32 {
     return self.max.y - self.min.y;
+}
+
+pub fn diag(self: Rect) Vec2 {
+    return self.max.sub(self.min);
+}
+
+// Other area must fit inside this area, otherwise the result will be clamped
+pub fn align_h(self: Rect, alignment: HAlign, other: Rect) Rect {
+    var min = Vec2{
+        .x = self.min.x,
+        .y = other.min.y,
+    };
+    switch (alignment) {
+        .left => {},
+        .center => min.x += (self.width() -| other.width()) / 2,
+        .right => min.x = self.max.x -| other.width(),
+    }
+    return Rect{ .min = min, .max = min.add(other.diag()) };
+}
+
+// Other area must fit inside this area, otherwise the result will be clamped
+pub fn align_v(self: Rect, alignment: VAlign, other: Rect) Rect {
+    var min = Vec2{
+        .x = other.min.x,
+        .y = self.min.y,
+    };
+    switch (alignment) {
+        .top => {},
+        .center => min.y += (self.height() -| other.height()) / 2,
+        .bottom => min.y = self.max.y -| other.height(),
+    }
+    return Rect{ .min = min, .max = min.add(other.diag()) };
+}
+
+// Other area must fit inside this area, otherwise the result will be clamped
+pub fn align_inside(self: Rect, alignment: Align, other: Rect) Rect {
+    const h = self.align_h(alignment.h, other);
+    const v = self.align_v(alignment.v, h);
+    return v;
 }

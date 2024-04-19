@@ -74,23 +74,15 @@ pub fn render(self: *StackLayout, area: Rect, frame: Frame) !void {
         const props = w.layout_props();
         const alignment = props.alignment;
 
-        var min_pos = cursor;
-        switch (alignment) {
-            .start => {},
-            .end => switch (self.orientation) {
-                .vertical => min_pos.x = area.max.x - s.x,
-                .horizontal => min_pos.y = area.max.y - s.y,
-            },
-            .center => switch (self.orientation) {
-                .vertical => min_pos.x += (area.width() - s.x) / 2,
-                .horizontal => min_pos.y += (area.height() - s.y) / 2,
-            },
-        }
-
-        const widget_area = Rect{
-            .min = min_pos,
-            .max = min_pos.add(s),
+        var widget_area = Rect{
+            .min = cursor,
+            .max = cursor.add(s),
         };
+
+        switch (self.orientation) {
+            .vertical => widget_area = area.align_h(alignment.h, widget_area),
+            .horizontal => widget_area = area.align_v(alignment.v, widget_area),
+        }
 
         try w.render(widget_area, frame.with_area(widget_area));
         switch (self.orientation) {
@@ -168,7 +160,8 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
         var w_cons = Constraints{};
         @field(w_cons, max_main) = std.math.maxInt(u32);
         @field(w_cons, max_cross) = @field(constraints, max_cross);
-        const size = try w.layout(w_cons);
+        var size = try w.layout(w_cons);
+        @field(size, cross) = @min(@field(size, cross), @field(constraints, max_cross));
 
         self.widget_sizes.items[idx] = size;
         fixed_size += @field(size, main);
@@ -195,7 +188,8 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
         @field(w_cons, min_main) = widget_main_size;
         @field(w_cons, max_main) = widget_main_size;
         @field(w_cons, max_cross) = @field(constraints, max_cross);
-        const size = try w.layout(w_cons);
+        var size = try w.layout(w_cons);
+        @field(size, cross) = @min(@field(size, cross), @field(constraints, max_cross));
 
         self.widget_sizes.items[idx] = size;
         @field(self_size, main) += @field(size, main);
@@ -206,7 +200,11 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
     }
     if (flex_indices.items.len > 0) std.debug.assert(remaining == 0);
 
-    @field(self_size, cross) = @max(@field(self_size, cross), @field(constraints, min_cross));
+    @field(self_size, cross) = std.math.clamp(
+        @field(self_size, cross),
+        @field(constraints, min_cross),
+        @field(constraints, max_cross),
+    );
 
     return self_size;
 }

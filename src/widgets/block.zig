@@ -29,6 +29,8 @@ pub fn Block(comptime Inner: anytype) type {
 
         inner: *Inner,
 
+        inner_size: Vec2 = Vec2.zero(),
+
         border: border.Border,
 
         border_chars: border.BorderCharacters,
@@ -70,7 +72,7 @@ pub fn Block(comptime Inner: anytype) type {
         }
 
         pub fn render(self: *Self, area: Rect, frame: Frame) !void {
-            const inner_area = Rect{
+            var content_area = Rect{
                 .min = .{
                     .x = area.min.x + self.border_widths.left,
                     .y = area.min.y + self.border_widths.top,
@@ -81,9 +83,17 @@ pub fn Block(comptime Inner: anytype) type {
                 },
             };
 
-            if (inner_area.min.x > inner_area.max.x or inner_area.min.y > inner_area.max.y) {
-                try self.inner.render(area, frame);
+            if (content_area.min.x > content_area.max.x or content_area.min.y > content_area.max.y) {
+                self.render_border(area, frame);
             } else {
+                var inner_area = Rect{
+                    .min = content_area.min,
+                    .max = content_area.min.add(self.inner_size),
+                };
+
+                const props = self.inner.layout_props();
+                inner_area = content_area.align_inside(props.alignment, inner_area);
+
                 try self.inner.render(inner_area, frame.with_area(inner_area));
                 self.render_border(area, frame);
             }
@@ -102,22 +112,22 @@ pub fn Block(comptime Inner: anytype) type {
                 .y = self.border_widths.top + self.border_widths.bottom,
             };
             const inner_constraints = Constraints{
-                .min_width = self_constraints.min_width -| border_size.x,
-                .min_height = self_constraints.min_height -| border_size.y,
+                .min_width = 0,
+                .min_height = 0,
                 .max_width = self_constraints.max_width -| border_size.x,
                 .max_height = self_constraints.max_height -| border_size.y,
             };
-            const inner_size = try self.inner.layout(inner_constraints);
+            self.inner_size = try self.inner.layout(inner_constraints);
 
             var size = .{
                 .x = self_constraints.max_width,
                 .y = self_constraints.max_height,
             };
             if (self.fit_content or size.x == std.math.maxInt(u32)) {
-                size.x = @min(size.x, inner_size.x + border_size.x);
+                size.x = @min(size.x, self.inner_size.x + border_size.x);
             }
             if (self.fit_content or size.y == std.math.maxInt(u32)) {
-                size.y = @min(size.y, inner_size.y + border_size.y);
+                size.y = @min(size.y, self.inner_size.y + border_size.y);
             }
 
             return size;
@@ -132,33 +142,39 @@ pub fn Block(comptime Inner: anytype) type {
         }
 
         fn render_border(self: *Self, area: Rect, frame: Frame) void {
-            var x = area.min.x;
-            while (x < area.max.x) : (x += 1) {
-                if (self.border.top)
-                    frame.set_symbol(.{ .x = x, .y = area.min.y }, self.border_chars.top);
-                if (self.border.bottom)
-                    frame.set_symbol(.{ .x = x, .y = area.max.y - 1 }, self.border_chars.bottom);
+            if (area.height() > 0) {
+                var x = area.min.x;
+                while (x < area.max.x) : (x += 1) {
+                    if (self.border.top)
+                        frame.set_symbol(.{ .x = x, .y = area.min.y }, self.border_chars.top);
+                    if (self.border.bottom)
+                        frame.set_symbol(.{ .x = x, .y = area.max.y - 1 }, self.border_chars.bottom);
+                }
             }
 
-            var y = area.min.y;
-            while (y < area.max.y) : (y += 1) {
-                if (self.border.left)
-                    frame.set_symbol(.{ .x = area.min.x, .y = y }, self.border_chars.left);
-                if (self.border.right)
-                    frame.set_symbol(.{ .x = area.max.x - 1, .y = y }, self.border_chars.right);
+            if (area.width() > 0) {
+                var y = area.min.y;
+                while (y < area.max.y) : (y += 1) {
+                    if (self.border.left)
+                        frame.set_symbol(.{ .x = area.min.x, .y = y }, self.border_chars.left);
+                    if (self.border.right)
+                        frame.set_symbol(.{ .x = area.max.x - 1, .y = y }, self.border_chars.right);
+                }
             }
 
-            if (self.border.top and self.border.left)
-                frame.set_symbol(.{ .x = area.min.x, .y = area.min.y }, self.border_chars.top_left);
+            if (area.height() > 1 and area.width() > 1) {
+                if (self.border.top and self.border.left)
+                    frame.set_symbol(.{ .x = area.min.x, .y = area.min.y }, self.border_chars.top_left);
 
-            if (self.border.top and self.border.right)
-                frame.set_symbol(.{ .x = area.max.x - 1, .y = area.min.y }, self.border_chars.top_right);
+                if (self.border.top and self.border.right)
+                    frame.set_symbol(.{ .x = area.max.x - 1, .y = area.min.y }, self.border_chars.top_right);
 
-            if (self.border.bottom and self.border.left)
-                frame.set_symbol(.{ .x = area.min.x, .y = area.max.y - 1 }, self.border_chars.bottom_left);
+                if (self.border.bottom and self.border.left)
+                    frame.set_symbol(.{ .x = area.min.x, .y = area.max.y - 1 }, self.border_chars.bottom_left);
 
-            if (self.border.bottom and self.border.right)
-                frame.set_symbol(.{ .x = area.max.x - 1, .y = area.max.y - 1 }, self.border_chars.bottom_right);
+                if (self.border.bottom and self.border.right)
+                    frame.set_symbol(.{ .x = area.max.x - 1, .y = area.max.y - 1 }, self.border_chars.bottom_right);
+            }
         }
     };
 }

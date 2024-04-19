@@ -68,6 +68,7 @@ pub fn main() !void {
                 allocator,
                 .{ .orientation = .horizontal },
                 .{
+                    try widgets.Spacer.create(allocator, .{}),
                     try widgets.Block(widgets.CheckboxGroup).create(
                         allocator,
                         .{ .border = tuile.border.Border.all(), .border_type = .double },
@@ -81,6 +82,7 @@ pub fn main() !void {
                             },
                         ),
                     ),
+                    try widgets.Spacer.create(allocator, .{ .layout = .{ .max_width = 10, .max_height = 1 } }),
                     try widgets.Block(widgets.CheckboxGroup).create(
                         allocator,
                         .{ .border = tuile.border.Border.all(), .border_type = .double },
@@ -94,6 +96,7 @@ pub fn main() !void {
                             },
                         ),
                     ),
+                    try widgets.Spacer.create(allocator, .{}),
                 },
             ),
             try widgets.StackLayout.create(

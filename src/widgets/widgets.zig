@@ -8,3 +8,4 @@ pub const CheckboxGroup = @import("CheckboxGroup.zig");
 pub const Input = @import("Input.zig");
 pub const FocusHandler = @import("FocusHandler.zig");
 pub const Padding = @import("Padding.zig");
+pub const Spacer = @import("Spacer.zig");

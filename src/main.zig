@@ -17,7 +17,7 @@ pub fn main() !void {
 
     const layout = try widgets.StackLayout.create(
         allocator,
-        .{ .orientation = .Vertical, .sized = .{ .flex = 1 } },
+        .{ .orientation = .vertical, .sized = .{ .flex = 1 } },
         .{
             try widgets.Block(widgets.Label).create(
                 allocator,
@@ -28,7 +28,7 @@ pub fn main() !void {
             try widgets.Label.create(allocator, .{ .text = "Label text 3" }),
             try widgets.StackLayout.create(
                 allocator,
-                .{ .orientation = .Horizontal },
+                .{ .orientation = .horizontal },
                 .{
                     try widgets.Block(widgets.Label).create(
                         allocator,
@@ -57,7 +57,7 @@ pub fn main() !void {
             ),
             try widgets.StackLayout.create(
                 allocator,
-                .{ .orientation = .Horizontal },
+                .{ .orientation = .horizontal },
                 .{
                     try widgets.Button.create(allocator, .{ .label = "Button 1", .on_press = handle_press }),
                     try widgets.Button.create(allocator, .{ .label = "Button 2", .on_press = handle_press }),
@@ -66,7 +66,7 @@ pub fn main() !void {
 
             try widgets.StackLayout.create(
                 allocator,
-                .{ .orientation = .Horizontal },
+                .{ .orientation = .horizontal },
                 .{
                     try widgets.Block(widgets.CheckboxGroup).create(
                         allocator,
@@ -98,9 +98,9 @@ pub fn main() !void {
             ),
             try widgets.StackLayout.create(
                 allocator,
-                .{ .orientation = .Horizontal },
+                .{ .orientation = .horizontal },
                 .{
-                    try widgets.Input.create(allocator, .{ .placeholder = "placeholder" }),
+                    try widgets.Input.create(allocator, .{ .placeholder = "placeholder", .sized = .{ .flex = 1 } }),
                     try widgets.Button.create(allocator, .{ .label = "Submit" }),
                 },
             ),

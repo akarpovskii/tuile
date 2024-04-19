@@ -71,10 +71,27 @@ pub fn render(self: *StackLayout, area: Rect, frame: Frame) !void {
     var cursor = area.min;
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {
+        const props = w.layout_props();
+        const alignment = props.alignment;
+
+        var min_pos = cursor;
+        switch (alignment) {
+            .start => {},
+            .end => switch (self.orientation) {
+                .vertical => min_pos.x = area.max.x - s.x,
+                .horizontal => min_pos.y = area.max.y - s.y,
+            },
+            .center => switch (self.orientation) {
+                .vertical => min_pos.x += (area.width() - s.x) / 2,
+                .horizontal => min_pos.y += (area.height() - s.y) / 2,
+            },
+        }
+
         const widget_area = Rect{
-            .min = cursor,
-            .max = cursor.add(s),
+            .min = min_pos,
+            .max = min_pos.add(s),
         };
+
         try w.render(widget_area, frame.with_area(widget_area));
         switch (self.orientation) {
             .horizontal => {

@@ -18,3 +18,11 @@ pub fn intersect(self: Rect, other: Rect) Rect {
         },
     };
 }
+
+pub fn width(self: Rect) u32 {
+    return self.max.x - self.min.x;
+}
+
+pub fn height(self: Rect) u32 {
+    return self.max.y - self.min.y;
+}

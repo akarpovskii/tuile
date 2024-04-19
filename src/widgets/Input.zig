@@ -53,7 +53,7 @@ pub fn widget(self: *Input) Widget {
 }
 
 pub fn render(self: *Input, area: Rect, frame: Frame) !void {
-    if (area.max.y - area.min.y < 1) {
+    if (area.height() < 1) {
         return;
     }
     frame.set_style(area, .{ .add_effect = .{ .underline = true } });
@@ -63,7 +63,7 @@ pub fn render(self: *Input, area: Rect, frame: Frame) !void {
 
     const text_to_render = self.current_text();
     const visible = text_to_render[self.view_start..];
-    _ = try frame.write_symbols(area.min, visible, area.max.x - area.min.x);
+    _ = try frame.write_symbols(area.min, visible, area.width());
 
     if (self.focus_handler.focused) {
         var end_pos = area.min;

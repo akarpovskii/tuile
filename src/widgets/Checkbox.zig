@@ -56,7 +56,7 @@ pub fn widget(self: *Checkbox) Widget {
 }
 
 pub fn render(self: *Checkbox, area: Rect, frame: Frame) !void {
-    if (area.max.y - area.min.y < 1) {
+    if (area.height() < 1) {
         return;
     }
     self.focus_handler.render(area, frame);
@@ -64,7 +64,7 @@ pub fn render(self: *Checkbox, area: Rect, frame: Frame) !void {
     const marker = if (self.checked) Marker.Checked else Marker.Basic;
 
     const to_write: [2][]const u8 = .{ marker, self.label };
-    var len: usize = area.max.x - area.min.x;
+    var len: usize = area.width();
     var cursor = area.min;
     for (to_write) |bytes| {
         if (len <= 0) break;

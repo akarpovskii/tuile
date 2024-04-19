@@ -54,10 +54,10 @@ pub fn widget(self: *Label) Widget {
 }
 
 pub fn render(self: *Label, area: Rect, frame: Frame) !void {
-    for (0..area.max.y - area.min.y) |y| {
+    for (0..area.height()) |y| {
         if (y >= self.lines.len) break;
         const pos = area.min.add(.{ .x = 0, .y = @intCast(y) });
-        _ = try frame.write_symbols(pos, self.lines[y], area.max.x - area.min.x);
+        _ = try frame.write_symbols(pos, self.lines[y], area.width());
     }
 }
 

@@ -76,7 +76,7 @@ pub fn render(self: *Input, area: Rect, frame: Frame, _: Theme) !void {
             .min = end_pos,
             .max = end_pos.add(.{ .x = 1, .y = 1 }),
         };
-        frame.set_style(end_area, .{ .fg = Color.dark_gray, .add_effect = .{ .reverse = true } });
+        frame.set_style(end_area, .{ .fg = .{ .bright = .black }, .add_effect = .{ .reverse = true } });
     }
 }
 

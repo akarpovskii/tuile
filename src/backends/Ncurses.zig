@@ -6,6 +6,7 @@ const Style = @import("../Style.zig");
 const color = @import("../color.zig");
 const Color = color.Color;
 const ColorPair = color.ColorPair;
+const Palette256 = color.Palette256;
 
 const c = @cImport({
     @cInclude("ncurses.h");
@@ -22,7 +23,7 @@ scr: *c.struct__win_st,
 
 has_colors: bool,
 
-color_pairs: std.AutoHashMap(u8, i16),
+color_pairs: std.AutoHashMap(ColorPair, i16),
 
 pub fn create(allocator: std.mem.Allocator) !*Ncurses {
     // Initialize the locale to get UTF-8 support, see `man ncurses` - Initialization
@@ -53,7 +54,7 @@ pub fn create(allocator: std.mem.Allocator) !*Ncurses {
         .allocator = allocator,
         .scr = scr.?,
         .has_colors = has_colors,
-        .color_pairs = std.AutoHashMap(u8, i16).init(allocator),
+        .color_pairs = std.AutoHashMap(ColorPair, i16).init(allocator),
     };
     return self;
 }
@@ -180,8 +181,7 @@ pub fn use_color(self: *Ncurses, color_pair: ColorPair) !void {
 }
 
 fn get_or_init_color(self: *Ncurses, color_pair: ColorPair) !c_int {
-    const key: u8 = @bitCast(color_pair);
-    if (self.color_pairs.get(key)) |pair| {
+    if (self.color_pairs.get(color_pair)) |pair| {
         return pair;
     }
 
@@ -192,31 +192,42 @@ fn get_or_init_color(self: *Ncurses, color_pair: ColorPair) !c_int {
 
     const init_res = c.init_pair(
         @intCast(pair),
-        color_for_enum(color_pair.fg),
-        color_for_enum(color_pair.bg),
+        color_to_int(color_pair.fg),
+        color_to_int(color_pair.bg),
     );
     if (init_res == c.ERR) return error.GeneralError;
-    try self.color_pairs.put(key, pair);
+    try self.color_pairs.put(color_pair, pair);
     return pair;
 }
 
-fn color_for_enum(col: Color) c_short {
-    return switch (col) {
-        .black => c.COLOR_BLACK,
-        .red => c.COLOR_RED,
-        .green => c.COLOR_GREEN,
-        .yellow => c.COLOR_YELLOW,
-        .blue => c.COLOR_BLUE,
-        .magenta => c.COLOR_MAGENTA,
-        .cyan => c.COLOR_CYAN,
-        .gray => c.COLOR_WHITE,
-        .dark_gray => (8 + c.COLOR_BLACK),
-        .light_red => (8 + c.COLOR_RED),
-        .light_green => (8 + c.COLOR_GREEN),
-        .light_yellow => (8 + c.COLOR_YELLOW),
-        .light_blue => (8 + c.COLOR_BLUE),
-        .light_magenta => (8 + c.COLOR_MAGENTA),
-        .light_cyan => (8 + c.COLOR_CYAN),
-        .white => (8 + c.COLOR_WHITE),
+fn color_to_int(color_: Color) c_short {
+    // Source - https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+    const res = switch (color_) {
+        .dark => |base| switch (base) {
+            .black => c.COLOR_BLACK,
+            .red => c.COLOR_RED,
+            .green => c.COLOR_GREEN,
+            .yellow => c.COLOR_YELLOW,
+            .blue => c.COLOR_BLUE,
+            .magenta => c.COLOR_MAGENTA,
+            .cyan => c.COLOR_CYAN,
+            .white => c.COLOR_WHITE,
+        },
+        .bright => |base| switch (base) {
+            .black => @rem(8 + c.COLOR_BLACK, c.COLORS),
+            .red => @rem(8 + c.COLOR_RED, c.COLORS),
+            .green => @rem(8 + c.COLOR_GREEN, c.COLORS),
+            .yellow => @rem(8 + c.COLOR_YELLOW, c.COLORS),
+            .blue => @rem(8 + c.COLOR_BLUE, c.COLORS),
+            .magenta => @rem(8 + c.COLOR_MAGENTA, c.COLORS),
+            .cyan => @rem(8 + c.COLOR_CYAN, c.COLORS),
+            .white => @rem(8 + c.COLOR_WHITE, c.COLORS),
+        },
+        .rgb => |rgb| if (c.COLORS >= 256)
+            Palette256.findClosestNonSystem(rgb)
+        else
+            Palette256.findClosestSystem(rgb),
     };
+
+    return @intCast(res);
 }

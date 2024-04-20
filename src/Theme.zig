@@ -1,14 +1,16 @@
 const std = @import("std");
-const Color = @import("color.zig").Color;
+const color = @import("color.zig");
+const Color = color.Color;
+const Rgb = color.Rgb;
 
-foreground: Color = .black,
+foreground: Color = .{ .dark = .black },
 
-background: Color = .white,
+background: Color = .{ .rgb = Rgb.white() },
 
-primary: Color = .black,
+primary: Color = .{ .dark = .black },
 
-secondary: Color = .white,
+secondary: Color = .{ .rgb = Rgb.white() },
 
-accent: Color = .black,
+accent: Color = .{ .dark = .black },
 
-cursor: Color = .black,
+cursor: Color = .{ .dark = .black },

@@ -8,6 +8,7 @@ const Color = @import("../color.zig").Color;
 const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
+const Theme = @import("../Theme.zig");
 
 pub const Config = struct {
     placeholder: []const u8 = "",
@@ -52,7 +53,7 @@ pub fn widget(self: *Input) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Input, area: Rect, frame: Frame) !void {
+pub fn render(self: *Input, area: Rect, frame: Frame, _: Theme) !void {
     if (area.height() < 1) {
         return;
     }

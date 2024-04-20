@@ -7,9 +7,9 @@ const Cell = @This();
 // Doesn't own the memory
 symbol: ?[]const u8 = null,
 
-fg: Color = Color.black,
+fg: Color,
 
-bg: Color = Color.white,
+bg: Color,
 
 effect: Style.Effect = .{},
 

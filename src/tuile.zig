@@ -8,6 +8,7 @@ pub const Rect = @import("Rect.zig");
 pub const events = @import("events.zig");
 pub const Style = @import("Style.zig");
 pub const Color = @import("color.zig").Color;
+pub const Theme = @import("Theme.zig");
 pub const border = @import("border.zig");
 
 pub const Tuile = struct {
@@ -18,6 +19,8 @@ pub const Tuile = struct {
     is_running: bool = true,
 
     root: *widgets.StackLayout,
+
+    theme: Theme = .{},
 
     pub fn init(allocator: std.mem.Allocator) !Tuile {
         const curses = try backends.Ncurses.create(allocator);
@@ -59,7 +62,7 @@ pub const Tuile = struct {
 
         var buffer = try std.ArrayList(render.Cell).initCapacity(self.allocator, window_size.x * window_size.y);
         defer buffer.deinit();
-        buffer.appendNTimesAssumeCapacity(.{}, buffer.capacity);
+        buffer.appendNTimesAssumeCapacity(.{ .fg = self.theme.foreground, .bg = self.theme.background }, buffer.capacity);
 
         var frame = render.Frame{
             .buffer = buffer.items,
@@ -73,7 +76,7 @@ pub const Tuile = struct {
         };
         _ = try self.root.layout(constraints);
 
-        try self.root.render(window_area, frame);
+        try self.root.render(window_area, frame, self.theme);
 
         try frame.render(self.backend);
     }

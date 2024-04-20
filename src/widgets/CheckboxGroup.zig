@@ -9,6 +9,7 @@ const StackLayout = @import("StackLayout.zig");
 const Checkbox = @import("Checkbox.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
+const Theme = @import("../Theme.zig");
 
 pub const Config = struct {
     multiselect: bool = false,
@@ -51,8 +52,8 @@ pub fn widget(self: *CheckboxGroup) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *CheckboxGroup, area: Rect, frame: Frame) !void {
-    try self.view.render(area, frame);
+pub fn render(self: *CheckboxGroup, area: Rect, frame: Frame, theme: Theme) !void {
+    try self.view.render(area, frame, theme);
 }
 
 pub fn layout(self: *CheckboxGroup, constraints: Constraints) !Vec2 {

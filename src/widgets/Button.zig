@@ -9,6 +9,7 @@ const Style = @import("../Style.zig");
 const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
+const Theme = @import("../Theme.zig");
 
 pub const Config = struct {
     label: []const u8,
@@ -59,9 +60,9 @@ pub fn widget(self: *Button) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Button, area: Rect, frame: Frame) !void {
-    self.focus_handler.render(area, frame);
-    try self.view.render(area, frame);
+pub fn render(self: *Button, area: Rect, frame: Frame, theme: Theme) !void {
+    self.focus_handler.render(area, frame, theme);
+    try self.view.render(area, frame, theme);
 }
 
 pub fn layout(self: *Button, constraints: Constraints) !Vec2 {

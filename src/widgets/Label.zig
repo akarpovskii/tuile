@@ -6,6 +6,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
+const Theme = @import("../Theme.zig");
 
 pub const Config = struct {
     text: []const u8,
@@ -53,7 +54,7 @@ pub fn widget(self: *Label) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Label, area: Rect, frame: Frame) !void {
+pub fn render(self: *Label, area: Rect, frame: Frame, _: Theme) !void {
     for (0..area.height()) |y| {
         if (y >= self.lines.len) break;
         const pos = area.min.add(.{ .x = 0, .y = @intCast(y) });

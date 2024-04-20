@@ -8,6 +8,7 @@ const border = @import("../border.zig");
 const Padding = @import("Padding.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
+const Theme = @import("../Theme.zig");
 
 pub fn Block(comptime Inner: anytype) type {
     return struct {
@@ -71,7 +72,7 @@ pub fn Block(comptime Inner: anytype) type {
             return Widget.init(self);
         }
 
-        pub fn render(self: *Self, area: Rect, frame: Frame) !void {
+        pub fn render(self: *Self, area: Rect, frame: Frame, theme: Theme) !void {
             var content_area = Rect{
                 .min = .{
                     .x = area.min.x + self.border_widths.left,
@@ -94,7 +95,7 @@ pub fn Block(comptime Inner: anytype) type {
                 const props = self.inner.layout_props();
                 inner_area = content_area.align_inside(props.alignment, inner_area);
 
-                try self.inner.render(inner_area, frame.with_area(inner_area));
+                try self.inner.render(inner_area, frame.with_area(inner_area), theme);
                 self.render_border(area, frame);
             }
         }

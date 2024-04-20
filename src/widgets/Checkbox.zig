@@ -9,6 +9,7 @@ const Style = @import("../Style.zig");
 const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
+const Theme = @import("../Theme.zig");
 
 pub const Config = struct {
     label: []const u8,
@@ -55,11 +56,11 @@ pub fn widget(self: *Checkbox) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Checkbox, area: Rect, frame: Frame) !void {
+pub fn render(self: *Checkbox, area: Rect, frame: Frame, theme: Theme) !void {
     if (area.height() < 1) {
         return;
     }
-    self.focus_handler.render(area, frame);
+    self.focus_handler.render(area, frame, theme);
 
     const marker = if (self.checked) Marker.Checked else Marker.Basic;
 

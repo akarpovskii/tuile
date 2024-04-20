@@ -7,6 +7,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
+const Theme = @import("../Theme.zig");
 
 pub const Config = struct {
     // Spacer must either be flexible, or both max height and width must be defined.
@@ -42,7 +43,7 @@ pub fn widget(self: *Spacer) Widget {
     return Widget.init(self);
 }
 
-pub fn render(_: *Spacer, _: Rect, _: Frame) !void {}
+pub fn render(_: *Spacer, _: Rect, _: Frame, _: Theme) !void {}
 
 pub fn layout(self: *Spacer, constraints: Constraints) !Vec2 {
     const props = self.layout_properties;

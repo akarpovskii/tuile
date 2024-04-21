@@ -341,3 +341,9 @@ const WidgetsIterator = struct {
 pub fn layoutProps(self: *StackLayout) LayoutProperties {
     return self.layout_properties;
 }
+
+pub fn prepare(self: *StackLayout) !void {
+    for (self.widgets.items) |w| {
+        try w.prepare();
+    }
+}

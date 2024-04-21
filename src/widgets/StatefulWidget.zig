@@ -86,7 +86,7 @@ pub fn render(self: *StatefulWidget, area: Rect, frame: Frame, theme: Theme) !vo
 }
 
 pub fn layout(self: *StatefulWidget, constraints: Constraints) !Vec2 {
-    return try self.getOrInitView().layout(constraints);
+    return try self.view.?.layout(constraints);
 }
 
 pub fn handleEvent(self: *StatefulWidget, event: events.Event) !events.EventResult {
@@ -97,10 +97,9 @@ pub fn layoutProps(self: *StatefulWidget) LayoutProperties {
     return self.view.?.layoutProps();
 }
 
-pub fn getOrInitView(self: *StatefulWidget) Widget {
+pub fn prepare(self: *StatefulWidget) !void {
     if (self.builder.needRebuild()) {
         if (self.view) |view| view.destroy();
-        self.view = self.builder.build() catch @panic("can't build the view");
+        self.view = try self.builder.build();
     }
-    return self.view.?;
 }

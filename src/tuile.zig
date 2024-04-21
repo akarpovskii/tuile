@@ -43,6 +43,8 @@ pub const Tuile = struct {
 
     pub fn run(self: *Tuile) !void {
         while (self.is_running) {
+            try self.prepare();
+
             const event = try self.backend.pollEvent();
             if (event) |value| {
                 try self.propagateEvent(value);
@@ -50,6 +52,10 @@ pub const Tuile = struct {
 
             try self.redraw();
         }
+    }
+
+    fn prepare(self: *Tuile) !void {
+        try self.root.prepare();
     }
 
     fn redraw(self: *Tuile) !void {

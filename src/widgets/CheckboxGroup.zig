@@ -95,3 +95,7 @@ pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResul
 pub fn layoutProps(self: *CheckboxGroup) LayoutProperties {
     return self.view.layoutProps();
 }
+
+pub fn prepare(self: *CheckboxGroup) !void {
+    try self.view.prepare();
+}

@@ -88,3 +88,7 @@ pub fn handleEvent(self: *Themed, event: events.Event) !events.EventResult {
 pub fn layoutProps(self: *Themed) LayoutProperties {
     return self.inner.layoutProps();
 }
+
+pub fn prepare(self: *Themed) !void {
+    try self.inner.prepare();
+}

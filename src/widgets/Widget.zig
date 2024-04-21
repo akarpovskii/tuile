@@ -23,6 +23,10 @@ const VTable = struct {
     handle_event: *const fn (context: *anyopaque, event: events.Event) anyerror!events.EventResult,
 
     layout_props: *const fn (context: *anyopaque) LayoutProperties,
+
+    // Optional, widgets may not implement this method unless they have children.
+    // In which case they must call prepare() on all of their children.
+    prepare: *const fn (context: *anyopaque) anyerror!void,
 };
 
 pub fn init(context: anytype) Widget {
@@ -58,6 +62,13 @@ pub fn init(context: anytype) Widget {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.layoutProps(self);
         }
+
+        pub fn prepare(pointer: *anyopaque) anyerror!void {
+            const self: T = @ptrCast(@alignCast(pointer));
+            if (@hasDecl(ptr_info.Pointer.child, "prepare")) {
+                try ptr_info.Pointer.child.prepare(self);
+            }
+        }
     };
 
     return Widget{
@@ -68,6 +79,7 @@ pub fn init(context: anytype) Widget {
             .layout = vtable.layout,
             .handle_event = vtable.handleEvent,
             .layout_props = vtable.layoutProps,
+            .prepare = vtable.prepare,
         },
     };
 }
@@ -90,4 +102,8 @@ pub inline fn handleEvent(self: Widget, event: events.Event) anyerror!events.Eve
 
 pub inline fn layoutProps(self: Widget) LayoutProperties {
     return self.vtable.layout_props(self.context);
+}
+
+pub inline fn prepare(self: Widget) anyerror!void {
+    return self.vtable.prepare(self.context);
 }

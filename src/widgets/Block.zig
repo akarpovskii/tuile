@@ -185,3 +185,7 @@ fn renderBorder(self: *Block, area: Rect, frame: Frame, _: Theme) void {
             frame.setSymbol(.{ .x = max.x - 1, .y = max.y - 1 }, chars.bottom_right);
     }
 }
+
+pub fn prepare(self: *Block) !void {
+    try self.inner.prepare();
+}

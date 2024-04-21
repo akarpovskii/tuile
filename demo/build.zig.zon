@@ -1,0 +1,15 @@
+.{
+    .name = "tuile-demo",
+    .version = "0.0.0",
+    .minimum_zig_version = "0.12.0",
+
+    .dependencies = .{
+        .tuile = .{ .path = "../" },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

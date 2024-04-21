@@ -1,6 +1,5 @@
 const std = @import("std");
-
-const tuile = @import("tuile.zig");
+const tuile = @import("tuile");
 const widgets = tuile.widgets;
 
 pub fn main() !void {

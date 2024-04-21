@@ -10,11 +10,12 @@ const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const Theme = @import("../Theme.zig");
+const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
     label: []const u8,
 
-    on_press: ?*const fn (label: []const u8) void = null,
+    on_press: ?callbacks.Callback(void) = null,
 
     layout: LayoutProperties = .{},
 };
@@ -27,7 +28,7 @@ view: *Label,
 
 focus_handler: FocusHandler = .{},
 
-on_press: ?*const fn (label: []const u8) void,
+on_press: ?callbacks.Callback(void),
 
 pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
     var label = try allocator.alloc(u8, config.label.len + 2);
@@ -78,7 +79,7 @@ pub fn handleEvent(self: *Button, event: events.Event) !events.EventResult {
         .char => |char| switch (char) {
             ' ' => {
                 if (self.on_press) |on_press| {
-                    on_press(self.view.text);
+                    on_press.call();
                 }
                 return .consumed;
             },

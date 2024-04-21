@@ -9,9 +9,12 @@ const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const Theme = @import("../Theme.zig");
+const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
     placeholder: []const u8 = "",
+
+    on_value_changed: ?callbacks.Callback([]const u8) = null,
 
     layout: LayoutProperties = .{},
 };
@@ -21,6 +24,8 @@ const Input = @This();
 allocator: std.mem.Allocator,
 
 placeholder: []const u8,
+
+on_value_changed: ?callbacks.Callback([]const u8),
 
 value: std.ArrayList(u8),
 
@@ -36,6 +41,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Input {
     const self = try allocator.create(Input);
     self.* = Input{
         .allocator = allocator,
+        .on_value_changed = config.on_value_changed,
         .placeholder = try allocator.dupe(u8, config.placeholder),
         .value = std.ArrayList(u8).init(allocator),
         .layout_properties = config.layout,
@@ -131,6 +137,7 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
             .Backspace => {
                 if (self.cursor > 0) {
                     _ = self.value.orderedRemove(self.cursor - 1);
+                    if (self.on_value_changed) |cb| cb.call(self.value.items);
                 }
                 self.cursor -|= 1;
                 return .consumed;
@@ -138,6 +145,7 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
             .Delete => {
                 if (self.cursor < self.value.items.len) {
                     _ = self.value.orderedRemove(self.cursor);
+                    if (self.on_value_changed) |cb| cb.call(self.value.items);
                 }
                 return .consumed;
             },
@@ -146,6 +154,7 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
 
         .char => |char| {
             try self.value.insert(self.cursor, char);
+            if (self.on_value_changed) |cb| cb.call(self.value.items);
             self.cursor += 1;
             return .consumed;
         },

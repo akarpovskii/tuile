@@ -25,7 +25,7 @@ pub fn main() !void {
                 try widgets.Themed.create(
                     allocator,
                     .{ .theme = .{ .background = .{ .bright = .yellow } } },
-                    try widgets.Block(widgets.Label).create(
+                    try widgets.Block.create(
                         allocator,
                         .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
                         try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
@@ -38,7 +38,7 @@ pub fn main() !void {
                 allocator,
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Block(widgets.Label).create(
+                    try widgets.Block.create(
                         allocator,
                         .{ .border = tuile.border.Border.all(), .border_type = .rounded },
                         try widgets.Label.create(allocator, .{ .text = "Label text 4 aaaaaa" }),
@@ -46,7 +46,7 @@ pub fn main() !void {
                     try widgets.Label.create(allocator, .{ .text = "Label text 5" }),
                 },
             ),
-            try widgets.Block(widgets.Label).create(
+            try widgets.Block.create(
                 allocator,
                 .{
                     .border = tuile.border.Border.all(),
@@ -55,7 +55,7 @@ pub fn main() !void {
                 },
                 try widgets.Label.create(allocator, .{ .text = "Multiline\nlabel text" }),
             ),
-            try widgets.Block(widgets.Label).create(
+            try widgets.Block.create(
                 allocator,
                 .{
                     .border = tuile.border.Border.none(),
@@ -77,7 +77,7 @@ pub fn main() !void {
                 .{ .orientation = .horizontal },
                 .{
                     try widgets.Spacer.create(allocator, .{}),
-                    try widgets.Block(widgets.CheckboxGroup).create(
+                    try widgets.Block.create(
                         allocator,
                         .{ .border = tuile.border.Border.all(), .border_type = .double },
                         try widgets.CheckboxGroup.create(
@@ -91,7 +91,7 @@ pub fn main() !void {
                         ),
                     ),
                     try widgets.Spacer.create(allocator, .{ .layout = .{ .max_width = 10, .max_height = 1 } }),
-                    try widgets.Block(widgets.CheckboxGroup).create(
+                    try widgets.Block.create(
                         allocator,
                         .{ .border = tuile.border.Border.all(), .border_type = .double },
                         try widgets.CheckboxGroup.create(

@@ -35,9 +35,19 @@ layout_properties: LayoutProperties,
 
 pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !*StackLayout {
     var widgets = std.ArrayList(Widget).init(allocator);
-    inline for (children) |child| {
-        const w = if (@TypeOf(child) == Widget) child else child.widget();
-        try widgets.append(w);
+
+    const info = @typeInfo(@TypeOf(children));
+    if (info == .Struct and info.Struct.is_tuple) {
+        inline for (children) |child| {
+            // Tuples only support comptime indexing
+            const w = if (@TypeOf(child) == Widget) child else child.widget();
+            try widgets.append(w);
+        }
+    } else {
+        for (children) |child| {
+            const w = if (@TypeOf(child) == Widget) child else child.widget();
+            try widgets.append(w);
+        }
     }
 
     const self = try allocator.create(StackLayout);

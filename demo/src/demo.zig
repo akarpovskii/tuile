@@ -66,8 +66,8 @@ pub fn main() !void {
                 allocator,
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Button.create(allocator, .{ .label = "Button 1", .on_press = handlePress }),
-                    try widgets.Button.create(allocator, .{ .label = "Button 2", .on_press = handlePress }),
+                    try widgets.Button.create(allocator, .{ .label = "Button 1" }),
+                    try widgets.Button.create(allocator, .{ .label = "Button 2" }),
                 },
             ),
 

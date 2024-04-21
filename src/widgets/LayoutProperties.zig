@@ -16,19 +16,19 @@ pub const Align = struct {
     h: HAlign,
     v: VAlign,
 
-    pub fn top_left() Align {
+    pub fn topLeft() Align {
         return .{ .h = .left, .v = .top };
     }
 
-    pub fn top_center() Align {
+    pub fn topCenter() Align {
         return .{ .h = .center, .v = .top };
     }
 
-    pub fn top_right() Align {
+    pub fn topRight() Align {
         return .{ .h = .right, .v = .top };
     }
 
-    pub fn center_left() Align {
+    pub fn centerLeft() Align {
         return .{ .h = .left, .v = .center };
     }
 
@@ -36,19 +36,19 @@ pub const Align = struct {
         return .{ .h = .center, .v = .center };
     }
 
-    pub fn center_right() Align {
+    pub fn centerRight() Align {
         return .{ .h = .right, .v = .center };
     }
 
-    pub fn bottom_left() Align {
+    pub fn bottomLeft() Align {
         return .{ .h = .left, .v = .bottom };
     }
 
-    pub fn bottom_center() Align {
+    pub fn bottomCenter() Align {
         return .{ .h = .center, .v = .bottom };
     }
 
-    pub fn bottom_right() Align {
+    pub fn bottomRight() Align {
         return .{ .h = .right, .v = .bottom };
     }
 };

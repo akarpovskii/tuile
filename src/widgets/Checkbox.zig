@@ -69,7 +69,7 @@ pub fn render(self: *Checkbox, area: Rect, frame: Frame, theme: Theme) !void {
     var cursor = area.min;
     for (to_write) |bytes| {
         if (len <= 0) break;
-        const written = try frame.write_symbols(cursor, bytes, len);
+        const written = try frame.writeSymbols(cursor, bytes, len);
         len -= written;
         cursor.x += @intCast(written);
     }
@@ -82,29 +82,29 @@ pub fn layout(self: *Checkbox, constraints: Constraints) !Vec2 {
         .y = 1,
     };
 
-    const self_constraints = Constraints.from_props(self.layout_properties);
+    const self_constraints = Constraints.fromProps(self.layout_properties);
     size = self_constraints.apply(size);
     size = constraints.apply(size);
     return size;
 }
 
-pub fn handle_event(self: *Checkbox, event: events.Event) !events.EventResult {
-    if (self.focus_handler.handle_event(event) == .Consumed) {
-        return .Consumed;
+pub fn handleEvent(self: *Checkbox, event: events.Event) !events.EventResult {
+    if (self.focus_handler.handleEvent(event) == .consumed) {
+        return .consumed;
     }
     switch (event) {
-        .Char => |char| switch (char) {
+        .char => |char| switch (char) {
             ' ' => {
                 self.checked = !self.checked;
-                return .Consumed;
+                return .consumed;
             },
             else => {},
         },
         else => {},
     }
-    return .Ignored;
+    return .ignored;
 }
 
-pub fn layout_props(self: *Checkbox) LayoutProperties {
+pub fn layoutProps(self: *Checkbox) LayoutProperties {
     return self.layout_properties;
 }

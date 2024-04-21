@@ -44,9 +44,9 @@ pub const Tuile = struct {
 
     pub fn run(self: *Tuile) !void {
         while (self.is_running) {
-            const event = try self.backend.poll_event();
+            const event = try self.backend.pollEvent();
             if (event) |value| {
-                try self.propagate_event(value);
+                try self.propagateEvent(value);
             }
 
             try self.redraw();
@@ -54,7 +54,7 @@ pub const Tuile = struct {
     }
 
     fn redraw(self: *Tuile) !void {
-        const window_size = try self.backend.window_size();
+        const window_size = try self.backend.windowSize();
         const window_area = Rect{
             .min = Vec2.zero(),
             .max = window_size,
@@ -81,17 +81,17 @@ pub const Tuile = struct {
         try frame.render(self.backend);
     }
 
-    fn propagate_event(self: *Tuile, event: events.Event) !void {
+    fn propagateEvent(self: *Tuile, event: events.Event) !void {
         switch (event) {
-            .CtrlChar => |value| {
+            .ctrl_char => |value| {
                 if (value == 'c') {
                     self.is_running = false;
                 }
             },
-            .Key => |key| if (key == .Resize) return,
+            .key => |key| if (key == .Resize) return,
             else => {},
         }
 
-        _ = try self.root.handle_event(event);
+        _ = try self.root.handleEvent(event);
     }
 };

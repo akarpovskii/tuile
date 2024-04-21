@@ -69,26 +69,26 @@ pub fn layout(self: *Button, constraints: Constraints) !Vec2 {
     return self.view.layout(constraints);
 }
 
-pub fn handle_event(self: *Button, event: events.Event) !events.EventResult {
-    if (self.focus_handler.handle_event(event) == .Consumed) {
-        return .Consumed;
+pub fn handleEvent(self: *Button, event: events.Event) !events.EventResult {
+    if (self.focus_handler.handleEvent(event) == .consumed) {
+        return .consumed;
     }
 
     switch (event) {
-        .Char => |char| switch (char) {
+        .char => |char| switch (char) {
             ' ' => {
                 if (self.on_press) |on_press| {
                     on_press(self.view.text);
                 }
-                return .Consumed;
+                return .consumed;
             },
             else => {},
         },
         else => {},
     }
-    return .Ignored;
+    return .ignored;
 }
 
-pub fn layout_props(self: *Button) LayoutProperties {
-    return self.view.layout_props();
+pub fn layoutProps(self: *Button) LayoutProperties {
+    return self.view.layoutProps();
 }

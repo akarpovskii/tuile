@@ -57,14 +57,14 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: Theme) !void {
     if (area.height() < 1) {
         return;
     }
-    frame.set_style(area, .{ .add_effect = .{ .underline = true } });
+    frame.setStyle(area, .{ .add_effect = .{ .underline = true } });
 
     const render_placeholder = self.value.items.len == 0;
-    if (render_placeholder) frame.set_style(area, .{ .add_effect = .{ .dim = true } });
+    if (render_placeholder) frame.setStyle(area, .{ .add_effect = .{ .dim = true } });
 
-    const text_to_render = self.current_text();
+    const text_to_render = self.currentText();
     const visible = text_to_render[self.view_start..];
-    _ = try frame.write_symbols(area.min, visible, area.width());
+    _ = try frame.writeSymbols(area.min, visible, area.width());
 
     if (self.focus_handler.focused) {
         var cursor_pos = area.min;
@@ -76,7 +76,7 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: Theme) !void {
             .min = cursor_pos,
             .max = cursor_pos.add(.{ .x = 1, .y = 1 }),
         };
-        frame.set_style(end_area, .{
+        frame.setStyle(end_area, .{
             .fg = theme.cursor,
             .add_effect = .{ .reverse = true },
             .sub_effect = .{ .dim = true },
@@ -96,7 +96,7 @@ pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
         }
     }
 
-    const visible = self.visible_text();
+    const visible = self.visibleText();
     // +1 for the cursor
     const len = try std.unicode.utf8CountCodepoints(visible) + 1;
 
@@ -105,64 +105,64 @@ pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
         .y = 1,
     };
 
-    const self_constraints = Constraints.from_props(self.layout_properties);
+    const self_constraints = Constraints.fromProps(self.layout_properties);
     size = self_constraints.apply(size);
     size = constraints.apply(size);
     return size;
 }
 
-pub fn handle_event(self: *Input, event: events.Event) !events.EventResult {
-    if (self.focus_handler.handle_event(event) == .Consumed) {
-        return .Consumed;
+pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
+    if (self.focus_handler.handleEvent(event) == .consumed) {
+        return .consumed;
     }
 
     switch (event) {
-        .Key, .ShiftKey => |key| switch (key) {
+        .key, .shift_key => |key| switch (key) {
             .Left => {
                 self.cursor -|= 1;
-                return .Consumed;
+                return .consumed;
             },
             .Right => {
                 if (self.cursor < self.value.items.len) {
                     self.cursor += 1;
                 }
-                return .Consumed;
+                return .consumed;
             },
             .Backspace => {
                 if (self.cursor > 0) {
                     _ = self.value.orderedRemove(self.cursor - 1);
                 }
                 self.cursor -|= 1;
-                return .Consumed;
+                return .consumed;
             },
             .Delete => {
                 if (self.cursor < self.value.items.len) {
                     _ = self.value.orderedRemove(self.cursor);
                 }
-                return .Consumed;
+                return .consumed;
             },
             else => {},
         },
 
-        .Char => |char| {
+        .char => |char| {
             try self.value.insert(self.cursor, char);
             self.cursor += 1;
-            return .Consumed;
+            return .consumed;
         },
         else => {},
     }
-    return .Ignored;
+    return .ignored;
 }
 
-fn current_text(self: *Input) []const u8 {
+fn currentText(self: *Input) []const u8 {
     const show_placeholder = self.value.items.len == 0;
     return if (show_placeholder) self.placeholder else self.value.items;
 }
 
-fn visible_text(self: *Input) []const u8 {
-    return self.current_text()[self.view_start..];
+fn visibleText(self: *Input) []const u8 {
+    return self.currentText()[self.view_start..];
 }
 
-pub fn layout_props(self: *Input) LayoutProperties {
+pub fn layoutProps(self: *Input) LayoutProperties {
     return self.layout_properties;
 }

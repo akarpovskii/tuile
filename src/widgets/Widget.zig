@@ -49,14 +49,14 @@ pub fn init(context: anytype) Widget {
             return size;
         }
 
-        pub fn handle_event(pointer: *anyopaque, event: events.Event) anyerror!events.EventResult {
+        pub fn handleEvent(pointer: *anyopaque, event: events.Event) anyerror!events.EventResult {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.handle_event(self, event);
+            return ptr_info.Pointer.child.handleEvent(self, event);
         }
 
-        pub fn layout_props(pointer: *anyopaque) LayoutProperties {
+        pub fn layoutProps(pointer: *anyopaque) LayoutProperties {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.layout_props(self);
+            return ptr_info.Pointer.child.layoutProps(self);
         }
     };
 
@@ -66,8 +66,8 @@ pub fn init(context: anytype) Widget {
             .destroy = vtable.destroy,
             .render = vtable.render,
             .layout = vtable.layout,
-            .handle_event = vtable.handle_event,
-            .layout_props = vtable.layout_props,
+            .handle_event = vtable.handleEvent,
+            .layout_props = vtable.layoutProps,
         },
     };
 }
@@ -84,10 +84,10 @@ pub inline fn layout(self: Widget, constraints: Constraints) anyerror!Vec2 {
     return try self.vtable.layout(self.context, constraints);
 }
 
-pub inline fn handle_event(self: Widget, event: events.Event) anyerror!events.EventResult {
+pub inline fn handleEvent(self: Widget, event: events.Event) anyerror!events.EventResult {
     return self.vtable.handle_event(self.context, event);
 }
 
-pub inline fn layout_props(self: Widget) LayoutProperties {
+pub inline fn layoutProps(self: Widget) LayoutProperties {
     return self.vtable.layout_props(self.context);
 }

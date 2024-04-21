@@ -72,7 +72,7 @@ pub fn render(self: *StackLayout, area: Rect, frame: Frame, theme: Theme) !void 
     var cursor = area.min;
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {
-        const props = w.layout_props();
+        const props = w.layoutProps();
         const alignment = props.alignment;
 
         var widget_area = Rect{
@@ -81,11 +81,11 @@ pub fn render(self: *StackLayout, area: Rect, frame: Frame, theme: Theme) !void 
         };
 
         switch (self.orientation) {
-            .vertical => widget_area = area.align_h(alignment.h, widget_area),
-            .horizontal => widget_area = area.align_v(alignment.v, widget_area),
+            .vertical => widget_area = area.alignH(alignment.h, widget_area),
+            .horizontal => widget_area = area.alignV(alignment.v, widget_area),
         }
 
-        try w.render(widget_area, frame.with_area(widget_area), theme);
+        try w.render(widget_area, frame.withArea(widget_area), theme);
         switch (self.orientation) {
             .horizontal => {
                 cursor.x += s.x;
@@ -99,12 +99,12 @@ pub fn render(self: *StackLayout, area: Rect, frame: Frame, theme: Theme) !void 
 
 pub fn layout(self: *StackLayout, constraints: Constraints) !Vec2 {
     switch (self.orientation) {
-        .vertical => return try self.layout_impl(constraints, .vertical),
-        .horizontal => return try self.layout_impl(constraints, .horizontal),
+        .vertical => return try self.layoutImpl(constraints, .vertical),
+        .horizontal => return try self.layoutImpl(constraints, .horizontal),
     }
 }
 
-pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orientation: Orientation) !Vec2 {
+pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orientation: Orientation) !Vec2 {
     if (self.widgets.items.len == 0) {
         return .{ .x = constraints.min_width, .y = constraints.min_height };
     }
@@ -145,7 +145,7 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
     defer fixed_indices.deinit();
 
     for (self.widgets.items, 0..) |w, idx| {
-        const props = w.layout_props();
+        const props = w.layoutProps();
         const fixed = props.flex == 0;
         if (fixed or @field(constraints, max_main) == std.math.maxInt(u32)) {
             try fixed_indices.append(idx);
@@ -173,13 +173,13 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
     var total_flex: u32 = 0;
     for (flex_indices.items) |idx| {
         const w = self.widgets.items[idx];
-        const props = w.layout_props();
+        const props = w.layoutProps();
         total_flex += props.flex;
     }
     var remaining = @field(constraints, max_main) -| fixed_size;
     for (flex_indices.items) |idx| {
         const w = self.widgets.items[idx];
-        const props = w.layout_props();
+        const props = w.layoutProps();
         const flex = props.flex;
         const weight = @as(f64, @floatFromInt(flex)) / @as(f64, @floatFromInt(total_flex));
         const main_size_f = @as(f64, @floatFromInt(remaining)) * weight;
@@ -210,14 +210,14 @@ pub fn layout_impl(self: *StackLayout, constraints: Constraints, comptime orient
     return self_size;
 }
 
-pub fn handle_event(self: *StackLayout, event: events.Event) !events.EventResult {
-    if (event == .FocusIn) {
-        var iter = WidgetsIterator.in_direction(self.widgets.items, event.FocusIn);
-        return self.focus_on_next(&iter, event.FocusIn);
+pub fn handleEvent(self: *StackLayout, event: events.Event) !events.EventResult {
+    if (event == .focus_in) {
+        var iter = WidgetsIterator.inDirection(self.widgets.items, event.focus_in);
+        return self.focusOnNext(&iter, event.focus_in);
     }
-    if (event == .FocusOut) {
+    if (event == .focus_out) {
         self.focused = null;
-        return .Consumed;
+        return .consumed;
     }
 
     if (self.focused == null) {
@@ -228,9 +228,9 @@ pub fn handle_event(self: *StackLayout, event: events.Event) !events.EventResult
         var direction: events.FocusDirection = undefined;
 
         switch (event) {
-            .Key, .ShiftKey => |key| if (key == .Tab) {
+            .key, .shift_key => |key| if (key == .Tab) {
                 supress_further = true;
-                direction = if (event == .Key) .front else .back;
+                direction = if (event == .key) .front else .back;
             },
             else => {
                 supress_further = false;
@@ -238,47 +238,47 @@ pub fn handle_event(self: *StackLayout, event: events.Event) !events.EventResult
             },
         }
 
-        if (try self.handle_event(.{ .FocusIn = direction }) == .Ignored) {
-            return .Ignored;
+        if (try self.handleEvent(.{ .focus_in = direction }) == .ignored) {
+            return .ignored;
         }
         if (supress_further) {
-            return .Consumed;
+            return .consumed;
         }
     }
 
     const active = self.focused.?;
     const active_w = self.widgets.items[active];
 
-    switch (try active_w.handle_event(event)) {
-        .Consumed => return .Consumed,
-        .Ignored => {
+    switch (try active_w.handleEvent(event)) {
+        .consumed => return .consumed,
+        .ignored => {
             switch (event) {
-                .Key, .ShiftKey => |key| if (key == .Tab) {
-                    const direction: events.FocusDirection = if (event == .Key) .front else .back;
+                .key, .shift_key => |key| if (key == .Tab) {
+                    const direction: events.FocusDirection = if (event == .key) .front else .back;
 
-                    var iter = WidgetsIterator.in_direction(self.widgets.items, direction);
+                    var iter = WidgetsIterator.inDirection(self.widgets.items, direction);
                     iter.current = @as(isize, @intCast(active)) + iter.step;
 
-                    const focused = self.focus_on_next(&iter, direction);
-                    _ = try active_w.handle_event(.FocusOut);
+                    const focused = self.focusOnNext(&iter, direction);
+                    _ = try active_w.handleEvent(.focus_out);
                     return focused;
                 },
                 else => {},
             }
         },
     }
-    return .Ignored;
+    return .ignored;
 }
 
-fn focus_on_next(self: *StackLayout, iter: *WidgetsIterator, direction: events.FocusDirection) !events.EventResult {
+fn focusOnNext(self: *StackLayout, iter: *WidgetsIterator, direction: events.FocusDirection) !events.EventResult {
     while (iter.peek()) |w| : (_ = iter.next()) {
-        if (try w.handle_event(.{ .FocusIn = direction }) == .Consumed) {
+        if (try w.handleEvent(.{ .focus_in = direction }) == .consumed) {
             self.focused = @intCast(iter.current);
-            return .Consumed;
+            return .consumed;
         }
     } else {
         self.focused = null;
-        return .Ignored;
+        return .ignored;
     }
 }
 
@@ -289,7 +289,7 @@ const WidgetsIterator = struct {
 
     current: isize,
 
-    pub fn in_direction(widgets: []Widget, direction: events.FocusDirection) WidgetsIterator {
+    pub fn inDirection(widgets: []Widget, direction: events.FocusDirection) WidgetsIterator {
         return switch (direction) {
             .front => forward(widgets),
             .back => backward(widgets),
@@ -328,6 +328,6 @@ const WidgetsIterator = struct {
     }
 };
 
-pub fn layout_props(self: *StackLayout) LayoutProperties {
+pub fn layoutProps(self: *StackLayout) LayoutProperties {
     return self.layout_properties;
 }

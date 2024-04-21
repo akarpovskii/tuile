@@ -14,20 +14,20 @@ max_height: u32 = std.math.maxInt(u32),
 
 pub fn apply(self: Constraints, size: Vec2) Vec2 {
     return .{
-        .x = self.clamp_width(size.x),
-        .y = self.clamp_height(size.y),
+        .x = self.clampWidth(size.x),
+        .y = self.clampHeight(size.y),
     };
 }
 
-pub fn clamp_width(self: Constraints, value: u32) u32 {
+pub fn clampWidth(self: Constraints, value: u32) u32 {
     return std.math.clamp(value, self.min_width, self.max_width);
 }
 
-pub fn clamp_height(self: Constraints, value: u32) u32 {
+pub fn clampHeight(self: Constraints, value: u32) u32 {
     return std.math.clamp(value, self.min_height, self.max_height);
 }
 
-pub fn from_props(props: LayoutProperties) Constraints {
+pub fn fromProps(props: LayoutProperties) Constraints {
     return .{
         .min_width = props.min_width,
         .min_height = props.min_height,

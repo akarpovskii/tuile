@@ -30,9 +30,9 @@ pub fn init(context: anytype) Backend {
             return ptr_info.Pointer.child.destroy(self);
         }
 
-        pub fn poll_event(pointer: *anyopaque) anyerror!?events.Event {
+        pub fn pollEvent(pointer: *anyopaque) anyerror!?events.Event {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.poll_event(self);
+            return ptr_info.Pointer.child.pollEvent(self);
         }
 
         pub fn refresh(pointer: *anyopaque) anyerror!void {
@@ -40,29 +40,29 @@ pub fn init(context: anytype) Backend {
             return ptr_info.Pointer.child.refresh(self);
         }
 
-        pub fn print_at(pointer: *anyopaque, pos: Vec2, text: []const u8) anyerror!void {
+        pub fn printAt(pointer: *anyopaque, pos: Vec2, text: []const u8) anyerror!void {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.print_at(self, pos, text);
+            return ptr_info.Pointer.child.printAt(self, pos, text);
         }
 
-        pub fn window_size(pointer: *anyopaque) anyerror!Vec2 {
+        pub fn windowSize(pointer: *anyopaque) anyerror!Vec2 {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.window_size(self);
+            return ptr_info.Pointer.child.windowSize(self);
         }
 
-        pub fn enable_effect(pointer: *anyopaque, effect: Style.Effect) anyerror!void {
+        pub fn enableEffect(pointer: *anyopaque, effect: Style.Effect) anyerror!void {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.enable_effect(self, effect);
+            return ptr_info.Pointer.child.enableEffect(self, effect);
         }
 
-        pub fn disable_effect(pointer: *anyopaque, effect: Style.Effect) anyerror!void {
+        pub fn disableEffect(pointer: *anyopaque, effect: Style.Effect) anyerror!void {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.disable_effect(self, effect);
+            return ptr_info.Pointer.child.disableEffect(self, effect);
         }
 
-        pub fn use_color(pointer: *anyopaque, color: ColorPair) anyerror!void {
+        pub fn useColor(pointer: *anyopaque, color: ColorPair) anyerror!void {
             const self: T = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.use_color(self, color);
+            return ptr_info.Pointer.child.useColor(self, color);
         }
     };
 
@@ -70,13 +70,13 @@ pub fn init(context: anytype) Backend {
         .context = context,
         .vtable = &.{
             .destroy = vtable.destroy,
-            .poll_event = vtable.poll_event,
+            .poll_event = vtable.pollEvent,
             .refresh = vtable.refresh,
-            .print_at = vtable.print_at,
-            .window_size = vtable.window_size,
-            .enable_effect = vtable.enable_effect,
-            .disable_effect = vtable.disable_effect,
-            .use_color = vtable.use_color,
+            .print_at = vtable.printAt,
+            .window_size = vtable.windowSize,
+            .enable_effect = vtable.enableEffect,
+            .disable_effect = vtable.disableEffect,
+            .use_color = vtable.useColor,
         },
     };
 }
@@ -85,7 +85,7 @@ pub fn destroy(self: Backend) anyerror!void {
     return self.vtable.destroy(self.context);
 }
 
-pub fn poll_event(self: Backend) anyerror!?events.Event {
+pub fn pollEvent(self: Backend) anyerror!?events.Event {
     return self.vtable.poll_event(self.context);
 }
 
@@ -93,22 +93,22 @@ pub fn refresh(self: Backend) anyerror!void {
     return self.vtable.refresh(self.context);
 }
 
-pub fn print_at(self: Backend, pos: Vec2, text: []const u8) anyerror!void {
+pub fn printAt(self: Backend, pos: Vec2, text: []const u8) anyerror!void {
     return self.vtable.print_at(self.context, pos, text);
 }
 
-pub fn window_size(self: Backend) anyerror!Vec2 {
+pub fn windowSize(self: Backend) anyerror!Vec2 {
     return self.vtable.window_size(self.context);
 }
 
-pub fn enable_effect(self: Backend, effect: Style.Effect) anyerror!void {
+pub fn enableEffect(self: Backend, effect: Style.Effect) anyerror!void {
     return self.vtable.enable_effect(self.context, effect);
 }
 
-pub fn disable_effect(self: Backend, effect: Style.Effect) anyerror!void {
+pub fn disableEffect(self: Backend, effect: Style.Effect) anyerror!void {
     return self.vtable.disable_effect(self.context, effect);
 }
 
-pub fn use_color(self: Backend, color: ColorPair) anyerror!void {
+pub fn useColor(self: Backend, color: ColorPair) anyerror!void {
     return self.vtable.use_color(self.context, color);
 }

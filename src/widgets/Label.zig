@@ -58,7 +58,7 @@ pub fn render(self: *Label, area: Rect, frame: Frame, _: Theme) !void {
     for (0..area.height()) |y| {
         if (y >= self.lines.len) break;
         const pos = area.min.add(.{ .x = 0, .y = @intCast(y) });
-        _ = try frame.write_symbols(pos, self.lines[y], area.width());
+        _ = try frame.writeSymbols(pos, self.lines[y], area.width());
     }
 }
 
@@ -74,16 +74,16 @@ pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
         .y = @intCast(self.lines.len),
     };
 
-    const self_constraints = Constraints.from_props(self.layout_properties);
+    const self_constraints = Constraints.fromProps(self.layout_properties);
     size = self_constraints.apply(size);
     size = constraints.apply(size);
     return size;
 }
 
-pub fn handle_event(_: *Label, _: events.Event) !events.EventResult {
-    return .Ignored;
+pub fn handleEvent(_: *Label, _: events.Event) !events.EventResult {
+    return .ignored;
 }
 
-pub fn layout_props(self: *Label) LayoutProperties {
+pub fn layoutProps(self: *Label) LayoutProperties {
     return self.layout_properties;
 }

@@ -7,24 +7,24 @@ const FocusHandler = @This();
 
 focused: bool = false,
 
-pub fn handle_event(self: *FocusHandler, event: events.Event) events.EventResult {
+pub fn handleEvent(self: *FocusHandler, event: events.Event) events.EventResult {
     switch (event) {
-        .FocusIn => {
+        .focus_in => {
             self.focused = true;
-            return .Consumed;
+            return .consumed;
         },
-        .FocusOut => {
+        .focus_out => {
             self.focused = false;
-            return .Consumed;
+            return .consumed;
         },
         else => {
-            return .Ignored;
+            return .ignored;
         },
     }
 }
 
 pub fn render(self: *FocusHandler, area: Rect, frame: Frame, theme: Theme) void {
     if (self.focused) {
-        frame.set_style(area, .{ .bg = theme.secondary });
+        frame.setStyle(area, .{ .bg = theme.secondary });
     }
 }

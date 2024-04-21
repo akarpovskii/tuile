@@ -60,14 +60,14 @@ pub fn layout(self: *CheckboxGroup, constraints: Constraints) !Vec2 {
     return try self.view.layout(constraints);
 }
 
-pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResult {
-    const res = try self.view.handle_event(event);
-    if (res == .Ignored) {
+pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResult {
+    const res = try self.view.handleEvent(event);
+    if (res == .ignored) {
         return res;
     }
 
     switch (event) {
-        .Char => |char| switch (char) {
+        .char => |char| switch (char) {
             ' ' => {
                 if (!self.multiselect) {
                     // This option received the event
@@ -83,7 +83,7 @@ pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResu
                         }
                     }
                 }
-                return .Consumed;
+                return .consumed;
             },
             else => {},
         },
@@ -92,6 +92,6 @@ pub fn handle_event(self: *CheckboxGroup, event: events.Event) !events.EventResu
     return res;
 }
 
-pub fn layout_props(self: *CheckboxGroup) LayoutProperties {
-    return self.view.layout_props();
+pub fn layoutProps(self: *CheckboxGroup) LayoutProperties {
+    return self.view.layoutProps();
 }

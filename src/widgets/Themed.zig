@@ -73,7 +73,7 @@ pub fn render(self: *Themed, area: Rect, frame: Frame, theme: Theme) !void {
         }
     }
 
-    frame.set_style(area, .{ .fg = new_theme.foreground, .bg = new_theme.background });
+    frame.setStyle(area, .{ .fg = new_theme.foreground, .bg = new_theme.background });
     return try self.inner.render(area, frame, new_theme);
 }
 
@@ -81,10 +81,10 @@ pub fn layout(self: *Themed, constraints: Constraints) !Vec2 {
     return try self.inner.layout(constraints);
 }
 
-pub fn handle_event(self: *Themed, event: events.Event) !events.EventResult {
-    return self.inner.handle_event(event);
+pub fn handleEvent(self: *Themed, event: events.Event) !events.EventResult {
+    return self.inner.handleEvent(event);
 }
 
-pub fn layout_props(self: *Themed) LayoutProperties {
-    return self.inner.layout_props();
+pub fn layoutProps(self: *Themed) LayoutProperties {
+    return self.inner.layoutProps();
 }

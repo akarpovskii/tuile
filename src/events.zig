@@ -32,16 +32,16 @@ pub const Key = enum {
 pub const FocusDirection = enum { front, back };
 
 pub const Event = union(enum) {
-    Char: u8,
-    Key: Key,
-    CtrlChar: u8,
-    ShiftKey: Key,
+    char: u8,
+    key: Key,
+    ctrl_char: u8,
+    shift_key: Key,
 
-    FocusIn: FocusDirection,
-    FocusOut,
+    focus_in: FocusDirection,
+    focus_out,
 };
 
 pub const EventResult = enum {
-    Ignored,
-    Consumed,
+    ignored,
+    consumed,
 };

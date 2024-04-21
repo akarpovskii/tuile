@@ -60,10 +60,10 @@ pub fn layout(self: *Spacer, constraints: Constraints) !Vec2 {
     return size;
 }
 
-pub fn handle_event(_: *Spacer, _: events.Event) !events.EventResult {
-    return .Ignored;
+pub fn handleEvent(_: *Spacer, _: events.Event) !events.EventResult {
+    return .ignored;
 }
 
-pub fn layout_props(self: *Spacer) LayoutProperties {
+pub fn layoutProps(self: *Spacer) LayoutProperties {
     return self.layout_properties;
 }

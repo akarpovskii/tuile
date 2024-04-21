@@ -23,7 +23,7 @@ fn inside(self: Frame, pos: Vec2) bool {
         self.area.min.y <= pos.y and pos.y < self.area.max.y;
 }
 
-pub fn with_area(self: Frame, area: Rect) Frame {
+pub fn withArea(self: Frame, area: Rect) Frame {
     return Frame{
         .buffer = self.buffer,
         .size = self.size,
@@ -31,18 +31,18 @@ pub fn with_area(self: Frame, area: Rect) Frame {
     };
 }
 
-pub fn set_style(self: Frame, area: Rect, style: Style) void {
+pub fn setStyle(self: Frame, area: Rect, style: Style) void {
     for (area.min.y..area.max.y) |y| {
         for (area.min.x..area.max.x) |x| {
             const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
             if (self.inside(pos)) {
-                self.at(pos).set_style(style);
+                self.at(pos).setStyle(style);
             }
         }
     }
 }
 
-pub fn set_symbol(self: Frame, pos: Vec2, symbol: []const u8) void {
+pub fn setSymbol(self: Frame, pos: Vec2, symbol: []const u8) void {
     if (self.inside(pos)) {
         self.at(pos).symbol = symbol;
     }
@@ -50,7 +50,7 @@ pub fn set_symbol(self: Frame, pos: Vec2, symbol: []const u8) void {
 
 // Decodes text as UTF-8, writes all code points separately and returns the number of 'characters' written
 // TODO: Use graphemes instead of code points!
-pub fn write_symbols(self: Frame, start: Vec2, bytes: []const u8, max: ?usize) !usize {
+pub fn writeSymbols(self: Frame, start: Vec2, bytes: []const u8, max: ?usize) !usize {
     const utf8_view = try std.unicode.Utf8View.init(bytes);
     var iter = utf8_view.iterator();
     var limit = max orelse std.math.maxInt(usize);
@@ -60,7 +60,7 @@ pub fn write_symbols(self: Frame, start: Vec2, bytes: []const u8, max: ?usize) !
         if (limit == 0) {
             break;
         }
-        self.set_symbol(cursor, cp);
+        self.setSymbol(cursor, cp);
         cursor.x += 1;
         limit -= 1;
         written += 1;
@@ -73,14 +73,14 @@ pub fn render(self: Frame, backend: Backend) !void {
         for (0..self.size.y) |y| {
             const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
             const cell = self.at(pos);
-            try backend.enable_effect(cell.effect);
-            try backend.use_color(.{ .fg = cell.fg, .bg = cell.bg });
+            try backend.enableEffect(cell.effect);
+            try backend.useColor(.{ .fg = cell.fg, .bg = cell.bg });
             if (cell.symbol) |symbol| {
-                try backend.print_at(pos, symbol);
+                try backend.printAt(pos, symbol);
             } else {
-                try backend.print_at(pos, " ");
+                try backend.printAt(pos, " ");
             }
-            try backend.disable_effect(cell.effect);
+            try backend.disableEffect(cell.effect);
         }
     }
     try backend.refresh();

@@ -31,7 +31,7 @@ pub const BorderCharacters = struct {
     bottom_left: []const u8,
     bottom_right: []const u8,
 
-    pub fn from_type(border: BorderType) BorderCharacters {
+    pub fn fromType(border: BorderType) BorderCharacters {
         return switch (border) {
             .simple => .{
                 .top = "-",

@@ -36,7 +36,7 @@ pub fn diag(self: Rect) Vec2 {
 }
 
 // Other area must fit inside this area, otherwise the result will be clamped
-pub fn align_h(self: Rect, alignment: HAlign, other: Rect) Rect {
+pub fn alignH(self: Rect, alignment: HAlign, other: Rect) Rect {
     var min = Vec2{
         .x = self.min.x,
         .y = other.min.y,
@@ -50,7 +50,7 @@ pub fn align_h(self: Rect, alignment: HAlign, other: Rect) Rect {
 }
 
 // Other area must fit inside this area, otherwise the result will be clamped
-pub fn align_v(self: Rect, alignment: VAlign, other: Rect) Rect {
+pub fn alignV(self: Rect, alignment: VAlign, other: Rect) Rect {
     var min = Vec2{
         .x = other.min.x,
         .y = self.min.y,
@@ -64,8 +64,8 @@ pub fn align_v(self: Rect, alignment: VAlign, other: Rect) Rect {
 }
 
 // Other area must fit inside this area, otherwise the result will be clamped
-pub fn align_inside(self: Rect, alignment: Align, other: Rect) Rect {
-    const h = self.align_h(alignment.h, other);
-    const v = self.align_v(alignment.v, h);
+pub fn alignInside(self: Rect, alignment: Align, other: Rect) Rect {
+    const h = self.alignH(alignment.h, other);
+    const v = self.alignV(alignment.v, h);
     return v;
 }

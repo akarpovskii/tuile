@@ -41,7 +41,7 @@ fit_content: bool,
 layout_properties: LayoutProperties,
 
 pub fn create(allocator: std.mem.Allocator, config: Config, inner: anytype) !*Block {
-    const border_chars = border.BorderCharacters.from_type(config.border_type);
+    const border_chars = border.BorderCharacters.fromType(config.border_type);
 
     const self = try allocator.create(Block);
     self.* = Block{
@@ -83,18 +83,18 @@ pub fn render(self: *Block, area: Rect, frame: Frame, theme: Theme) !void {
     };
 
     if (content_area.min.x > content_area.max.x or content_area.min.y > content_area.max.y) {
-        self.render_border(area, frame, theme);
+        self.renderBorder(area, frame, theme);
     } else {
         var inner_area = Rect{
             .min = content_area.min,
             .max = content_area.min.add(self.inner_size),
         };
 
-        const props = self.inner.layout_props();
-        inner_area = content_area.align_inside(props.alignment, inner_area);
+        const props = self.inner.layoutProps();
+        inner_area = content_area.alignInside(props.alignment, inner_area);
 
-        try self.inner.render(inner_area, frame.with_area(inner_area), theme);
-        self.render_border(area, frame, theme);
+        try self.inner.render(inner_area, frame.withArea(inner_area), theme);
+        self.renderBorder(area, frame, theme);
     }
 }
 
@@ -132,15 +132,15 @@ pub fn layout(self: *Block, constraints: Constraints) !Vec2 {
     return size;
 }
 
-pub fn handle_event(self: *Block, event: events.Event) !events.EventResult {
-    return self.inner.handle_event(event);
+pub fn handleEvent(self: *Block, event: events.Event) !events.EventResult {
+    return self.inner.handleEvent(event);
 }
 
-pub fn layout_props(self: *Block) LayoutProperties {
+pub fn layoutProps(self: *Block) LayoutProperties {
     return self.layout_properties;
 }
 
-fn render_border(self: *Block, area: Rect, frame: Frame, _: Theme) void {
+fn renderBorder(self: *Block, area: Rect, frame: Frame, _: Theme) void {
     const min = area.min;
     const max = area.max;
     const chars = self.border_chars;
@@ -152,9 +152,9 @@ fn render_border(self: *Block, area: Rect, frame: Frame, _: Theme) void {
         var x = min.x;
         while (x < area.max.x) : (x += 1) {
             if (self.border.top)
-                frame.set_symbol(.{ .x = x, .y = min.y }, chars.top);
+                frame.setSymbol(.{ .x = x, .y = min.y }, chars.top);
             if (self.border.bottom)
-                frame.set_symbol(.{ .x = x, .y = max.y - 1 }, chars.bottom);
+                frame.setSymbol(.{ .x = x, .y = max.y - 1 }, chars.bottom);
         }
     }
 
@@ -165,23 +165,23 @@ fn render_border(self: *Block, area: Rect, frame: Frame, _: Theme) void {
         var y = min.y;
         while (y < max.y) : (y += 1) {
             if (self.border.left)
-                frame.set_symbol(.{ .x = min.x, .y = y }, chars.left);
+                frame.setSymbol(.{ .x = min.x, .y = y }, chars.left);
             if (self.border.right)
-                frame.set_symbol(.{ .x = max.x - 1, .y = y }, chars.right);
+                frame.setSymbol(.{ .x = max.x - 1, .y = y }, chars.right);
         }
     }
 
     if (area.height() > 1 and area.width() > 1) {
         if (self.border.top and self.border.left)
-            frame.set_symbol(.{ .x = min.x, .y = min.y }, chars.top_left);
+            frame.setSymbol(.{ .x = min.x, .y = min.y }, chars.top_left);
 
         if (self.border.top and self.border.right)
-            frame.set_symbol(.{ .x = max.x - 1, .y = min.y }, chars.top_right);
+            frame.setSymbol(.{ .x = max.x - 1, .y = min.y }, chars.top_right);
 
         if (self.border.bottom and self.border.left)
-            frame.set_symbol(.{ .x = min.x, .y = max.y - 1 }, chars.bottom_left);
+            frame.setSymbol(.{ .x = min.x, .y = max.y - 1 }, chars.bottom_left);
 
         if (self.border.bottom and self.border.right)
-            frame.set_symbol(.{ .x = max.x - 1, .y = max.y - 1 }, chars.bottom_right);
+            frame.setSymbol(.{ .x = max.x - 1, .y = max.y - 1 }, chars.bottom_right);
     }
 }

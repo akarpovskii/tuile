@@ -67,8 +67,8 @@ pub fn main() !void {
                 allocator,
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Button.create(allocator, .{ .label = "Button 1", .on_press = handle_press }),
-                    try widgets.Button.create(allocator, .{ .label = "Button 2", .on_press = handle_press }),
+                    try widgets.Button.create(allocator, .{ .label = "Button 1", .on_press = handlePress }),
+                    try widgets.Button.create(allocator, .{ .label = "Button 2", .on_press = handlePress }),
                 },
             ),
 
@@ -123,6 +123,6 @@ pub fn main() !void {
     try tui.run();
 }
 
-fn handle_press(label: []const u8) void {
+fn handlePress(label: []const u8) void {
     std.debug.print("\tPressed {s}", .{label});
 }

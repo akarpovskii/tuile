@@ -13,7 +13,7 @@ bg: Color,
 
 effect: Style.Effect = .{},
 
-pub fn set_style(self: *Cell, style: Style) void {
+pub fn setStyle(self: *Cell, style: Style) void {
     if (style.fg) |fg| {
         self.fg = fg;
     }

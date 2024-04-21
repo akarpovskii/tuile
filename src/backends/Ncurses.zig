@@ -41,11 +41,11 @@ pub fn create(allocator: std.mem.Allocator) !*Ncurses {
     }
 
     const Visibility = enum(c_int) {
-        Invisible = 0,
-        Visible = 1,
-        VeryVisible = 2,
+        invisible = 0,
+        visible = 1,
+        very_visible = 2,
     };
-    if (c.curs_set(@intFromEnum(Visibility.Invisible)) == c.ERR) return error.GeneralError;
+    if (c.curs_set(@intFromEnum(Visibility.invisible)) == c.ERR) return error.GeneralError;
 
     c.timeout(0);
 
@@ -69,7 +69,7 @@ pub fn backend(self: *Ncurses) Backend {
     return Backend.init(self);
 }
 
-pub fn poll_event(_: *Ncurses) !?events.Event {
+pub fn pollEvent(_: *Ncurses) !?events.Event {
     var ch = c.getch();
     if (ch == c.ERR) {
         return null;
@@ -79,22 +79,22 @@ pub fn poll_event(_: *Ncurses) !?events.Event {
     if (ch >= 1 and ch <= 26 and ch != '\t' and ch != '\n') {
         ctrl = true;
         ch = 'a' + ch - 1;
-        return .{ .CtrlChar = @intCast(ch) };
+        return .{ .ctrl_char = @intCast(ch) };
     }
 
-    if (parse_key(ch)) |value| {
-        return .{ .Key = value };
+    if (parseKey(ch)) |value| {
+        return .{ .key = value };
     }
 
     switch (ch) {
-        c.KEY_BTAB => return .{ .ShiftKey = .Tab },
+        c.KEY_BTAB => return .{ .shift_key = .Tab },
         else => {},
     }
 
-    return .{ .Char = @intCast(ch) };
+    return .{ .char = @intCast(ch) };
 }
 
-fn parse_key(ch: c_int) ?events.Key {
+fn parseKey(ch: c_int) ?events.Key {
     switch (ch) {
         @as(c_int, '\t') => return .Tab,
         @as(c_int, '\n') => return .Enter,
@@ -135,11 +135,11 @@ pub fn refresh(_: *Ncurses) !void {
     if (c.refresh() == c.ERR) return error.GeneralError;
 }
 
-pub fn print_at(_: *Ncurses, pos: Vec2, text: []const u8) !void {
+pub fn printAt(_: *Ncurses, pos: Vec2, text: []const u8) !void {
     _ = c.mvaddnstr(@intCast(pos.y), @intCast(pos.x), text.ptr, @intCast(text.len));
 }
 
-pub fn window_size(self: *Ncurses) !Vec2 {
+pub fn windowSize(self: *Ncurses) !Vec2 {
     _ = self;
     const x = c.getmaxx(c.stdscr);
     const y = c.getmaxy(c.stdscr);
@@ -150,17 +150,17 @@ pub fn window_size(self: *Ncurses) !Vec2 {
     };
 }
 
-pub fn enable_effect(_: *Ncurses, effect: Style.Effect) !void {
-    const attr = attr_for_effect(effect);
+pub fn enableEffect(_: *Ncurses, effect: Style.Effect) !void {
+    const attr = attrForEffect(effect);
     if (c.attron(attr) == c.ERR) return error.GeneralError;
 }
 
-pub fn disable_effect(_: *Ncurses, effect: Style.Effect) !void {
-    const attr = attr_for_effect(effect);
+pub fn disableEffect(_: *Ncurses, effect: Style.Effect) !void {
+    const attr = attrForEffect(effect);
     if (c.attroff(attr) == c.ERR) return error.GeneralError;
 }
 
-fn attr_for_effect(effect: Style.Effect) c_int {
+fn attrForEffect(effect: Style.Effect) c_int {
     var attr = c.A_NORMAL;
     if (effect.highlight) attr |= c.A_STANDOUT;
     if (effect.underline) attr |= c.A_UNDERLINE;
@@ -172,15 +172,15 @@ fn attr_for_effect(effect: Style.Effect) c_int {
     return @bitCast(attr);
 }
 
-pub fn use_color(self: *Ncurses, color_pair: ColorPair) !void {
+pub fn useColor(self: *Ncurses, color_pair: ColorPair) !void {
     if (!self.has_colors) {
         return;
     }
-    const pair = try self.get_or_init_color(color_pair);
+    const pair = try self.getOrInitColor(color_pair);
     if (c.attron(c.COLOR_PAIR(pair)) == c.ERR) return error.GeneralError;
 }
 
-fn get_or_init_color(self: *Ncurses, color_pair: ColorPair) !c_int {
+fn getOrInitColor(self: *Ncurses, color_pair: ColorPair) !c_int {
     if (self.color_pairs.get(color_pair)) |pair| {
         return pair;
     }
@@ -192,15 +192,15 @@ fn get_or_init_color(self: *Ncurses, color_pair: ColorPair) !c_int {
 
     const init_res = c.init_pair(
         @intCast(pair),
-        color_to_int(color_pair.fg),
-        color_to_int(color_pair.bg),
+        colorToInt(color_pair.fg),
+        colorToInt(color_pair.bg),
     );
     if (init_res == c.ERR) return error.GeneralError;
     try self.color_pairs.put(color_pair, pair);
     return pair;
 }
 
-fn color_to_int(color_: Color) c_short {
+fn colorToInt(color_: Color) c_short {
     // Source - https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
     const res = switch (color_) {
         .dark => |base| switch (base) {

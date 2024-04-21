@@ -9,8 +9,14 @@ allocator: std.mem.Allocator,
 
 listeners: std.ArrayList(Listener),
 
+mutex: std.Thread.Mutex,
+
 pub fn init(allocator: std.mem.Allocator) ChangeNotifier {
-    return ChangeNotifier{ .allocator = allocator, .listeners = std.ArrayList(Listener).init(allocator) };
+    return ChangeNotifier{
+        .allocator = allocator,
+        .listeners = std.ArrayList(Listener).init(allocator),
+        .mutex = .{},
+    };
 }
 
 pub fn deinit(self: *ChangeNotifier) void {
@@ -18,10 +24,14 @@ pub fn deinit(self: *ChangeNotifier) void {
 }
 
 pub fn addListener(self: *ChangeNotifier, listener: Listener) !void {
+    self.mutex.lock();
+    defer self.mutex.unlock();
     try self.listeners.append(listener);
 }
 
 pub fn removeListener(self: *ChangeNotifier, listener: Listener) void {
+    self.mutex.lock();
+    defer self.mutex.unlock();
     for (self.listeners.items, 0..) |existing, idx| {
         if (std.meta.eql(listener, existing)) {
             _ = self.listeners.orderedRemove(idx);
@@ -30,7 +40,9 @@ pub fn removeListener(self: *ChangeNotifier, listener: Listener) void {
     }
 }
 
-pub fn notifyListeners(self: ChangeNotifier) void {
+pub fn notifyListeners(self: *ChangeNotifier) void {
+    self.mutex.lock();
+    defer self.mutex.unlock();
     for (self.listeners.items) |listener| {
         listener.call();
     }

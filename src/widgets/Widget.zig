@@ -30,41 +30,44 @@ const VTable = struct {
 };
 
 pub fn init(context: anytype) Widget {
-    const T = @TypeOf(context);
-    const ptr_info = @typeInfo(T);
+    const PtrT = @TypeOf(context);
+    const ptr_info = @typeInfo(PtrT);
+    comptime if (ptr_info != .Pointer) {
+        @compileError("expected a widget pointer, got " ++ @typeName(PtrT));
+    };
 
     const vtable = struct {
         pub fn destroy(pointer: *anyopaque) void {
-            const self: T = @ptrCast(@alignCast(pointer));
+            const self: PtrT = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.destroy(self);
         }
 
         pub fn render(pointer: *anyopaque, area: Rect, frame: Frame, theme: Theme) anyerror!void {
-            const self: T = @ptrCast(@alignCast(pointer));
+            const self: PtrT = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.render(self, area, frame, theme);
         }
 
         pub fn layout(pointer: *anyopaque, constraints: Constraints) anyerror!Vec2 {
             std.debug.assert(constraints.min_width <= constraints.max_width);
             std.debug.assert(constraints.min_height <= constraints.max_height);
-            const self: T = @ptrCast(@alignCast(pointer));
+            const self: PtrT = @ptrCast(@alignCast(pointer));
             const size = try ptr_info.Pointer.child.layout(self, constraints);
             // std.debug.print("{any}\n", .{T});
             return size;
         }
 
         pub fn handleEvent(pointer: *anyopaque, event: events.Event) anyerror!events.EventResult {
-            const self: T = @ptrCast(@alignCast(pointer));
+            const self: PtrT = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.handleEvent(self, event);
         }
 
         pub fn layoutProps(pointer: *anyopaque) LayoutProperties {
-            const self: T = @ptrCast(@alignCast(pointer));
+            const self: PtrT = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.layoutProps(self);
         }
 
         pub fn prepare(pointer: *anyopaque) anyerror!void {
-            const self: T = @ptrCast(@alignCast(pointer));
+            const self: PtrT = @ptrCast(@alignCast(pointer));
             if (@hasDecl(ptr_info.Pointer.child, "prepare")) {
                 try ptr_info.Pointer.child.prepare(self);
             }

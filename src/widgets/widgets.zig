@@ -2,6 +2,7 @@ pub const Block = @import("Block.zig");
 pub const border = @import("border.zig");
 pub const Button = @import("Button.zig");
 pub const callbacks = @import("callbacks.zig");
+pub const ChangeNotifier = @import("ChangeNotifier.zig");
 pub const Checkbox = @import("Checkbox.zig");
 pub const CheckboxGroup = @import("CheckboxGroup.zig");
 pub const FocusHandler = @import("FocusHandler.zig");

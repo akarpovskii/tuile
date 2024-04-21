@@ -3,33 +3,57 @@ const tuile = @import("tuile");
 const widgets = tuile.widgets;
 const Align = widgets.LayoutProperties.Align;
 
-const ListView = struct {
+const ListState = struct {
     allocator: std.mem.Allocator,
 
     items: std.ArrayList([]const u8),
 
     input: ?[]const u8 = null,
 
-    need_rebuild: bool = false,
+    change_notifier: widgets.ChangeNotifier,
+    pub usingnamespace widgets.ChangeNotifier.Mixin(@This(), "change_notifier");
 
-    pub fn init(allocator: std.mem.Allocator) ListView {
-        return ListView{
+    pub fn init(allocator: std.mem.Allocator) ListState {
+        return ListState{
             .allocator = allocator,
             .items = std.ArrayList([]const u8).init(allocator),
+            .change_notifier = widgets.ChangeNotifier.init(allocator),
         };
     }
 
-    pub fn deinit(self: *ListView) void {
+    pub fn deinit(self: *ListState) void {
         for (self.items.items) |item| {
             self.allocator.free(item);
         }
+        self.change_notifier.deinit();
         self.items.deinit();
     }
 
-    pub fn build(self: *ListView) !widgets.Widget {
-        var lines = try std.ArrayList(*widgets.Label).initCapacity(self.allocator, self.items.items.len);
+    pub fn onPress(ptr: ?*anyopaque) void {
+        const self: *ListState = @ptrCast(@alignCast(ptr.?));
+        if (self.input) |input| {
+            if (input.len > 0) {
+                self.items.append(self.allocator.dupe(u8, input) catch @panic("OOM")) catch @panic("OOM");
+                self.notifyListeners();
+            }
+        }
+    }
+
+    pub fn inputChanged(ptr: ?*anyopaque, value: []const u8) void {
+        const self: *ListState = @ptrCast(@alignCast(ptr.?));
+        self.input = value;
+    }
+};
+
+const ListView = struct {
+    allocator: std.mem.Allocator,
+
+    pub fn build(self: *ListView, context: *widgets.StatefulWidget.BuildContext) !widgets.Widget {
+        const state: *ListState = try context.watch(ListState);
+
+        var lines = try std.ArrayList(*widgets.Label).initCapacity(self.allocator, state.items.items.len);
         defer lines.deinit();
-        for (self.items.items) |item| {
+        for (state.items.items) |item| {
             lines.append(try widgets.Label.create(self.allocator, .{ .text = item })) catch unreachable;
         }
 
@@ -43,28 +67,7 @@ const ListView = struct {
             ),
         );
 
-        self.need_rebuild = false;
-
         return widget.widget();
-    }
-
-    pub fn needRebuild(self: *ListView) bool {
-        return self.need_rebuild;
-    }
-
-    pub fn onPress(ptr: ?*anyopaque) void {
-        const self: *ListView = @ptrCast(@alignCast(ptr.?));
-        if (self.input) |input| {
-            if (input.len > 0) {
-                self.items.append(self.allocator.dupe(u8, input) catch @panic("OOM")) catch @panic("OOM");
-                self.need_rebuild = true;
-            }
-        }
-    }
-
-    pub fn inputChanged(ptr: ?*anyopaque, value: []const u8) void {
-        const self: *ListView = @ptrCast(@alignCast(ptr.?));
-        self.input = value;
     }
 };
 
@@ -80,8 +83,10 @@ pub fn main() !void {
         };
     }
 
-    var list_view = ListView.init(allocator);
-    defer list_view.deinit();
+    var list_state = ListState.init(allocator);
+    defer list_state.deinit();
+
+    var list_view = ListView{ .allocator = allocator };
 
     const layout = try widgets.StackLayout.create(
         allocator,
@@ -90,6 +95,7 @@ pub fn main() !void {
             try widgets.StatefulWidget.create(
                 allocator,
                 &list_view,
+                &list_state,
             ),
 
             try widgets.StackLayout.create(
@@ -99,15 +105,15 @@ pub fn main() !void {
                     try widgets.Input.create(allocator, .{
                         .layout = .{ .flex = 1 },
                         .on_value_changed = .{
-                            .cb = ListView.inputChanged,
-                            .payload = &list_view,
+                            .cb = ListState.inputChanged,
+                            .payload = &list_state,
                         },
                     }),
                     try widgets.Button.create(allocator, .{
                         .label = "Submit",
                         .on_press = .{
-                            .cb = ListView.onPress,
-                            .payload = &list_view,
+                            .cb = ListState.onPress,
+                            .payload = &list_state,
                         },
                     }),
                 },

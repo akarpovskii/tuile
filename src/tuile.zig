@@ -1,15 +1,15 @@
 const std = @import("std");
 
-pub const widgets = @import("widgets/widgets.zig");
 pub const backends = @import("backends/backends.zig");
 pub const render = @import("render/render.zig");
-pub const events = @import("events.zig");
+pub const widgets = @import("widgets/widgets.zig");
 pub const border = @import("border.zig");
 pub const color = @import("color.zig");
-pub const Vec2 = @import("Vec2.zig");
+pub const events = @import("events.zig");
 pub const Rect = @import("Rect.zig");
 pub const Style = @import("Style.zig");
 pub const Theme = @import("Theme.zig");
+pub const Vec2 = @import("Vec2.zig");
 
 pub const Tuile = struct {
     allocator: std.mem.Allocator,

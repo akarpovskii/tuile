@@ -1,4 +1,5 @@
 pub const Block = @import("Block.zig");
+pub const border = @import("border.zig");
 pub const Button = @import("Button.zig");
 pub const Checkbox = @import("Checkbox.zig");
 pub const CheckboxGroup = @import("CheckboxGroup.zig");

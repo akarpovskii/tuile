@@ -27,7 +27,7 @@ pub fn main() !void {
                     .{ .theme = .{ .background = .{ .bright = .yellow } } },
                     try widgets.Block.create(
                         allocator,
-                        .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
+                        .{ .border = widgets.border.Border.all(), .layout = .{ .flex = 1 } },
                         try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
                     ),
                 ),
@@ -40,7 +40,7 @@ pub fn main() !void {
                 .{
                     try widgets.Block.create(
                         allocator,
-                        .{ .border = tuile.border.Border.all(), .border_type = .rounded },
+                        .{ .border = widgets.border.Border.all(), .border_type = .rounded },
                         try widgets.Label.create(allocator, .{ .text = "Label text 4 aaaaaa" }),
                     ),
                     try widgets.Label.create(allocator, .{ .text = "Label text 5" }),
@@ -49,7 +49,7 @@ pub fn main() !void {
             try widgets.Block.create(
                 allocator,
                 .{
-                    .border = tuile.border.Border.all(),
+                    .border = widgets.border.Border.all(),
                     .border_type = .rounded,
                     .padding = .{ .top = 1, .bottom = 2, .left = 3, .right = 0 },
                 },
@@ -58,7 +58,7 @@ pub fn main() !void {
             try widgets.Block.create(
                 allocator,
                 .{
-                    .border = tuile.border.Border.none(),
+                    .border = widgets.border.Border.none(),
                     .padding = .{ .top = 1, .bottom = 1, .left = 1, .right = 1 },
                 },
                 try widgets.Label.create(allocator, .{ .text = "Padding\nwithout borders" }),
@@ -79,7 +79,7 @@ pub fn main() !void {
                     try widgets.Spacer.create(allocator, .{}),
                     try widgets.Block.create(
                         allocator,
-                        .{ .border = tuile.border.Border.all(), .border_type = .double },
+                        .{ .border = widgets.border.Border.all(), .border_type = .double },
                         try widgets.CheckboxGroup.create(
                             allocator,
                             .{ .multiselect = false },
@@ -93,7 +93,7 @@ pub fn main() !void {
                     try widgets.Spacer.create(allocator, .{ .layout = .{ .max_width = 10, .max_height = 1 } }),
                     try widgets.Block.create(
                         allocator,
-                        .{ .border = tuile.border.Border.all(), .border_type = .double },
+                        .{ .border = widgets.border.Border.all(), .border_type = .double },
                         try widgets.CheckboxGroup.create(
                             allocator,
                             .{ .multiselect = true },

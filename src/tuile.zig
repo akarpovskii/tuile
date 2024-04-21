@@ -3,7 +3,6 @@ const std = @import("std");
 pub const backends = @import("backends/backends.zig");
 pub const render = @import("render/render.zig");
 pub const widgets = @import("widgets/widgets.zig");
-pub const border = @import("border.zig");
 pub const color = @import("color.zig");
 pub const events = @import("events.zig");
 pub const Rect = @import("Rect.zig");

@@ -10,6 +10,7 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const Theme = @import("../Theme.zig");
 
+// TODO: don't make it generic over inner
 pub fn Block(comptime Inner: anytype) type {
     return struct {
         const Self = @This();
@@ -85,7 +86,7 @@ pub fn Block(comptime Inner: anytype) type {
             };
 
             if (content_area.min.x > content_area.max.x or content_area.min.y > content_area.max.y) {
-                self.render_border(area, frame);
+                self.render_border(area, frame, theme);
             } else {
                 var inner_area = Rect{
                     .min = content_area.min,
@@ -96,7 +97,7 @@ pub fn Block(comptime Inner: anytype) type {
                 inner_area = content_area.align_inside(props.alignment, inner_area);
 
                 try self.inner.render(inner_area, frame.with_area(inner_area), theme);
-                self.render_border(area, frame);
+                self.render_border(area, frame, theme);
             }
         }
 
@@ -142,39 +143,49 @@ pub fn Block(comptime Inner: anytype) type {
             return self.layout_properties;
         }
 
-        fn render_border(self: *Self, area: Rect, frame: Frame) void {
+        fn render_border(self: *Self, area: Rect, frame: Frame, _: Theme) void {
+            const min = area.min;
+            const max = area.max;
+            const chars = self.border_chars;
+
             if (area.height() > 0) {
-                var x = area.min.x;
+                // frame.set_style(.{ .min = min, .max = .{ .x = max.x, .y = min.y + 1 } }, .{ .fg = theme.primary });
+                // frame.set_style(.{ .min = .{ .x = min.x, .y = max.y - 1 }, .max = max }, .{ .fg = theme.primary });
+
+                var x = min.x;
                 while (x < area.max.x) : (x += 1) {
                     if (self.border.top)
-                        frame.set_symbol(.{ .x = x, .y = area.min.y }, self.border_chars.top);
+                        frame.set_symbol(.{ .x = x, .y = min.y }, chars.top);
                     if (self.border.bottom)
-                        frame.set_symbol(.{ .x = x, .y = area.max.y - 1 }, self.border_chars.bottom);
+                        frame.set_symbol(.{ .x = x, .y = max.y - 1 }, chars.bottom);
                 }
             }
 
             if (area.width() > 0) {
-                var y = area.min.y;
-                while (y < area.max.y) : (y += 1) {
+                // frame.set_style(.{ .min = min, .max = .{ .x = min.x + 1, .y = max.y } }, .{ .fg = theme.primary });
+                // frame.set_style(.{ .min = .{ .x = max.x - 1, .y = min.y }, .max = max }, .{ .fg = theme.primary });
+
+                var y = min.y;
+                while (y < max.y) : (y += 1) {
                     if (self.border.left)
-                        frame.set_symbol(.{ .x = area.min.x, .y = y }, self.border_chars.left);
+                        frame.set_symbol(.{ .x = min.x, .y = y }, chars.left);
                     if (self.border.right)
-                        frame.set_symbol(.{ .x = area.max.x - 1, .y = y }, self.border_chars.right);
+                        frame.set_symbol(.{ .x = max.x - 1, .y = y }, chars.right);
                 }
             }
 
             if (area.height() > 1 and area.width() > 1) {
                 if (self.border.top and self.border.left)
-                    frame.set_symbol(.{ .x = area.min.x, .y = area.min.y }, self.border_chars.top_left);
+                    frame.set_symbol(.{ .x = min.x, .y = min.y }, chars.top_left);
 
                 if (self.border.top and self.border.right)
-                    frame.set_symbol(.{ .x = area.max.x - 1, .y = area.min.y }, self.border_chars.top_right);
+                    frame.set_symbol(.{ .x = max.x - 1, .y = min.y }, chars.top_right);
 
                 if (self.border.bottom and self.border.left)
-                    frame.set_symbol(.{ .x = area.min.x, .y = area.max.y - 1 }, self.border_chars.bottom_left);
+                    frame.set_symbol(.{ .x = min.x, .y = max.y - 1 }, chars.bottom_left);
 
                 if (self.border.bottom and self.border.right)
-                    frame.set_symbol(.{ .x = area.max.x - 1, .y = area.max.y - 1 }, self.border_chars.bottom_right);
+                    frame.set_symbol(.{ .x = max.x - 1, .y = max.y - 1 }, chars.bottom_right);
             }
         }
     };

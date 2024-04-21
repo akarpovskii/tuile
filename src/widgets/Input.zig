@@ -53,7 +53,7 @@ pub fn widget(self: *Input) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Input, area: Rect, frame: Frame, _: Theme) !void {
+pub fn render(self: *Input, area: Rect, frame: Frame, theme: Theme) !void {
     if (area.height() < 1) {
         return;
     }
@@ -67,16 +67,20 @@ pub fn render(self: *Input, area: Rect, frame: Frame, _: Theme) !void {
     _ = try frame.write_symbols(area.min, visible, area.width());
 
     if (self.focus_handler.focused) {
-        var end_pos = area.min;
-        end_pos.x += @intCast(self.cursor - self.view_start);
-        if (end_pos.x >= area.max.x) {
-            end_pos.x = area.max.x - 1;
+        var cursor_pos = area.min;
+        cursor_pos.x += @intCast(self.cursor - self.view_start);
+        if (cursor_pos.x >= area.max.x) {
+            cursor_pos.x = area.max.x - 1;
         }
         const end_area = Rect{
-            .min = end_pos,
-            .max = end_pos.add(.{ .x = 1, .y = 1 }),
+            .min = cursor_pos,
+            .max = cursor_pos.add(.{ .x = 1, .y = 1 }),
         };
-        frame.set_style(end_area, .{ .fg = .{ .bright = .black }, .add_effect = .{ .reverse = true } });
+        frame.set_style(end_area, .{
+            .fg = theme.cursor,
+            .add_effect = .{ .reverse = true },
+            .sub_effect = .{ .dim = true },
+        });
     }
 }
 

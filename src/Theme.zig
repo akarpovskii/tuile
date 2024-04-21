@@ -3,14 +3,14 @@ const color = @import("color.zig");
 const Color = color.Color;
 const Rgb = color.Rgb;
 
-foreground: Color = .{ .dark = .black },
+foreground: Color = .{ .rgb = color.Rgb{ .r = 10, .g = 4, .b = 31 } },
 
-background: Color = .{ .rgb = Rgb.white() },
+background: Color = .{ .rgb = color.Rgb{ .r = 245, .g = 245, .b = 254 } },
 
-primary: Color = .{ .dark = .black },
+primary: Color = .{ .rgb = color.Rgb{ .r = 67, .g = 44, .b = 228 } },
 
-secondary: Color = .{ .rgb = Rgb.white() },
+secondary: Color = .{ .rgb = color.Rgb{ .r = 239, .g = 131, .b = 215 } },
 
-accent: Color = .{ .dark = .black },
+accent: Color = .{ .rgb = color.Rgb{ .r = 233, .g = 87, .b = 145 } },
 
-cursor: Color = .{ .dark = .black },
+cursor: Color = .{ .rgb = color.Rgb{ .r = 239, .g = 131, .b = 215 } },

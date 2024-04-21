@@ -19,10 +19,18 @@ pub fn main() !void {
         allocator,
         .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
         .{
-            try widgets.Block(widgets.Label).create(
+            try widgets.Themed.create(
                 allocator,
-                .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
-                try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
+                .{ .theme = .{ .background = .{ .rgb = tuile.color.Rgb.blue() }, .foreground = .{ .rgb = tuile.color.Rgb.white() } } },
+                try widgets.Themed.create(
+                    allocator,
+                    .{ .theme = .{ .background = .{ .bright = .yellow } } },
+                    try widgets.Block(widgets.Label).create(
+                        allocator,
+                        .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
+                        try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
+                    ),
+                ),
             ),
             try widgets.Label.create(allocator, .{ .text = "Label text 2" }),
             try widgets.Label.create(allocator, .{ .text = "Label text 3" }),

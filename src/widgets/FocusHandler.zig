@@ -23,8 +23,8 @@ pub fn handle_event(self: *FocusHandler, event: events.Event) events.EventResult
     }
 }
 
-pub fn render(self: *FocusHandler, area: Rect, frame: Frame, _: Theme) void {
+pub fn render(self: *FocusHandler, area: Rect, frame: Frame, theme: Theme) void {
     if (self.focused) {
-        frame.set_style(area, .{ .add_effect = .{ .highlight = true } });
+        frame.set_style(area, .{ .bg = theme.secondary });
     }
 }

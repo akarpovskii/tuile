@@ -10,8 +10,8 @@ pub fn main() !void {
     var tui = try tuile.Tuile.init();
     defer tui.deinit();
 
-    const layout = tuile.stack_layout(
-        .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
+    const layout = tuile.vertical(
+        .{ .layout = .{ .flex = 1 } },
         .{
             tuile.themed(
                 .{ .theme = .{
@@ -30,8 +30,8 @@ pub fn main() !void {
             ),
             tuile.label(.{ .text = "Label text 2" }),
             tuile.label(.{ .text = "Label text 3" }),
-            tuile.stack_layout(
-                .{ .orientation = .horizontal },
+            tuile.horizontal(
+                .{},
                 .{
                     tuile.block(
                         .{ .border = tuile.border.Border.all(), .border_type = .rounded },
@@ -55,16 +55,16 @@ pub fn main() !void {
                 },
                 tuile.label(.{ .text = "Padding\nwithout borders" }),
             ),
-            tuile.stack_layout(
-                .{ .orientation = .horizontal },
+            tuile.horizontal(
+                .{},
                 .{
                     tuile.button(.{ .label = "Button 1" }),
                     tuile.button(.{ .label = "Button 2" }),
                 },
             ),
 
-            tuile.stack_layout(
-                .{ .orientation = .horizontal },
+            tuile.horizontal(
+                .{},
                 .{
                     tuile.spacer(.{}),
                     tuile.block(
@@ -93,8 +93,8 @@ pub fn main() !void {
                     tuile.spacer(.{}),
                 },
             ),
-            tuile.stack_layout(
-                .{ .orientation = .horizontal },
+            tuile.horizontal(
+                .{},
                 .{
                     tuile.input(.{ .placeholder = "placeholder", .layout = .{ .flex = 1 } }),
                     tuile.button(.{ .label = "Submit" }),

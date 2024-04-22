@@ -78,8 +78,8 @@ const ProgressView = struct {
             std.mem.copyForwards(u8, bar[i * "█".len ..], "█");
         }
 
-        const stack = try tuile.stack_layout(
-            .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
+        const stack = try tuile.vertical(
+            .{ .layout = .{ .flex = 1 } },
             .{
                 tuile.label(.{ .text = bar, .layout = .{ .alignment = tuile.LayoutProperties.Align.center() } }),
                 tuile.spacer(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
@@ -122,8 +122,8 @@ pub fn main() !void {
     defer app_state.deinit();
     var progress_view = ProgressView{};
 
-    const layout = tuile.stack_layout(
-        .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
+    const layout = tuile.vertical(
+        .{ .layout = .{ .flex = 1 } },
         .{
             tuile.stateful(&progress_view, app_state),
         },

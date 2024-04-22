@@ -114,6 +114,10 @@ pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResul
                             const nested_result = try option.handleEvent(.{ .char = ' ' });
                             std.debug.assert(nested_result == .consumed);
                             std.debug.assert(option.checked == false);
+
+                            if (self.on_state_change) |on_state_change| {
+                                on_state_change.call(idx, option.checked);
+                            }
                         }
                     }
                 }

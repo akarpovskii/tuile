@@ -25,5 +25,15 @@ pub const input = Input.create;
 pub const label = Label.create;
 pub const spacer = Spacer.create;
 pub const stack_layout = StackLayout.create;
+pub fn horizontal(config: StackLayout.Config, children: anytype) !*StackLayout {
+    var cfg = config;
+    cfg.orientation = .horizontal;
+    return StackLayout.create(cfg, children);
+}
+pub fn vertical(config: StackLayout.Config, children: anytype) !*StackLayout {
+    var cfg = config;
+    cfg.orientation = .vertical;
+    return StackLayout.create(cfg, children);
+}
 pub const stateful = StatefulWidget.create;
 pub const themed = Themed.create;

@@ -57,8 +57,8 @@ const ListView = struct {
 
         const widget = try tuile.block(
             .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
-            try tuile.stack_layout(
-                .{ .orientation = .vertical },
+            try tuile.vertical(
+                .{},
                 lines.items,
             ),
         );
@@ -80,13 +80,13 @@ pub fn main() !void {
 
     var list_view = ListView{ .allocator = allocator };
 
-    const layout = tuile.stack_layout(
-        .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
+    const layout = tuile.vertical(
+        .{ .layout = .{ .flex = 1 } },
         .{
             tuile.stateful(&list_view, &list_state),
 
-            tuile.stack_layout(
-                .{ .orientation = .horizontal },
+            tuile.horizontal(
+                .{},
                 .{
                     tuile.input(.{
                         .layout = .{ .flex = 1 },

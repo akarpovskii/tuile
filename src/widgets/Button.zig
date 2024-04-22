@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -22,30 +23,26 @@ pub const Config = struct {
 
 pub const Button = @This();
 
-allocator: std.mem.Allocator,
-
 view: *Label,
 
 focus_handler: FocusHandler = .{},
 
 on_press: ?callbacks.Callback(void),
 
-pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
-    var label = try allocator.alloc(u8, config.label.len + 2);
-    defer allocator.free(label);
+pub fn create(config: Config) !*Button {
+    var label = try internal.allocator.alloc(u8, config.label.len + 2);
+    defer internal.allocator.free(label);
 
     std.mem.copyForwards(u8, label[1..], config.label);
     label[0] = '[';
     label[label.len - 1] = ']';
 
     const view = try Label.create(
-        allocator,
         .{ .text = label, .layout = config.layout },
     );
 
-    const self = try allocator.create(Button);
+    const self = try internal.allocator.create(Button);
     self.* = Button{
-        .allocator = allocator,
         .view = view,
         .on_press = config.on_press,
     };
@@ -54,7 +51,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Button {
 
 pub fn destroy(self: *Button) void {
     self.view.destroy();
-    self.allocator.destroy(self);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Button) Widget {

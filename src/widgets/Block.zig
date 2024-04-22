@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -24,8 +25,6 @@ pub const Config = struct {
     layout: LayoutProperties = .{},
 };
 
-allocator: std.mem.Allocator,
-
 inner: Widget,
 
 inner_size: Vec2 = Vec2.zero(),
@@ -40,13 +39,12 @@ fit_content: bool,
 
 layout_properties: LayoutProperties,
 
-pub fn create(allocator: std.mem.Allocator, config: Config, inner: anytype) !*Block {
+pub fn create(config: Config, inner: anytype) !*Block {
     const border_chars = border.BorderCharacters.fromType(config.border_type);
 
-    const self = try allocator.create(Block);
+    const self = try internal.allocator.create(Block);
     self.* = Block{
-        .allocator = allocator,
-        .inner = if (@TypeOf(inner) == Widget) inner else inner.widget(),
+        .inner = try Widget.fromAny(inner),
         .border = config.border,
         .border_chars = border_chars,
         .border_widths = .{
@@ -63,7 +61,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, inner: anytype) !*Bl
 
 pub fn destroy(self: *Block) void {
     self.inner.destroy();
-    self.allocator.destroy(self);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Block) Widget {

@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -21,8 +22,6 @@ pub const Config = struct {
 
 const Input = @This();
 
-allocator: std.mem.Allocator,
-
 placeholder: []const u8,
 
 on_value_changed: ?callbacks.Callback([]const u8),
@@ -37,22 +36,21 @@ cursor: u32 = 0,
 
 view_start: usize = 0,
 
-pub fn create(allocator: std.mem.Allocator, config: Config) !*Input {
-    const self = try allocator.create(Input);
+pub fn create(config: Config) !*Input {
+    const self = try internal.allocator.create(Input);
     self.* = Input{
-        .allocator = allocator,
         .on_value_changed = config.on_value_changed,
-        .placeholder = try allocator.dupe(u8, config.placeholder),
-        .value = std.ArrayList(u8).init(allocator),
+        .placeholder = try internal.allocator.dupe(u8, config.placeholder),
+        .value = std.ArrayList(u8).init(internal.allocator),
         .layout_properties = config.layout,
     };
     return self;
 }
 
 pub fn destroy(self: *Input) void {
-    self.allocator.free(self.placeholder);
     self.value.deinit();
-    self.allocator.destroy(self);
+    internal.allocator.free(self.placeholder);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Input) Widget {

@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -38,17 +39,14 @@ pub const Config = struct {
     theme: PartialTheme,
 };
 
-allocator: std.mem.Allocator,
-
 inner: Widget,
 
 partial_theme: PartialTheme,
 
-pub fn create(allocator: std.mem.Allocator, config: Config, inner: anytype) !*Themed {
-    const self = try allocator.create(Themed);
+pub fn create(config: Config, inner: anytype) !*Themed {
+    const self = try internal.allocator.create(Themed);
     self.* = Themed{
-        .allocator = allocator,
-        .inner = if (@TypeOf(inner) == Widget) inner else inner.widget(),
+        .inner = try Widget.fromAny(inner),
         .partial_theme = config.theme,
     };
     return self;
@@ -56,7 +54,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, inner: anytype) !*Th
 
 pub fn destroy(self: *Themed) void {
     self.inner.destroy();
-    self.allocator.destroy(self);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Themed) Widget {

@@ -1,20 +1,18 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const callbacks = @import("callbacks.zig");
 
 const ChangeNotifier = @This();
 
 pub const Listener = callbacks.Callback(void);
 
-allocator: std.mem.Allocator,
-
 listeners: std.ArrayList(Listener),
 
 mutex: std.Thread.Mutex,
 
-pub fn init(allocator: std.mem.Allocator) ChangeNotifier {
+pub fn init() ChangeNotifier {
     return ChangeNotifier{
-        .allocator = allocator,
-        .listeners = std.ArrayList(Listener).init(allocator),
+        .listeners = std.ArrayList(Listener).init(internal.allocator),
         .mutex = .{},
     };
 }
@@ -77,11 +75,7 @@ const TestListener = struct {
 };
 
 test "listeners are notified" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    var notifier = ChangeNotifier.init(allocator);
+    var notifier = ChangeNotifier.init();
     defer notifier.deinit();
 
     var listener = TestListener{};
@@ -92,11 +86,7 @@ test "listeners are notified" {
 }
 
 test "listeners can be added multiple times" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    var notifier = ChangeNotifier.init(allocator);
+    var notifier = ChangeNotifier.init();
     defer notifier.deinit();
 
     var listener = TestListener{};
@@ -108,11 +98,7 @@ test "listeners can be added multiple times" {
 }
 
 test "listeners are being removed" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    var notifier = ChangeNotifier.init(allocator);
+    var notifier = ChangeNotifier.init();
     defer notifier.deinit();
 
     var listener = TestListener{};
@@ -126,11 +112,7 @@ test "listeners are being removed" {
 }
 
 test "duplicate listeners are removed only once" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    var notifier = ChangeNotifier.init(allocator);
+    var notifier = ChangeNotifier.init();
     defer notifier.deinit();
 
     var listener = TestListener{};
@@ -150,11 +132,7 @@ test "mixin adds methods" {
         usingnamespace ChangeNotifier.Mixin(@This(), "change_notifier");
     };
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    var notifier = MixinNotifier{ .change_notifier = ChangeNotifier.init(allocator) };
+    var notifier = MixinNotifier{ .change_notifier = ChangeNotifier.init() };
     defer {
         notifier.change_notifier.deinit();
     }

@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -21,8 +22,6 @@ pub const Config = struct {
 
 pub const StackLayout = @This();
 
-allocator: std.mem.Allocator,
-
 widgets: std.ArrayList(Widget),
 
 widget_sizes: std.ArrayList(Vec2),
@@ -33,28 +32,30 @@ focused: ?usize = null,
 
 layout_properties: LayoutProperties,
 
-pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !*StackLayout {
-    var widgets = std.ArrayList(Widget).init(allocator);
+fn createWidgets(children: anytype) !std.ArrayList(Widget) {
+    var widgets = std.ArrayList(Widget).init(internal.allocator);
 
     const info = @typeInfo(@TypeOf(children));
     if (info == .Struct and info.Struct.is_tuple) {
+        // Tuples only support comptime indexing
         inline for (children) |child| {
-            // Tuples only support comptime indexing
-            const w = if (@TypeOf(child) == Widget) child else child.widget();
-            try widgets.append(w);
+            try widgets.append(try Widget.fromAny(child));
         }
     } else {
         for (children) |child| {
-            const w = if (@TypeOf(child) == Widget) child else child.widget();
-            try widgets.append(w);
+            try widgets.append(try Widget.fromAny(child));
         }
     }
+    return widgets;
+}
 
-    const self = try allocator.create(StackLayout);
+pub fn create(config: Config, children: anytype) !*StackLayout {
+    const widgets = try createWidgets(children);
+
+    const self = try internal.allocator.create(StackLayout);
     self.* = StackLayout{
-        .allocator = allocator,
         .widgets = widgets,
-        .widget_sizes = std.ArrayList(Vec2).init(allocator),
+        .widget_sizes = std.ArrayList(Vec2).init(internal.allocator),
         .orientation = config.orientation,
         .layout_properties = config.layout,
     };
@@ -62,8 +63,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !
 }
 
 pub fn add(self: *StackLayout, child: anytype) !void {
-    const w = if (@TypeOf(child) == Widget) child else child.widget();
-    try self.widgets.append(w);
+    try self.widgets.append(try Widget.fromAny(child));
 }
 
 pub fn destroy(self: *StackLayout) void {
@@ -72,7 +72,7 @@ pub fn destroy(self: *StackLayout) void {
     }
     self.widgets.deinit();
     self.widget_sizes.deinit();
-    self.allocator.destroy(self);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *StackLayout) Widget {
@@ -150,9 +150,9 @@ pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orienta
     self.widget_sizes.clearRetainingCapacity();
     try self.widget_sizes.resize(self.widgets.items.len);
 
-    var flex_indices = std.ArrayList(usize).init(self.allocator);
+    var flex_indices = std.ArrayList(usize).init(internal.allocator);
     defer flex_indices.deinit();
-    var fixed_indices = std.ArrayList(usize).init(self.allocator);
+    var fixed_indices = std.ArrayList(usize).init(internal.allocator);
     defer fixed_indices.deinit();
 
     for (self.widgets.items, 0..) |w, idx| {

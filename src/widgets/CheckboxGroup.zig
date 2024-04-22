@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -19,22 +20,42 @@ pub const Config = struct {
 
 pub const CheckboxGroup = @This();
 
-allocator: std.mem.Allocator,
-
 view: *StackLayout,
 
 multiselect: bool,
 
-pub fn create(allocator: std.mem.Allocator, config: Config, options: anytype) !*CheckboxGroup {
-    inline for (options) |opt| {
-        const T = @TypeOf(opt);
-        if (T != *Checkbox) @compileError("expected type *Checkbox, found" ++ @typeName(T));
+fn assertCheckbox(any: anytype) void {
+    const T = @TypeOf(any);
+    const info = @typeInfo(T);
+
+    const Underlying = if (info == .ErrorUnion)
+        info.ErrorUnion.payload
+    else
+        T;
+
+    if (Underlying != *Checkbox) @compileError("expected type *Checkbox, found" ++ @typeName(Underlying));
+}
+
+fn assertCheckboxes(options: anytype) void {
+    const info = @typeInfo(@TypeOf(options));
+    if (info == .Struct and info.Struct.is_tuple) {
+        // Tuples only support comptime indexing
+        inline for (options) |opt| {
+            assertCheckbox(opt);
+        }
+    } else {
+        for (options) |opt| {
+            assertCheckbox(opt);
+        }
     }
-    const self = try allocator.create(CheckboxGroup);
+}
+
+pub fn create(config: Config, options: anytype) !*CheckboxGroup {
+    assertCheckboxes(options);
+
+    const self = try internal.allocator.create(CheckboxGroup);
     self.* = CheckboxGroup{
-        .allocator = allocator,
         .view = try StackLayout.create(
-            allocator,
             .{ .layout = config.layout },
             options,
         ),
@@ -45,7 +66,7 @@ pub fn create(allocator: std.mem.Allocator, config: Config, options: anytype) !*
 
 pub fn destroy(self: *CheckboxGroup) void {
     self.view.destroy();
-    self.allocator.destroy(self);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *CheckboxGroup) Widget {

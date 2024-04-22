@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -26,8 +27,6 @@ const Marker = struct {
     const Basic: []const u8 = "[ ] ";
 };
 
-allocator: std.mem.Allocator,
-
 label: []const u8,
 
 focus_handler: FocusHandler = .{},
@@ -36,11 +35,10 @@ layout_properties: LayoutProperties,
 
 checked: bool,
 
-pub fn create(allocator: std.mem.Allocator, config: Config) !*Checkbox {
-    const self = try allocator.create(Checkbox);
+pub fn create(config: Config) !*Checkbox {
+    const self = try internal.allocator.create(Checkbox);
     self.* = Checkbox{
-        .allocator = allocator,
-        .label = try allocator.dupe(u8, config.label),
+        .label = try internal.allocator.dupe(u8, config.label),
         .checked = config.checked,
         .layout_properties = config.layout,
     };
@@ -48,8 +46,8 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Checkbox {
 }
 
 pub fn destroy(self: *Checkbox) void {
-    self.allocator.free(self.label);
-    self.allocator.destroy(self);
+    internal.allocator.free(self.label);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Checkbox) Widget {

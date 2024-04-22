@@ -110,3 +110,15 @@ pub inline fn layoutProps(self: Widget) LayoutProperties {
 pub inline fn prepare(self: Widget) anyerror!void {
     return self.vtable.prepare(self.context);
 }
+
+pub fn fromAny(any: anytype) anyerror!Widget {
+    const ok = if (@typeInfo(@TypeOf(any)) == .ErrorUnion)
+        try any
+    else
+        any;
+
+    return if (@TypeOf(ok) == Widget)
+        ok
+    else
+        ok.widget();
+}

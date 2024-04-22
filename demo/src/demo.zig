@@ -2,12 +2,13 @@ const std = @import("std");
 const tuile = @import("tuile");
 const widgets = tuile.widgets;
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+pub const tuile_allocator = gpa.allocator();
 
-    var tui = try tuile.Tuile.init(allocator);
+pub fn main() !void {
+    defer _ = gpa.deinit();
+
+    var tui = try tuile.Tuile.init();
     defer {
         tui.deinit() catch {
             std.debug.print("Failed to deinit ncurses", .{});
@@ -15,103 +16,93 @@ pub fn main() !void {
     }
 
     const layout = try widgets.StackLayout.create(
-        allocator,
         .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
         .{
-            try widgets.Themed.create(
-                allocator,
-                .{ .theme = .{ .background = .{ .rgb = tuile.color.Rgb.blue() }, .foreground = .{ .rgb = tuile.color.Rgb.white() } } },
-                try widgets.Themed.create(
-                    allocator,
-                    .{ .theme = .{ .background = .{ .bright = .yellow } } },
-                    try widgets.Block.create(
-                        allocator,
+            widgets.Themed.create(
+                .{ .theme = .{
+                    .background = .{ .rgb = tuile.color.Rgb.blue() },
+                    .foreground = .{ .rgb = tuile.color.Rgb.white() },
+                } },
+                widgets.Themed.create(
+                    .{ .theme = .{
+                        .background = .{ .bright = .yellow },
+                    } },
+                    widgets.Block.create(
                         .{ .border = widgets.border.Border.all(), .layout = .{ .flex = 1 } },
-                        try widgets.Label.create(allocator, .{ .text = "Label text 1" }),
+                        widgets.Label.create(.{ .text = "Label text 1" }),
                     ),
                 ),
             ),
-            try widgets.Label.create(allocator, .{ .text = "Label text 2" }),
-            try widgets.Label.create(allocator, .{ .text = "Label text 3" }),
-            try widgets.StackLayout.create(
-                allocator,
+            widgets.Label.create(.{ .text = "Label text 2" }),
+            widgets.Label.create(.{ .text = "Label text 3" }),
+            widgets.StackLayout.create(
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Block.create(
-                        allocator,
+                    widgets.Block.create(
                         .{ .border = widgets.border.Border.all(), .border_type = .rounded },
-                        try widgets.Label.create(allocator, .{ .text = "Label text 4 aaaaaa" }),
+                        widgets.Label.create(.{ .text = "Label text 4 aaaaaa" }),
                     ),
-                    try widgets.Label.create(allocator, .{ .text = "Label text 5" }),
+                    widgets.Label.create(.{ .text = "Label text 5" }),
                 },
             ),
-            try widgets.Block.create(
-                allocator,
+            widgets.Block.create(
                 .{
                     .border = widgets.border.Border.all(),
                     .border_type = .rounded,
                     .padding = .{ .top = 1, .bottom = 2, .left = 3, .right = 0 },
                 },
-                try widgets.Label.create(allocator, .{ .text = "Multiline\nlabel text" }),
+                widgets.Label.create(.{ .text = "Multiline\nlabel text" }),
             ),
-            try widgets.Block.create(
-                allocator,
+            widgets.Block.create(
                 .{
                     .border = widgets.border.Border.none(),
                     .padding = .{ .top = 1, .bottom = 1, .left = 1, .right = 1 },
                 },
-                try widgets.Label.create(allocator, .{ .text = "Padding\nwithout borders" }),
+                widgets.Label.create(.{ .text = "Padding\nwithout borders" }),
             ),
-            try widgets.StackLayout.create(
-                allocator,
+            widgets.StackLayout.create(
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Button.create(allocator, .{ .label = "Button 1" }),
-                    try widgets.Button.create(allocator, .{ .label = "Button 2" }),
+                    widgets.Button.create(.{ .label = "Button 1" }),
+                    widgets.Button.create(.{ .label = "Button 2" }),
                 },
             ),
 
-            try widgets.StackLayout.create(
-                allocator,
+            widgets.StackLayout.create(
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Spacer.create(allocator, .{}),
-                    try widgets.Block.create(
-                        allocator,
+                    widgets.Spacer.create(.{}),
+                    widgets.Block.create(
                         .{ .border = widgets.border.Border.all(), .border_type = .double },
-                        try widgets.CheckboxGroup.create(
-                            allocator,
+                        widgets.CheckboxGroup.create(
                             .{ .multiselect = false },
                             .{
-                                try widgets.Checkbox.create(allocator, .{ .label = "Option 1" }),
-                                try widgets.Checkbox.create(allocator, .{ .label = "Option 2" }),
-                                try widgets.Checkbox.create(allocator, .{ .label = "Option 3" }),
+                                widgets.Checkbox.create(.{ .label = "Option 1" }),
+                                widgets.Checkbox.create(.{ .label = "Option 2" }),
+                                widgets.Checkbox.create(.{ .label = "Option 3" }),
                             },
                         ),
                     ),
-                    try widgets.Spacer.create(allocator, .{ .layout = .{ .max_width = 10, .max_height = 1 } }),
-                    try widgets.Block.create(
-                        allocator,
+                    widgets.Spacer.create(.{ .layout = .{ .max_width = 10, .max_height = 1 } }),
+                    widgets.Block.create(
                         .{ .border = widgets.border.Border.all(), .border_type = .double },
-                        try widgets.CheckboxGroup.create(
-                            allocator,
+                        widgets.CheckboxGroup.create(
                             .{ .multiselect = true },
                             .{
-                                try widgets.Checkbox.create(allocator, .{ .label = "Option 1" }),
-                                try widgets.Checkbox.create(allocator, .{ .label = "Option 2" }),
-                                try widgets.Checkbox.create(allocator, .{ .label = "Option 3" }),
+                                widgets.Checkbox.create(.{ .label = "Option 1" }),
+                                widgets.Checkbox.create(.{ .label = "Option 2" }),
+                                widgets.Checkbox.create(.{ .label = "Option 3" }),
                             },
                         ),
                     ),
-                    try widgets.Spacer.create(allocator, .{}),
+                    widgets.Spacer.create(.{}),
                 },
             ),
-            try widgets.StackLayout.create(
-                allocator,
+            widgets.StackLayout.create(
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Input.create(allocator, .{ .placeholder = "placeholder", .layout = .{ .flex = 1 } }),
-                    try widgets.Button.create(allocator, .{ .label = "Submit" }),
+                    widgets.Input.create(.{ .placeholder = "placeholder", .layout = .{ .flex = 1 } }),
+                    widgets.Button.create(.{ .label = "Submit" }),
                 },
             ),
         },

@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -16,17 +17,15 @@ pub const Config = struct {
 
 pub const Label = @This();
 
-allocator: std.mem.Allocator,
-
 text: []const u8,
 
 lines: [][]const u8,
 
 layout_properties: LayoutProperties,
 
-pub fn create(allocator: std.mem.Allocator, config: Config) !*Label {
-    const text = try allocator.dupe(u8, config.text);
-    var lines = std.ArrayList([]const u8).init(allocator);
+pub fn create(config: Config) !*Label {
+    const text = try internal.allocator.dupe(u8, config.text);
+    var lines = std.ArrayList([]const u8).init(internal.allocator);
     defer lines.deinit();
 
     var iter = std.mem.tokenizeScalar(u8, text, '\n');
@@ -34,9 +33,8 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Label {
         try lines.append(line);
     }
 
-    const self = try allocator.create(Label);
+    const self = try internal.allocator.create(Label);
     self.* = Label{
-        .allocator = allocator,
         .text = text,
         .lines = try lines.toOwnedSlice(),
         .layout_properties = config.layout,
@@ -45,9 +43,9 @@ pub fn create(allocator: std.mem.Allocator, config: Config) !*Label {
 }
 
 pub fn destroy(self: *Label) void {
-    self.allocator.free(self.lines);
-    self.allocator.free(self.text);
-    self.allocator.destroy(self);
+    internal.allocator.free(self.lines);
+    internal.allocator.free(self.text);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Label) Widget {

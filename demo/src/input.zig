@@ -17,7 +17,7 @@ const ListState = struct {
         return ListState{
             .allocator = allocator,
             .items = std.ArrayList([]const u8).init(allocator),
-            .change_notifier = widgets.ChangeNotifier.init(allocator),
+            .change_notifier = widgets.ChangeNotifier.init(),
         };
     }
 
@@ -54,14 +54,12 @@ const ListView = struct {
         var lines = try std.ArrayList(*widgets.Label).initCapacity(self.allocator, state.items.items.len);
         defer lines.deinit();
         for (state.items.items) |item| {
-            lines.append(try widgets.Label.create(self.allocator, .{ .text = item })) catch unreachable;
+            lines.append(try widgets.Label.create(.{ .text = item })) catch unreachable;
         }
 
         const widget = try widgets.Block.create(
-            self.allocator,
             .{ .border = widgets.border.Border.all(), .layout = .{ .flex = 1 } },
             try widgets.StackLayout.create(
-                self.allocator,
                 .{ .orientation = .vertical },
                 lines.items,
             ),
@@ -76,7 +74,7 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    var tui = try tuile.Tuile.init(allocator);
+    var tui = try tuile.Tuile.init();
     defer {
         tui.deinit() catch {
             std.debug.print("Failed to deinit ncurses", .{});
@@ -89,27 +87,24 @@ pub fn main() !void {
     var list_view = ListView{ .allocator = allocator };
 
     const layout = try widgets.StackLayout.create(
-        allocator,
         .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
         .{
             try widgets.StatefulWidget.create(
-                allocator,
                 &list_view,
                 &list_state,
             ),
 
             try widgets.StackLayout.create(
-                allocator,
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Input.create(allocator, .{
+                    try widgets.Input.create(.{
                         .layout = .{ .flex = 1 },
                         .on_value_changed = .{
                             .cb = ListState.inputChanged,
                             .payload = &list_state,
                         },
                     }),
-                    try widgets.Button.create(allocator, .{
+                    try widgets.Button.create(.{
                         .label = "Submit",
                         .on_press = .{
                             .cb = ListState.onPress,

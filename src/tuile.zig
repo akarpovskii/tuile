@@ -1,5 +1,5 @@
 const std = @import("std");
-
+const internal = @import("internal.zig");
 pub const backends = @import("backends/backends.zig");
 pub const render = @import("render/render.zig");
 pub const widgets = @import("widgets/widgets.zig");
@@ -11,8 +11,6 @@ pub const Theme = @import("Theme.zig");
 pub const Vec2 = @import("Vec2.zig");
 
 pub const Tuile = struct {
-    allocator: std.mem.Allocator,
-
     backend: backends.Backend,
 
     is_running: bool = true,
@@ -21,12 +19,11 @@ pub const Tuile = struct {
 
     theme: Theme = .{},
 
-    pub fn init(allocator: std.mem.Allocator) !Tuile {
-        const curses = try backends.Ncurses.create(allocator);
-        const root = try widgets.StackLayout.create(allocator, .{ .orientation = .vertical }, .{});
+    pub fn init() !Tuile {
+        const curses = try backends.Ncurses.create();
+        const root = try widgets.StackLayout.create(.{ .orientation = .vertical }, .{});
 
         return .{
-            .allocator = allocator,
             .backend = curses.backend(),
             .root = root,
         };
@@ -37,7 +34,7 @@ pub const Tuile = struct {
         self.root.destroy();
     }
 
-    pub fn add(self: *Tuile, child: widgets.Widget) !void {
+    pub fn add(self: *Tuile, child: anytype) !void {
         try self.root.add(child);
     }
 
@@ -65,7 +62,7 @@ pub const Tuile = struct {
             .max = window_size,
         };
 
-        var buffer = try std.ArrayList(render.Cell).initCapacity(self.allocator, window_size.x * window_size.y);
+        var buffer = try std.ArrayList(render.Cell).initCapacity(internal.allocator, window_size.x * window_size.y);
         defer buffer.deinit();
         buffer.appendNTimesAssumeCapacity(.{ .fg = self.theme.foreground, .bg = self.theme.background }, buffer.capacity);
 

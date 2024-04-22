@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -10,8 +11,6 @@ const Theme = @import("../Theme.zig");
 const ChangeNotifier = @import("ChangeNotifier.zig");
 
 pub const StatefulWidget = @This();
-
-allocator: std.mem.Allocator,
 
 builder: Builder,
 
@@ -133,10 +132,9 @@ pub const BuildContext = struct {
     }
 };
 
-pub fn create(allocator: std.mem.Allocator, builder: anytype, state: anytype) !*StatefulWidget {
-    const self = try allocator.create(StatefulWidget);
+pub fn create(builder: anytype, state: anytype) !*StatefulWidget {
+    const self = try internal.allocator.create(StatefulWidget);
     self.* = StatefulWidget{
-        .allocator = allocator,
         .builder = Builder.init(builder),
         .view = null,
         .build_context = BuildContext.init(state),
@@ -148,7 +146,7 @@ pub fn destroy(self: *StatefulWidget) void {
     if (self.view) |view| {
         view.destroy();
     }
-    self.allocator.destroy(self);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *StatefulWidget) Widget {

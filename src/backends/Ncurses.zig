@@ -1,4 +1,5 @@
 const std = @import("std");
+const internal = @import("../internal.zig");
 const Backend = @import("Backend.zig");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
@@ -17,15 +18,13 @@ const Ncurses = @This();
 
 const NcursesError = error{ LocaleError, GeneralError };
 
-allocator: std.mem.Allocator,
-
 scr: *c.struct__win_st,
 
 has_colors: bool,
 
 color_pairs: std.AutoHashMap(ColorPair, i16),
 
-pub fn create(allocator: std.mem.Allocator) !*Ncurses {
+pub fn create() !*Ncurses {
     // Initialize the locale to get UTF-8 support, see `man ncurses` - Initialization
     if (c.setlocale(c.LC_ALL, "") == null) return error.LocaleError;
 
@@ -49,18 +48,17 @@ pub fn create(allocator: std.mem.Allocator) !*Ncurses {
 
     c.timeout(0);
 
-    const self = try allocator.create(Ncurses);
+    const self = try internal.allocator.create(Ncurses);
     self.* = .{
-        .allocator = allocator,
         .scr = scr.?,
         .has_colors = has_colors,
-        .color_pairs = std.AutoHashMap(ColorPair, i16).init(allocator),
+        .color_pairs = std.AutoHashMap(ColorPair, i16).init(internal.allocator),
     };
     return self;
 }
 
 pub fn destroy(self: *Ncurses) !void {
-    defer self.allocator.destroy(self);
+    defer internal.allocator.destroy(self);
     defer self.color_pairs.deinit();
     if (c.endwin() == c.ERR) return error.GeneralError;
 }

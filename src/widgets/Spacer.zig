@@ -1,5 +1,6 @@
 const std = @import("std");
 const maxInt = std.math.maxInt;
+const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
@@ -17,26 +18,23 @@ pub const Config = struct {
 
 const Spacer = @This();
 
-allocator: std.mem.Allocator,
-
 layout_properties: LayoutProperties,
 
-pub fn create(allocator: std.mem.Allocator, config: Config) !*Spacer {
+pub fn create(config: Config) !*Spacer {
     const layout_ = config.layout;
     if (layout_.flex == 0 and (layout_.max_height == maxInt(u32) or layout_.max_width == maxInt(u32))) {
         @panic("Spacer must either be flexible, or both max height and width must be defined");
     }
 
-    const self = try allocator.create(Spacer);
+    const self = try internal.allocator.create(Spacer);
     self.* = Spacer{
-        .allocator = allocator,
         .layout_properties = config.layout,
     };
     return self;
 }
 
 pub fn destroy(self: *Spacer) void {
-    self.allocator.destroy(self);
+    internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Spacer) Widget {

@@ -34,7 +34,7 @@ const AppState = struct {
         self.* = AppState{
             .allocator = allocator,
             .progress = 0,
-            .notifier = ChangeNotifier.init(allocator),
+            .notifier = ChangeNotifier.init(),
             .mutex = std.Thread.Mutex{},
             .thread = try std.Thread.spawn(.{}, AppState.update_loop, .{self}),
         };
@@ -76,9 +76,7 @@ const AppState = struct {
 };
 
 const ProgressView = struct {
-    allocator: std.mem.Allocator,
-
-    pub fn build(self: *ProgressView, context: *BuildContext) !Widget {
+    pub fn build(_: *ProgressView, context: *BuildContext) !Widget {
         const state = try context.watch(AppState);
         state.mutex.lock();
         defer state.mutex.unlock();
@@ -92,17 +90,16 @@ const ProgressView = struct {
         }
 
         const stack = try StackLayout.create(
-            self.allocator,
             .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
             .{
-                try Label.create(self.allocator, .{ .text = bar, .layout = .{ .alignment = Align.center() } }),
-                try Spacer.create(self.allocator, .{ .layout = .{ .max_width = 1, .max_height = 1 } }),
+                try Label.create(.{ .text = bar, .layout = .{ .alignment = Align.center() } }),
+                try Spacer.create(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
             },
         );
 
         if (state.progress == 100) {
             try stack.add(
-                try Button.create(self.allocator, .{
+                try Button.create(.{
                     .label = "Restart",
                     .on_press = .{
                         .cb = AppState.onReset,
@@ -112,12 +109,11 @@ const ProgressView = struct {
             );
         } else {
             try stack.add(
-                try Spacer.create(self.allocator, .{ .layout = .{ .max_width = 1, .max_height = 1 } }),
+                try Spacer.create(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
             );
         }
 
         const widget = try Block.create(
-            self.allocator,
             .{ .border = widgets.border.Border.all(), .layout = .{ .flex = 1 } },
             stack,
         );
@@ -130,7 +126,7 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    var tui = try tuile.Tuile.init(allocator);
+    var tui = try tuile.Tuile.init();
     defer {
         tui.deinit() catch {
             std.debug.print("Failed to deinit ncurses", .{});
@@ -139,14 +135,12 @@ pub fn main() !void {
 
     var app_state = try AppState.init(allocator);
     defer app_state.deinit();
-    var progress_view = ProgressView{ .allocator = allocator };
+    var progress_view = ProgressView{};
 
     const layout = try StackLayout.create(
-        allocator,
         .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
         .{
             try StatefulWidget.create(
-                allocator,
                 &progress_view,
                 app_state,
             ),

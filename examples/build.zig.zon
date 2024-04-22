@@ -1,5 +1,5 @@
 .{
-    .name = "tuile-demo",
+    .name = "tuile-examples",
     .version = "0.0.0",
     .minimum_zig_version = "0.12.0",
 

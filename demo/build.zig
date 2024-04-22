@@ -6,7 +6,7 @@ pub fn build(b: *std.Build) void {
 
     const tuile = b.dependency("tuile", .{});
 
-    const executables: []const []const u8 = &.{ "demo", "input", "htop" };
+    const executables: []const []const u8 = &.{ "demo", "input", "threads" };
     inline for (executables) |name| {
         const exe = b.addExecutable(.{
             .name = name,

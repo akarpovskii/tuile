@@ -61,8 +61,9 @@ pub fn create(allocator: std.mem.Allocator, config: Config, children: anytype) !
     return self;
 }
 
-pub fn add(self: *StackLayout, child: Widget) !void {
-    try self.widgets.append(child);
+pub fn add(self: *StackLayout, child: anytype) !void {
+    const w = if (@TypeOf(child) == Widget) child else child.widget();
+    try self.widgets.append(w);
 }
 
 pub fn destroy(self: *StackLayout) void {

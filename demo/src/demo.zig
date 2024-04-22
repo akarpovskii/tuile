@@ -8,11 +8,7 @@ pub fn main() !void {
     defer _ = gpa.deinit();
 
     var tui = try tuile.Tuile.init();
-    defer {
-        tui.deinit() catch {
-            std.debug.print("Failed to deinit ncurses", .{});
-        };
-    }
+    defer tui.deinit();
 
     const layout = tuile.stack_layout(
         .{ .orientation = .vertical, .layout = .{ .flex = 1 } },

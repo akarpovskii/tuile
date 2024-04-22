@@ -30,8 +30,8 @@ pub const Tuile = struct {
         };
     }
 
-    pub fn deinit(self: *Tuile) !void {
-        try self.backend.destroy();
+    pub fn deinit(self: *Tuile) void {
+        self.backend.destroy();
         self.root.destroy();
     }
 

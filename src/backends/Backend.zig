@@ -10,7 +10,7 @@ context: *anyopaque,
 vtable: *const VTable,
 
 pub const VTable = struct {
-    destroy: *const fn (context: *anyopaque) anyerror!void,
+    destroy: *const fn (context: *anyopaque) void,
     poll_event: *const fn (context: *anyopaque) anyerror!?events.Event,
     refresh: *const fn (context: *anyopaque) anyerror!void,
     print_at: *const fn (context: *anyopaque, pos: Vec2, text: []const u8) anyerror!void,
@@ -25,7 +25,7 @@ pub fn init(context: anytype) Backend {
     const ptr_info = @typeInfo(T);
 
     const vtable = struct {
-        pub fn destroy(pointer: *anyopaque) anyerror!void {
+        pub fn destroy(pointer: *anyopaque) void {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.destroy(self);
         }
@@ -81,7 +81,7 @@ pub fn init(context: anytype) Backend {
     };
 }
 
-pub fn destroy(self: Backend) anyerror!void {
+pub fn destroy(self: Backend) void {
     return self.vtable.destroy(self.context);
 }
 

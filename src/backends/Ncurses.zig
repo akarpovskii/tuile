@@ -57,10 +57,10 @@ pub fn create() !*Ncurses {
     return self;
 }
 
-pub fn destroy(self: *Ncurses) !void {
+pub fn destroy(self: *Ncurses) void {
     defer internal.allocator.destroy(self);
     defer self.color_pairs.deinit();
-    if (c.endwin() == c.ERR) return error.GeneralError;
+    _ = c.endwin();
 }
 
 pub fn backend(self: *Ncurses) Backend {

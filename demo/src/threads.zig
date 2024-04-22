@@ -116,11 +116,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     var tui = try tuile.Tuile.init();
-    defer {
-        tui.deinit() catch {
-            std.debug.print("Failed to deinit ncurses", .{});
-        };
-    }
+    defer tui.deinit();
 
     var app_state = try AppState.init(allocator);
     defer app_state.deinit();

@@ -11,9 +11,12 @@ const Checkbox = @import("Checkbox.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const Theme = @import("../Theme.zig");
+const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
     multiselect: bool = false,
+
+    on_state_change: ?callbacks.Callback(.{ usize, bool }) = null,
 
     layout: LayoutProperties = .{},
 };
@@ -23,6 +26,8 @@ pub const CheckboxGroup = @This();
 view: *StackLayout,
 
 multiselect: bool,
+
+on_state_change: ?callbacks.Callback(.{ usize, bool }),
 
 fn assertCheckbox(any: anytype) void {
     const T = @TypeOf(any);
@@ -60,6 +65,7 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
             options,
         ),
         .multiselect = config.multiselect,
+        .on_state_change = config.on_state_change,
     };
     return self;
 }
@@ -90,17 +96,24 @@ pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResul
     switch (event) {
         .char => |char| switch (char) {
             ' ' => {
+                // Safe - this option received and consumed the event
+                const focused = self.view.focused.?;
+                const checked_option: *Checkbox = @ptrCast(@alignCast(self.view.widgets.items[focused].context));
+                if (self.on_state_change) |on_state_change| {
+                    on_state_change.call(focused, checked_option.checked);
+                }
+
+                // Uncheck everything else
                 if (!self.multiselect) {
-                    // This option received the event
-                    const focused = self.view.focused.?;
-                    // Uncheck everything else
                     for (self.view.widgets.items, 0..) |*opt_w, idx| {
                         if (idx == focused) {
                             continue;
                         }
                         const option: *Checkbox = @ptrCast(@alignCast(opt_w.context));
                         if (option.checked) {
-                            option.*.checked = false;
+                            const nested_result = try option.handleEvent(.{ .char = ' ' });
+                            std.debug.assert(nested_result == .consumed);
+                            std.debug.assert(option.checked == false);
                         }
                     }
                 }

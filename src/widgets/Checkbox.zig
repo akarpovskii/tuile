@@ -11,11 +11,14 @@ const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const Theme = @import("../Theme.zig");
+const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
     label: []const u8,
 
     checked: bool = false,
+
+    on_state_change: ?callbacks.Callback(bool) = null,
 
     layout: LayoutProperties = .{},
 };
@@ -35,12 +38,15 @@ layout_properties: LayoutProperties,
 
 checked: bool,
 
+on_state_change: ?callbacks.Callback(bool),
+
 pub fn create(config: Config) !*Checkbox {
     const self = try internal.allocator.create(Checkbox);
     self.* = Checkbox{
         .label = try internal.allocator.dupe(u8, config.label),
         .checked = config.checked,
         .layout_properties = config.layout,
+        .on_state_change = config.on_state_change,
     };
     return self;
 }
@@ -94,6 +100,9 @@ pub fn handleEvent(self: *Checkbox, event: events.Event) !events.EventResult {
         .char => |char| switch (char) {
             ' ' => {
                 self.checked = !self.checked;
+                if (self.on_state_change) |on_state_change| {
+                    on_state_change.call(self.checked);
+                }
                 return .consumed;
             },
             else => {},

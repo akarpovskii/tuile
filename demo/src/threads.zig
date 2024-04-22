@@ -1,16 +1,5 @@
 const std = @import("std");
 const tuile = @import("tuile");
-const widgets = tuile.widgets;
-const Align = widgets.LayoutProperties.Align;
-const Block = widgets.Block;
-const BuildContext = StatefulWidget.BuildContext;
-const Button = widgets.Button;
-const ChangeNotifier = widgets.ChangeNotifier;
-const Label = widgets.Label;
-const StackLayout = widgets.StackLayout;
-const StatefulWidget = widgets.StatefulWidget;
-const Spacer = widgets.Spacer;
-const Widget = widgets.Widget;
 
 const AppState = struct {
     allocator: std.mem.Allocator,
@@ -23,8 +12,8 @@ const AppState = struct {
 
     progress: usize,
 
-    notifier: ChangeNotifier,
-    pub usingnamespace ChangeNotifier.Mixin(@This(), .notifier);
+    notifier: tuile.ChangeNotifier,
+    pub usingnamespace tuile.ChangeNotifier.Mixin(@This(), .notifier);
 
     const progress_step: usize = 5;
 
@@ -34,7 +23,7 @@ const AppState = struct {
         self.* = AppState{
             .allocator = allocator,
             .progress = 0,
-            .notifier = ChangeNotifier.init(),
+            .notifier = tuile.ChangeNotifier.init(),
             .mutex = std.Thread.Mutex{},
             .thread = try std.Thread.spawn(.{}, AppState.update_loop, .{self}),
         };
@@ -76,7 +65,7 @@ const AppState = struct {
 };
 
 const ProgressView = struct {
-    pub fn build(_: *ProgressView, context: *BuildContext) !Widget {
+    pub fn build(_: *ProgressView, context: *tuile.StatefulWidget.BuildContext) !tuile.Widget {
         const state = try context.watch(AppState);
         state.mutex.lock();
         defer state.mutex.unlock();
@@ -89,17 +78,17 @@ const ProgressView = struct {
             std.mem.copyForwards(u8, bar[i * "█".len ..], "█");
         }
 
-        const stack = try StackLayout.create(
+        const stack = try tuile.stack_layout(
             .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
             .{
-                try Label.create(.{ .text = bar, .layout = .{ .alignment = Align.center() } }),
-                try Spacer.create(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
+                tuile.label(.{ .text = bar, .layout = .{ .alignment = tuile.LayoutProperties.Align.center() } }),
+                tuile.spacer(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
             },
         );
 
         if (state.progress == 100) {
             try stack.add(
-                try Button.create(.{
+                tuile.button(.{
                     .label = "Restart",
                     .on_press = .{
                         .cb = AppState.onReset,
@@ -109,12 +98,12 @@ const ProgressView = struct {
             );
         } else {
             try stack.add(
-                try Spacer.create(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
+                tuile.spacer(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
             );
         }
 
-        const widget = try Block.create(
-            .{ .border = widgets.border.Border.all(), .layout = .{ .flex = 1 } },
+        const widget = try tuile.block(
+            .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
             stack,
         );
         return widget.widget();
@@ -137,17 +126,14 @@ pub fn main() !void {
     defer app_state.deinit();
     var progress_view = ProgressView{};
 
-    const layout = try StackLayout.create(
+    const layout = tuile.stack_layout(
         .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
         .{
-            try StatefulWidget.create(
-                &progress_view,
-                app_state,
-            ),
+            tuile.stateful(&progress_view, app_state),
         },
     );
 
-    try tui.add(layout.widget());
+    try tui.add(layout);
 
     try tui.run();
 }

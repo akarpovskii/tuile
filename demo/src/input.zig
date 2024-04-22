@@ -1,7 +1,5 @@
 const std = @import("std");
 const tuile = @import("tuile");
-const widgets = tuile.widgets;
-const Align = widgets.LayoutProperties.Align;
 
 const ListState = struct {
     allocator: std.mem.Allocator,
@@ -10,14 +8,14 @@ const ListState = struct {
 
     input: ?[]const u8 = null,
 
-    change_notifier: widgets.ChangeNotifier,
-    pub usingnamespace widgets.ChangeNotifier.Mixin(@This(), .change_notifier);
+    change_notifier: tuile.ChangeNotifier,
+    pub usingnamespace tuile.ChangeNotifier.Mixin(@This(), .change_notifier);
 
     pub fn init(allocator: std.mem.Allocator) ListState {
         return ListState{
             .allocator = allocator,
             .items = std.ArrayList([]const u8).init(allocator),
-            .change_notifier = widgets.ChangeNotifier.init(),
+            .change_notifier = tuile.ChangeNotifier.init(),
         };
     }
 
@@ -48,18 +46,18 @@ const ListState = struct {
 const ListView = struct {
     allocator: std.mem.Allocator,
 
-    pub fn build(self: *ListView, context: *widgets.StatefulWidget.BuildContext) !widgets.Widget {
+    pub fn build(self: *ListView, context: *tuile.StatefulWidget.BuildContext) !tuile.Widget {
         const state: *ListState = try context.watch(ListState);
 
-        var lines = try std.ArrayList(*widgets.Label).initCapacity(self.allocator, state.items.items.len);
+        var lines = try std.ArrayList(*tuile.Label).initCapacity(self.allocator, state.items.items.len);
         defer lines.deinit();
         for (state.items.items) |item| {
-            lines.append(try widgets.Label.create(.{ .text = item })) catch unreachable;
+            lines.append(try tuile.label(.{ .text = item })) catch unreachable;
         }
 
-        const widget = try widgets.Block.create(
-            .{ .border = widgets.border.Border.all(), .layout = .{ .flex = 1 } },
-            try widgets.StackLayout.create(
+        const widget = try tuile.block(
+            .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
+            try tuile.stack_layout(
                 .{ .orientation = .vertical },
                 lines.items,
             ),
@@ -86,25 +84,22 @@ pub fn main() !void {
 
     var list_view = ListView{ .allocator = allocator };
 
-    const layout = try widgets.StackLayout.create(
+    const layout = tuile.stack_layout(
         .{ .orientation = .vertical, .layout = .{ .flex = 1 } },
         .{
-            try widgets.StatefulWidget.create(
-                &list_view,
-                &list_state,
-            ),
+            tuile.stateful(&list_view, &list_state),
 
-            try widgets.StackLayout.create(
+            tuile.stack_layout(
                 .{ .orientation = .horizontal },
                 .{
-                    try widgets.Input.create(.{
+                    tuile.input(.{
                         .layout = .{ .flex = 1 },
                         .on_value_changed = .{
                             .cb = ListState.inputChanged,
                             .payload = &list_state,
                         },
                     }),
-                    try widgets.Button.create(.{
+                    tuile.button(.{
                         .label = "Submit",
                         .on_press = .{
                             .cb = ListState.onPress,
@@ -116,7 +111,7 @@ pub fn main() !void {
         },
     );
 
-    try tui.add(layout.widget());
+    try tui.add(layout);
 
     try tui.run();
 }

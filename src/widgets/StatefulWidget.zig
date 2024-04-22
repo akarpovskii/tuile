@@ -63,7 +63,7 @@ pub const BuildContext = struct {
 
     unique_id: usize,
 
-    need_rebuild: bool,
+    need_rebuild: std.atomic.Value(bool),
 
     subscribe: *const fn (_: *BuildContext) anyerror!void,
 
@@ -95,7 +95,7 @@ pub const BuildContext = struct {
         return BuildContext{
             .state = state,
             .unique_id = typeId(T),
-            .need_rebuild = true,
+            .need_rebuild = std.atomic.Value(bool).init(true),
             .subscribe = erase_type.subscribe,
             .unsubscribe = erase_type.unsubscribe,
         };
@@ -129,7 +129,7 @@ pub const BuildContext = struct {
 
     fn onStateChange(ptr: ?*anyopaque) void {
         const self: *BuildContext = @ptrCast(@alignCast(ptr.?));
-        self.need_rebuild = true;
+        self.need_rebuild.store(true, .release);
     }
 };
 
@@ -172,10 +172,9 @@ pub fn layoutProps(self: *StatefulWidget) LayoutProperties {
 }
 
 pub fn prepare(self: *StatefulWidget) !void {
-    if (self.build_context.need_rebuild) {
+    if (self.build_context.need_rebuild.cmpxchgStrong(true, false, .acquire, .monotonic) == null) {
         if (self.view) |view| view.destroy();
         self.build_context.unsubscribe(&self.build_context);
         self.view = try self.builder.build(&self.build_context);
-        self.build_context.need_rebuild = false;
     }
 }

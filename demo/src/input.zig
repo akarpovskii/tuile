@@ -11,7 +11,7 @@ const ListState = struct {
     input: ?[]const u8 = null,
 
     change_notifier: widgets.ChangeNotifier,
-    pub usingnamespace widgets.ChangeNotifier.Mixin(@This(), "change_notifier");
+    pub usingnamespace widgets.ChangeNotifier.Mixin(@This(), .change_notifier);
 
     pub fn init(allocator: std.mem.Allocator) ListState {
         return ListState{

@@ -46,20 +46,22 @@ pub fn notifyListeners(self: *ChangeNotifier) void {
     }
 }
 
-pub fn Mixin(comptime T: type, notifier: []const u8) type {
+pub fn Mixin(comptime T: type, comptime notifier: std.meta.FieldEnum(T)) type {
+    const field = std.meta.fieldInfo(T, notifier);
+
     return struct {
         pub fn addListener(context: *T, listener: Listener) !void {
-            var self: *ChangeNotifier = &@field(context, notifier);
+            var self: *ChangeNotifier = &@field(context, field.name);
             try self.addListener(listener);
         }
 
         pub fn removeListener(context: *T, listener: Listener) void {
-            var self: *ChangeNotifier = &@field(context, notifier);
+            var self: *ChangeNotifier = &@field(context, field.name);
             self.removeListener(listener);
         }
 
         pub fn notifyListeners(context: *T) void {
-            var self: *ChangeNotifier = &@field(context, notifier);
+            var self: *ChangeNotifier = &@field(context, field.name);
             self.notifyListeners();
         }
     };
@@ -129,7 +131,7 @@ test "duplicate listeners are removed only once" {
 test "mixin adds methods" {
     const MixinNotifier = struct {
         change_notifier: ChangeNotifier,
-        usingnamespace ChangeNotifier.Mixin(@This(), "change_notifier");
+        usingnamespace ChangeNotifier.Mixin(@This(), .change_notifier);
     };
 
     var notifier = MixinNotifier{ .change_notifier = ChangeNotifier.init() };

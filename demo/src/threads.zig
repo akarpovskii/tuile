@@ -24,7 +24,7 @@ const AppState = struct {
     progress: usize,
 
     notifier: ChangeNotifier,
-    pub usingnamespace ChangeNotifier.Mixin(@This(), "notifier");
+    pub usingnamespace ChangeNotifier.Mixin(@This(), .notifier);
 
     const progress_step: usize = 5;
 

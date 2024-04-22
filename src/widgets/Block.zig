@@ -9,7 +9,7 @@ const border = @import("border.zig");
 const Padding = @import("Padding.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
+const display = @import("../display/display.zig");
 
 const Block = @This();
 
@@ -68,7 +68,7 @@ pub fn widget(self: *Block) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Block, area: Rect, frame: Frame, theme: Theme) !void {
+pub fn render(self: *Block, area: Rect, frame: Frame, theme: display.Theme) !void {
     var content_area = Rect{
         .min = .{
             .x = area.min.x + self.border_widths.left,
@@ -138,7 +138,7 @@ pub fn layoutProps(self: *Block) LayoutProperties {
     return self.layout_properties;
 }
 
-fn renderBorder(self: *Block, area: Rect, frame: Frame, _: Theme) void {
+fn renderBorder(self: *Block, area: Rect, frame: Frame, _: display.Theme) void {
     const min = area.min;
     const max = area.max;
     const chars = self.border_chars;

@@ -7,12 +7,12 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
+const display = @import("../display/display.zig");
 
 const Themed = @This();
 
 pub const PartialTheme = init_partial: {
-    const original = @typeInfo(Theme).Struct.fields;
+    const original = @typeInfo(display.Theme).Struct.fields;
     const len = original.len;
     var partial: [len]std.builtin.Type.StructField = undefined;
     for (original, &partial) |orig, *part| {
@@ -61,9 +61,9 @@ pub fn widget(self: *Themed) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Themed, area: Rect, frame: Frame, theme: Theme) !void {
+pub fn render(self: *Themed, area: Rect, frame: Frame, theme: display.Theme) !void {
     var new_theme = theme;
-    inline for (@typeInfo(Theme).Struct.fields) |field| {
+    inline for (@typeInfo(display.Theme).Struct.fields) |field| {
         const part = @field(self.partial_theme, field.name);
         const new = &@field(new_theme, field.name);
         if (part) |value| {

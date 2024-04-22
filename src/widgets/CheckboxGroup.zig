@@ -5,12 +5,11 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
-const Style = @import("../Style.zig");
 const StackLayout = @import("StackLayout.zig");
 const Checkbox = @import("Checkbox.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
+const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
@@ -79,7 +78,7 @@ pub fn widget(self: *CheckboxGroup) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *CheckboxGroup, area: Rect, frame: Frame, theme: Theme) !void {
+pub fn render(self: *CheckboxGroup, area: Rect, frame: Frame, theme: display.Theme) !void {
     try self.view.render(area, frame, theme);
 }
 

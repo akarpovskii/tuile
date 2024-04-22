@@ -1,11 +1,11 @@
 const std = @import("std");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
-const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
+const events = @import("../events.zig");
+const display = @import("../display/display.zig");
 
 pub const Widget = @This();
 
@@ -16,7 +16,7 @@ vtable: *const VTable,
 const VTable = struct {
     destroy: *const fn (context: *anyopaque) void,
 
-    render: *const fn (context: *anyopaque, area: Rect, frame: Frame, theme: Theme) anyerror!void,
+    render: *const fn (context: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void,
 
     layout: *const fn (context: *anyopaque, constraints: Constraints) anyerror!Vec2,
 
@@ -42,7 +42,7 @@ pub fn init(context: anytype) Widget {
             return ptr_info.Pointer.child.destroy(self);
         }
 
-        pub fn render(pointer: *anyopaque, area: Rect, frame: Frame, theme: Theme) anyerror!void {
+        pub fn render(pointer: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void {
             const self: PtrT = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.render(self, area, frame, theme);
         }
@@ -91,7 +91,7 @@ pub inline fn destroy(self: Widget) void {
     return self.vtable.destroy(self.context);
 }
 
-pub inline fn render(self: Widget, area: Rect, frame: Frame, theme: Theme) !void {
+pub inline fn render(self: Widget, area: Rect, frame: Frame, theme: display.Theme) !void {
     return self.vtable.render(self.context, area, frame, theme);
 }
 

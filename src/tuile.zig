@@ -1,15 +1,14 @@
 const std = @import("std");
 const internal = @import("internal.zig");
+pub const Vec2 = @import("Vec2.zig");
+pub const Rect = @import("Rect.zig");
 pub const backends = @import("backends/backends.zig");
 pub const render = @import("render/render.zig");
+pub const events = @import("events.zig");
 pub const widgets = @import("widgets/widgets.zig");
 pub usingnamespace widgets;
-pub const color = @import("color.zig");
-pub const events = @import("events.zig");
-pub const Rect = @import("Rect.zig");
-pub const Style = @import("Style.zig");
-pub const Theme = @import("Theme.zig");
-pub const Vec2 = @import("Vec2.zig");
+pub const display = @import("display/display.zig");
+pub usingnamespace display;
 
 pub const Tuile = struct {
     backend: backends.Backend,
@@ -18,7 +17,7 @@ pub const Tuile = struct {
 
     root: *widgets.StackLayout,
 
-    theme: Theme = .{},
+    theme: display.Theme = .{},
 
     pub fn init() !Tuile {
         const curses = try backends.Ncurses.create();

@@ -1,5 +1,4 @@
 const std = @import("std");
-const maxInt = std.math.maxInt;
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
 const Vec2 = @import("../Vec2.zig");
@@ -8,7 +7,9 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
+const Theme = @import("../display/Theme.zig");
+
+const maxInt = std.math.maxInt;
 
 pub const Config = struct {
     // Spacer must either be flexible, or both max height and width must be defined.

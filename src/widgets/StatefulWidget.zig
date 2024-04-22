@@ -7,8 +7,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
-const ChangeNotifier = @import("ChangeNotifier.zig");
+const display = @import("../display/display.zig");
 
 pub const StatefulWidget = @This();
 
@@ -153,7 +152,7 @@ pub fn widget(self: *StatefulWidget) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *StatefulWidget, area: Rect, frame: Frame, theme: Theme) !void {
+pub fn render(self: *StatefulWidget, area: Rect, frame: Frame, theme: display.Theme) !void {
     try self.view.?.render(area, frame, theme);
 }
 

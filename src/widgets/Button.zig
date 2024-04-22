@@ -6,11 +6,10 @@ const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig");
-const Style = @import("../Style.zig");
 const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
+const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
@@ -58,7 +57,7 @@ pub fn widget(self: *Button) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *Button, area: Rect, frame: Frame, theme: Theme) !void {
+pub fn render(self: *Button, area: Rect, frame: Frame, theme: display.Theme) !void {
     self.focus_handler.render(area, frame, theme);
     try self.view.render(area, frame, theme);
 }

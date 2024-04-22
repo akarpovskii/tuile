@@ -3,11 +3,7 @@ const internal = @import("../internal.zig");
 const Backend = @import("Backend.zig");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
-const Style = @import("../Style.zig");
-const color = @import("../color.zig");
-const Color = color.Color;
-const ColorPair = color.ColorPair;
-const Palette256 = color.Palette256;
+const display = @import("../display/display.zig");
 
 const c = @cImport({
     @cInclude("ncurses.h");
@@ -22,7 +18,7 @@ scr: *c.struct__win_st,
 
 has_colors: bool,
 
-color_pairs: std.AutoHashMap(ColorPair, i16),
+color_pairs: std.AutoHashMap(display.ColorPair, i16),
 
 pub fn create() !*Ncurses {
     // Initialize the locale to get UTF-8 support, see `man ncurses` - Initialization
@@ -52,7 +48,7 @@ pub fn create() !*Ncurses {
     self.* = .{
         .scr = scr.?,
         .has_colors = has_colors,
-        .color_pairs = std.AutoHashMap(ColorPair, i16).init(internal.allocator),
+        .color_pairs = std.AutoHashMap(display.ColorPair, i16).init(internal.allocator),
     };
     return self;
 }
@@ -148,17 +144,17 @@ pub fn windowSize(self: *Ncurses) !Vec2 {
     };
 }
 
-pub fn enableEffect(_: *Ncurses, effect: Style.Effect) !void {
+pub fn enableEffect(_: *Ncurses, effect: display.Style.Effect) !void {
     const attr = attrForEffect(effect);
     if (c.attron(attr) == c.ERR) return error.GeneralError;
 }
 
-pub fn disableEffect(_: *Ncurses, effect: Style.Effect) !void {
+pub fn disableEffect(_: *Ncurses, effect: display.Style.Effect) !void {
     const attr = attrForEffect(effect);
     if (c.attroff(attr) == c.ERR) return error.GeneralError;
 }
 
-fn attrForEffect(effect: Style.Effect) c_int {
+fn attrForEffect(effect: display.Style.Effect) c_int {
     var attr = c.A_NORMAL;
     if (effect.highlight) attr |= c.A_STANDOUT;
     if (effect.underline) attr |= c.A_UNDERLINE;
@@ -170,7 +166,7 @@ fn attrForEffect(effect: Style.Effect) c_int {
     return @bitCast(attr);
 }
 
-pub fn useColor(self: *Ncurses, color_pair: ColorPair) !void {
+pub fn useColor(self: *Ncurses, color_pair: display.ColorPair) !void {
     if (!self.has_colors) {
         return;
     }
@@ -178,7 +174,7 @@ pub fn useColor(self: *Ncurses, color_pair: ColorPair) !void {
     if (c.attron(c.COLOR_PAIR(pair)) == c.ERR) return error.GeneralError;
 }
 
-fn getOrInitColor(self: *Ncurses, color_pair: ColorPair) !c_int {
+fn getOrInitColor(self: *Ncurses, color_pair: display.ColorPair) !c_int {
     if (self.color_pairs.get(color_pair)) |pair| {
         return pair;
     }
@@ -198,9 +194,9 @@ fn getOrInitColor(self: *Ncurses, color_pair: ColorPair) !c_int {
     return pair;
 }
 
-fn colorToInt(color_: Color) c_short {
+fn colorToInt(color: display.Color) c_short {
     // Source - https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-    const res = switch (color_) {
+    const res = switch (color) {
         .dark => |base| switch (base) {
             .black => c.COLOR_BLACK,
             .red => c.COLOR_RED,
@@ -222,9 +218,9 @@ fn colorToInt(color_: Color) c_short {
             .white => @rem(8 + c.COLOR_WHITE, c.COLORS),
         },
         .rgb => |rgb| if (c.COLORS >= 256)
-            Palette256.findClosestNonSystem(rgb)
+            display.Palette256.findClosestNonSystem(rgb)
         else
-            Palette256.findClosestSystem(rgb),
+            display.Palette256.findClosestSystem(rgb),
     };
 
     return @intCast(res);

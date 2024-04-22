@@ -2,9 +2,8 @@ const std = @import("std");
 const Cell = @import("Cell.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
-const Color = @import("../color.zig").Color;
-const Style = @import("../Style.zig");
 const Backend = @import("../backends/Backend.zig");
+const display = @import("../display/display.zig");
 
 const Frame = @This();
 
@@ -31,7 +30,7 @@ pub fn withArea(self: Frame, area: Rect) Frame {
     };
 }
 
-pub fn setStyle(self: Frame, area: Rect, style: Style) void {
+pub fn setStyle(self: Frame, area: Rect, style: display.Style) void {
     for (area.min.y..area.max.y) |y| {
         for (area.min.x..area.max.x) |x| {
             const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };

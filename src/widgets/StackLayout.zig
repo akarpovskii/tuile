@@ -7,7 +7,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const Theme = @import("../Theme.zig");
+const display = @import("../display/display.zig");
 
 pub const Orientation = enum {
     vertical,
@@ -79,7 +79,7 @@ pub fn widget(self: *StackLayout) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *StackLayout, area: Rect, frame: Frame, theme: Theme) !void {
+pub fn render(self: *StackLayout, area: Rect, frame: Frame, theme: display.Theme) !void {
     var cursor = area.min;
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {

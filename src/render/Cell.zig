@@ -1,19 +1,17 @@
 const std = @import("std");
-const Color = @import("../color.zig").Color;
-const Style = @import("../Style.zig");
-
+const display = @import("../display/display.zig");
 const Cell = @This();
 
 // Doesn't own the memory
 symbol: ?[]const u8 = null,
 
-fg: Color,
+fg: display.Color,
 
-bg: Color,
+bg: display.Color,
 
-effect: Style.Effect = .{},
+effect: display.Style.Effect = .{},
 
-pub fn setStyle(self: *Cell, style: Style) void {
+pub fn setStyle(self: *Cell, style: display.Style) void {
     if (style.fg) |fg| {
         self.fg = fg;
     }

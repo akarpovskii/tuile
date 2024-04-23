@@ -89,7 +89,7 @@ const ProgressView = struct {
         if (state.progress == 100) {
             try stack.add(
                 tuile.button(.{
-                    .label = "Restart",
+                    .text = "Restart",
                     .on_press = .{
                         .cb = AppState.onReset,
                         .payload = state,

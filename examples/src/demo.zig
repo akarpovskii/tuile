@@ -58,8 +58,8 @@ pub fn main() !void {
             tuile.horizontal(
                 .{},
                 .{
-                    tuile.button(.{ .label = "Button 1" }),
-                    tuile.button(.{ .label = "Button 2" }),
+                    tuile.button(.{ .text = "Button 1" }),
+                    tuile.button(.{ .text = "Button 2" }),
                 },
             ),
 
@@ -72,9 +72,9 @@ pub fn main() !void {
                         tuile.checkbox_group(
                             .{ .multiselect = false },
                             .{
-                                tuile.checkbox(.{ .label = "Option 1" }),
-                                tuile.checkbox(.{ .label = "Option 2" }),
-                                tuile.checkbox(.{ .label = "Option 3" }),
+                                tuile.checkbox(.{ .text = "Option 1" }),
+                                tuile.checkbox(.{ .text = "Option 2" }),
+                                tuile.checkbox(.{ .text = "Option 3" }),
                             },
                         ),
                     ),
@@ -84,9 +84,9 @@ pub fn main() !void {
                         tuile.checkbox_group(
                             .{ .multiselect = true },
                             .{
-                                tuile.checkbox(.{ .label = "Option 1" }),
-                                tuile.checkbox(.{ .label = "Option 2" }),
-                                tuile.checkbox(.{ .label = "Option 3" }),
+                                tuile.checkbox(.{ .text = "Option 1" }),
+                                tuile.checkbox(.{ .text = "Option 2" }),
+                                tuile.checkbox(.{ .text = "Option 3" }),
                             },
                         ),
                     ),
@@ -97,7 +97,7 @@ pub fn main() !void {
                 .{},
                 .{
                     tuile.input(.{ .placeholder = "placeholder", .layout = .{ .flex = 1 } }),
-                    tuile.button(.{ .label = "Submit" }),
+                    tuile.button(.{ .text = "Submit" }),
                 },
             ),
         },

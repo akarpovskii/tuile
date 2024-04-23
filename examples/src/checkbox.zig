@@ -85,15 +85,15 @@ pub fn main() !void {
                         .{ .multiselect = false },
                         .{
                             tuile.checkbox(.{
-                                .label = "Option 1",
+                                .text = "Option 1",
                                 .on_state_change = .{ .cb = CheckedState.onState0, .payload = &state1 },
                             }),
                             tuile.checkbox(.{
-                                .label = "Option 2",
+                                .text = "Option 2",
                                 .on_state_change = .{ .cb = CheckedState.onState1, .payload = &state1 },
                             }),
                             tuile.checkbox(.{
-                                .label = "Option 3",
+                                .text = "Option 3",
                                 .on_state_change = .{ .cb = CheckedState.onState2, .payload = &state1 },
                             }),
                         },
@@ -112,9 +112,9 @@ pub fn main() !void {
                             .on_state_change = .{ .cb = CheckedState.onGroupState, .payload = &state2 },
                         },
                         .{
-                            tuile.checkbox(.{ .label = "Option 1" }),
-                            tuile.checkbox(.{ .label = "Option 2" }),
-                            tuile.checkbox(.{ .label = "Option 3" }),
+                            tuile.checkbox(.{ .text = "Option 1" }),
+                            tuile.checkbox(.{ .text = "Option 2" }),
+                            tuile.checkbox(.{ .text = "Option 3" }),
                         },
                     ),
                     tuile.stateful(&view2, &state2),

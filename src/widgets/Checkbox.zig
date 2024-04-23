@@ -5,6 +5,7 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
+const Label = @import("Label.zig");
 const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
@@ -12,7 +13,11 @@ const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
-    label: []const u8,
+    // text and span are mutually exclusive, only one of them must be defined
+    text: ?[]const u8 = null,
+
+    // text and span are mutually exclusive, only one of them must be defined
+    span: ?display.SpanView = null,
 
     checked: bool = false,
 
@@ -23,12 +28,7 @@ pub const Config = struct {
 
 pub const Checkbox = @This();
 
-const Marker = struct {
-    const Checked: []const u8 = "[*] ";
-    const Basic: []const u8 = "[ ] ";
-};
-
-label: []const u8,
+labels: [2]*Label,
 
 focus_handler: FocusHandler = .{},
 
@@ -38,10 +38,35 @@ checked: bool,
 
 on_state_change: ?callbacks.Callback(bool),
 
+fn createLabelWithMarker(marker: []const u8, config: Config) !*Label {
+    var label = display.Span.init(internal.allocator);
+    defer label.deinit();
+
+    try label.appendPlain(marker);
+    if (config.text) |text| {
+        try label.appendPlain(text);
+    } else if (config.span) |span| {
+        try label.appendSpan(span);
+    }
+
+    return try Label.create(
+        .{ .span = label.view(), .layout = config.layout },
+    );
+}
+
 pub fn create(config: Config) !*Checkbox {
+    if (config.text == null and config.span == null) {
+        @panic("text and span are mutually exclusive, only one of them must be defined");
+    }
+
+    const labels: [2]*Label = .{
+        try createLabelWithMarker("[ ] ", config),
+        try createLabelWithMarker("[*] ", config),
+    };
+
     const self = try internal.allocator.create(Checkbox);
     self.* = Checkbox{
-        .label = try internal.allocator.dupe(u8, config.label),
+        .labels = labels,
         .checked = config.checked,
         .layout_properties = config.layout,
         .on_state_change = config.on_state_change,
@@ -50,7 +75,9 @@ pub fn create(config: Config) !*Checkbox {
 }
 
 pub fn destroy(self: *Checkbox) void {
-    internal.allocator.free(self.label);
+    for (self.labels) |label| {
+        label.destroy();
+    }
     internal.allocator.destroy(self);
 }
 
@@ -59,35 +86,20 @@ pub fn widget(self: *Checkbox) Widget {
 }
 
 pub fn render(self: *Checkbox, area: Rect, frame: Frame, theme: display.Theme) !void {
-    if (area.height() < 1) {
-        return;
-    }
     self.focus_handler.render(area, frame, theme);
-
-    const marker = if (self.checked) Marker.Checked else Marker.Basic;
-
-    const to_write: [2][]const u8 = .{ marker, self.label };
-    var len: usize = area.width();
-    var cursor = area.min;
-    for (to_write) |bytes| {
-        if (len <= 0) break;
-        const written = try frame.writeSymbols(cursor, bytes, len);
-        len -= written;
-        cursor.x += @intCast(written);
+    if (self.checked) {
+        try self.labels[1].render(area, frame, theme);
+    } else {
+        try self.labels[0].render(area, frame, theme);
     }
 }
 
 pub fn layout(self: *Checkbox, constraints: Constraints) !Vec2 {
-    const len: u32 = @intCast(try std.unicode.utf8CountCodepoints(self.label) + Marker.Basic.len);
-    var size = Vec2{
-        .x = len,
-        .y = 1,
-    };
-
-    const self_constraints = Constraints.fromProps(self.layout_properties);
-    size = self_constraints.apply(size);
-    size = constraints.apply(size);
-    return size;
+    if (self.checked) {
+        return try self.labels[1].layout(constraints);
+    } else {
+        return try self.labels[0].layout(constraints);
+    }
 }
 
 pub fn handleEvent(self: *Checkbox, event: events.Event) !events.EventResult {

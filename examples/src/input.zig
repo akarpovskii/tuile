@@ -96,7 +96,7 @@ pub fn main() !void {
                         },
                     }),
                     tuile.button(.{
-                        .label = "Submit",
+                        .text = "Submit",
                         .on_press = .{
                             .cb = ListState.onPress,
                             .payload = &list_state,

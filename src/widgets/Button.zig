@@ -13,7 +13,11 @@ const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
-    label: []const u8,
+    // text and span are mutually exclusive, only one of them must be defined
+    text: ?[]const u8 = null,
+
+    // text and span are mutually exclusive, only one of them must be defined
+    span: ?display.SpanView = null,
 
     on_press: ?callbacks.Callback(void) = null,
 
@@ -29,15 +33,23 @@ focus_handler: FocusHandler = .{},
 on_press: ?callbacks.Callback(void),
 
 pub fn create(config: Config) !*Button {
-    var label = try internal.allocator.alloc(u8, config.label.len + 2);
-    defer internal.allocator.free(label);
+    if (config.text == null and config.span == null) {
+        @panic("text and span are mutually exclusive, only one of them must be defined");
+    }
 
-    std.mem.copyForwards(u8, label[1..], config.label);
-    label[0] = '[';
-    label[label.len - 1] = ']';
+    var label = display.Span.init(internal.allocator);
+    defer label.deinit();
+
+    try label.appendPlain("[");
+    if (config.text) |text| {
+        try label.appendPlain(text);
+    } else if (config.span) |span| {
+        try label.appendSpan(span);
+    }
+    try label.appendPlain("]");
 
     const view = try Label.create(
-        .{ .text = label, .layout = config.layout },
+        .{ .span = label.view(), .layout = config.layout },
     );
 
     const self = try internal.allocator.create(Button);

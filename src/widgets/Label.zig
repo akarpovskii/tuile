@@ -9,42 +9,64 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display/display.zig");
 
+const PartialChunk = struct {
+    orig: usize,
+
+    start: usize,
+
+    end: usize,
+};
+
+const Row = struct {
+    chunks: std.ArrayListUnmanaged(PartialChunk) = .{},
+
+    pub fn deinit(self: *Row, allocator: std.mem.Allocator) void {
+        self.chunks.deinit(allocator);
+    }
+};
+
 pub const Config = struct {
-    text: []const u8,
+    // text and span are mutually exclusive, only one of them must be defined
+    text: ?[]const u8 = null,
+
+    // text and span are mutually exclusive, only one of them must be defined
+    span: ?display.SpanView = null,
 
     layout: LayoutProperties = .{},
 };
 
 pub const Label = @This();
 
-text: []const u8,
+content: display.Span,
 
-lines: [][]const u8,
+rows: std.ArrayListUnmanaged(Row),
 
 layout_properties: LayoutProperties,
 
 pub fn create(config: Config) !*Label {
-    const text = try internal.allocator.dupe(u8, config.text);
-    var lines = std.ArrayList([]const u8).init(internal.allocator);
-    defer lines.deinit();
-
-    var iter = std.mem.tokenizeScalar(u8, text, '\n');
-    while (iter.next()) |line| {
-        try lines.append(line);
+    if (config.text == null and config.span == null) {
+        @panic("text and span are mutually exclusive, only one of them must be defined");
     }
-
     const self = try internal.allocator.create(Label);
     self.* = Label{
-        .text = text,
-        .lines = try lines.toOwnedSlice(),
+        .content = display.Span.init(internal.allocator),
+        .rows = .{},
         .layout_properties = config.layout,
     };
+    if (config.text) |text| {
+        try self.content.appendPlain(text);
+    } else if (config.span) |span| {
+        try self.content.appendSpan(span);
+    }
     return self;
 }
 
 pub fn destroy(self: *Label) void {
-    internal.allocator.free(self.lines);
-    internal.allocator.free(self.text);
+    for (self.rows.items) |*row| {
+        row.deinit(internal.allocator);
+    }
+    self.rows.deinit(internal.allocator);
+    self.content.deinit();
     internal.allocator.destroy(self);
 }
 
@@ -53,23 +75,38 @@ pub fn widget(self: *Label) Widget {
 }
 
 pub fn render(self: *Label, area: Rect, frame: Frame, _: display.Theme) !void {
+    const rows = self.rows.items;
     for (0..area.height()) |y| {
-        if (y >= self.lines.len) break;
-        const pos = area.min.add(.{ .x = 0, .y = @intCast(y) });
-        _ = try frame.writeSymbols(pos, self.lines[y], area.width());
+        if (y >= rows.len) break;
+
+        const row = rows[y];
+        var pos = area.min.add(.{ .x = 0, .y = @intCast(y) });
+        for (row.chunks.items) |chunk| {
+            const text = self.content.getTextForChunk(chunk.orig)[chunk.start..chunk.end];
+            const written: u32 = @intCast(try frame.writeSymbols(pos, text, area.width()));
+            const chunk_area = Rect{ .min = pos, .max = pos.add(.{ .x = written, .y = 1 }) };
+            frame.setStyle(chunk_area, self.content.getStyleForChunk(chunk.orig));
+            pos.x += written;
+        }
     }
 }
 
 pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
+    try self.wrapText(constraints);
+
     var max_len: usize = 0;
-    for (self.lines) |line| {
-        const len: usize = try std.unicode.utf8CountCodepoints(line);
+    for (self.rows.items) |row| {
+        var len: usize = 0;
+        for (row.chunks.items) |chunk| {
+            const text = self.content.getTextForChunk(chunk.orig)[chunk.start..chunk.end];
+            len += try std.unicode.utf8CountCodepoints(text);
+        }
         max_len = @max(max_len, len);
     }
 
     var size = Vec2{
         .x = @intCast(max_len),
-        .y = @intCast(self.lines.len),
+        .y = @intCast(self.rows.items.len),
     };
 
     const self_constraints = Constraints.fromProps(self.layout_properties);
@@ -84,4 +121,35 @@ pub fn handleEvent(_: *Label, _: events.Event) !events.EventResult {
 
 pub fn layoutProps(self: *Label) LayoutProperties {
     return self.layout_properties;
+}
+
+fn wrapText(self: *Label, _: Constraints) !void {
+    for (self.rows.items) |*row| {
+        row.deinit(internal.allocator);
+    }
+    self.rows.clearAndFree(internal.allocator);
+
+    for (0..self.content.getChunks().len) |chunk_idx| {
+        if (self.rows.items.len == 0) {
+            try self.rows.append(internal.allocator, .{});
+        }
+
+        const text = self.content.getTextForChunk(chunk_idx);
+        var iter = std.mem.tokenizeScalar(u8, text, '\n');
+        while (iter.next()) |line| {
+            const start = @intFromPtr(line.ptr) - @intFromPtr(text.ptr);
+            const end = start + line.len;
+            const partial = PartialChunk{
+                .orig = chunk_idx,
+                .start = start,
+                .end = end,
+            };
+
+            var last = &self.rows.items[self.rows.items.len - 1];
+            try last.chunks.append(internal.allocator, partial);
+            if (iter.peek()) |_| {
+                try self.rows.append(internal.allocator, .{});
+            }
+        }
+    }
 }

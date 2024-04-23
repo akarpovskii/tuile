@@ -10,6 +10,11 @@ pub fn main() !void {
     var tui = try tuile.Tuile.init();
     defer tui.deinit();
 
+    var multiline_span = tuile.Span.init(tuile_allocator);
+    defer multiline_span.deinit();
+    try multiline_span.append(.{ .text = "Multiline\n", .style = .{ .fg = .{ .bright = .red } } });
+    try multiline_span.append(.{ .text = "text", .style = .{ .fg = .{ .bright = .blue } } });
+
     const layout = tuile.vertical(
         .{ .layout = .{ .flex = 1 } },
         .{
@@ -46,7 +51,7 @@ pub fn main() !void {
                     .border_type = .rounded,
                     .padding = .{ .top = 1, .bottom = 2, .left = 3, .right = 0 },
                 },
-                tuile.label(.{ .text = "Multiline\nlabel text" }),
+                tuile.label(.{ .span = multiline_span.view() }),
             ),
             tuile.block(
                 .{

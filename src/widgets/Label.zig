@@ -151,5 +151,10 @@ fn wrapText(self: *Label, _: Constraints) !void {
                 try self.rows.append(internal.allocator, .{});
             }
         }
+        // tokenize skips delimiters, but we need to add another row
+        // if newline happens to be at the end
+        if (text.len > 0 and text[text.len - 1] == '\n') {
+            try self.rows.append(internal.allocator, .{});
+        }
     }
 }

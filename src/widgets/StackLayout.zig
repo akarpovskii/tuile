@@ -22,9 +22,9 @@ pub const Config = struct {
 
 pub const StackLayout = @This();
 
-widgets: std.ArrayList(Widget),
+widgets: std.ArrayListUnmanaged(Widget),
 
-widget_sizes: std.ArrayList(Vec2),
+widget_sizes: std.ArrayListUnmanaged(Vec2),
 
 orientation: Orientation,
 
@@ -32,18 +32,18 @@ focused: ?usize = null,
 
 layout_properties: LayoutProperties,
 
-fn createWidgets(children: anytype) !std.ArrayList(Widget) {
-    var widgets = std.ArrayList(Widget).init(internal.allocator);
+fn createWidgets(children: anytype) !std.ArrayListUnmanaged(Widget) {
+    var widgets = std.ArrayListUnmanaged(Widget){};
 
     const info = @typeInfo(@TypeOf(children));
     if (info == .Struct and info.Struct.is_tuple) {
         // Tuples only support comptime indexing
         inline for (children) |child| {
-            try widgets.append(try Widget.fromAny(child));
+            try widgets.append(internal.allocator, try Widget.fromAny(child));
         }
     } else {
         for (children) |child| {
-            try widgets.append(try Widget.fromAny(child));
+            try widgets.append(internal.allocator, try Widget.fromAny(child));
         }
     }
     return widgets;
@@ -55,7 +55,7 @@ pub fn create(config: Config, children: anytype) !*StackLayout {
     const self = try internal.allocator.create(StackLayout);
     self.* = StackLayout{
         .widgets = widgets,
-        .widget_sizes = std.ArrayList(Vec2).init(internal.allocator),
+        .widget_sizes = std.ArrayListUnmanaged(Vec2){},
         .orientation = config.orientation,
         .layout_properties = config.layout,
     };
@@ -63,15 +63,15 @@ pub fn create(config: Config, children: anytype) !*StackLayout {
 }
 
 pub fn add(self: *StackLayout, child: anytype) !void {
-    try self.widgets.append(try Widget.fromAny(child));
+    try self.widgets.append(internal.allocator, try Widget.fromAny(child));
 }
 
 pub fn destroy(self: *StackLayout) void {
     for (self.widgets.items) |w| {
         w.destroy();
     }
-    self.widgets.deinit();
-    self.widget_sizes.deinit();
+    self.widgets.deinit(internal.allocator);
+    self.widget_sizes.deinit(internal.allocator);
     internal.allocator.destroy(self);
 }
 
@@ -148,7 +148,7 @@ pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orienta
     }
 
     self.widget_sizes.clearRetainingCapacity();
-    try self.widget_sizes.resize(self.widgets.items.len);
+    try self.widget_sizes.resize(internal.allocator, self.widgets.items.len);
 
     var flex_indices = std.ArrayList(usize).init(internal.allocator);
     defer flex_indices.deinit();

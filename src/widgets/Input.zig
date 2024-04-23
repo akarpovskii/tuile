@@ -25,7 +25,7 @@ placeholder: []const u8,
 
 on_value_changed: ?callbacks.Callback([]const u8),
 
-value: std.ArrayList(u8),
+value: std.ArrayListUnmanaged(u8),
 
 focus_handler: FocusHandler = .{},
 
@@ -40,14 +40,14 @@ pub fn create(config: Config) !*Input {
     self.* = Input{
         .on_value_changed = config.on_value_changed,
         .placeholder = try internal.allocator.dupe(u8, config.placeholder),
-        .value = std.ArrayList(u8).init(internal.allocator),
+        .value = std.ArrayListUnmanaged(u8){},
         .layout_properties = config.layout,
     };
     return self;
 }
 
 pub fn destroy(self: *Input) void {
-    self.value.deinit();
+    self.value.deinit(internal.allocator);
     internal.allocator.free(self.placeholder);
     internal.allocator.destroy(self);
 }
@@ -150,7 +150,7 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
         },
 
         .char => |char| {
-            try self.value.insert(self.cursor, char);
+            try self.value.insert(internal.allocator, self.cursor, char);
             if (self.on_value_changed) |cb| cb.call(self.value.items);
             self.cursor += 1;
             return .consumed;

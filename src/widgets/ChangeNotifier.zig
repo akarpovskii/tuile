@@ -6,25 +6,25 @@ const ChangeNotifier = @This();
 
 pub const Listener = callbacks.Callback(void);
 
-listeners: std.ArrayList(Listener),
+listeners: std.ArrayListUnmanaged(Listener),
 
 mutex: std.Thread.Mutex,
 
 pub fn init() ChangeNotifier {
     return ChangeNotifier{
-        .listeners = std.ArrayList(Listener).init(internal.allocator),
+        .listeners = std.ArrayListUnmanaged(Listener){},
         .mutex = .{},
     };
 }
 
 pub fn deinit(self: *ChangeNotifier) void {
-    self.listeners.deinit();
+    self.listeners.deinit(internal.allocator);
 }
 
 pub fn addListener(self: *ChangeNotifier, listener: Listener) !void {
     self.mutex.lock();
     defer self.mutex.unlock();
-    try self.listeners.append(listener);
+    try self.listeners.append(internal.allocator, listener);
 }
 
 pub fn removeListener(self: *ChangeNotifier, listener: Listener) void {

@@ -62,8 +62,8 @@ pub const Tuile = struct {
             .max = window_size,
         };
 
-        var buffer = try std.ArrayList(render.Cell).initCapacity(internal.allocator, window_size.x * window_size.y);
-        defer buffer.deinit();
+        var buffer = try std.ArrayListUnmanaged(render.Cell).initCapacity(internal.allocator, window_size.x * window_size.y);
+        defer buffer.deinit(internal.allocator);
         buffer.appendNTimesAssumeCapacity(.{ .fg = self.theme.foreground, .bg = self.theme.background }, buffer.capacity);
 
         var frame = render.Frame{

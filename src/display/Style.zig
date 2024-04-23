@@ -36,3 +36,24 @@ pub const Effect = struct {
         return result;
     }
 };
+
+pub fn add(self: Style, other: Style) Style {
+    var new = self;
+    if (other.fg) |fg| new.fg = fg;
+    if (other.bg) |bg| new.bg = bg;
+    if (other.add_effect) |other_add| {
+        if (new.add_effect) |*new_add| {
+            new_add.* = new_add.add(other_add);
+        } else {
+            new.add_effect = other_add;
+        }
+    }
+    if (other.sub_effect) |other_sub| {
+        if (new.sub_effect) |*new_sub| {
+            new_sub.* = new_sub.add(other_sub);
+        } else {
+            new.sub_effect = other_sub;
+        }
+    }
+    return new;
+}

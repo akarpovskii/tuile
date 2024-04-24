@@ -26,6 +26,7 @@ const VTable = struct {
 
     // Optional, widgets may not implement this method unless they have children.
     // In which case they must call prepare() on all of their children.
+    // Tuile guarantees to call prepare() before any other method.
     prepare: *const fn (context: *anyopaque) anyerror!void,
 };
 

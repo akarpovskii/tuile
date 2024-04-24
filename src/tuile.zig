@@ -10,6 +10,10 @@ pub usingnamespace widgets;
 pub const display = @import("display/display.zig");
 pub usingnamespace display;
 
+// Make it user-driven?
+const FRAMES_PER_SECOND = 30;
+const FRAME_TIME_NS = std.time.ns_per_s / FRAMES_PER_SECOND;
+
 pub const Tuile = struct {
     backend: backends.Backend,
 
@@ -19,6 +23,9 @@ pub const Tuile = struct {
 
     theme: display.Theme = .{},
 
+    last_frame_time: u64,
+    last_sleep_error: i64,
+
     pub fn init() !Tuile {
         const curses = try backends.Ncurses.create();
         const root = try widgets.StackLayout.create(.{ .orientation = .vertical }, .{});
@@ -26,6 +33,8 @@ pub const Tuile = struct {
         return .{
             .backend = curses.backend(),
             .root = root,
+            .last_frame_time = 0,
+            .last_sleep_error = 0,
         };
     }
 
@@ -40,14 +49,39 @@ pub const Tuile = struct {
 
     pub fn run(self: *Tuile) !void {
         while (self.is_running) {
-            try self.prepare();
+            var frame_timer = try std.time.Timer.start();
 
-            const event = try self.backend.pollEvent();
-            if (event) |value| {
-                try self.propagateEvent(value);
+            var prepared = false;
+            while (try self.backend.pollEvent()) |event| {
+                switch (try self.handleEvent(event)) {
+                    .consumed => continue,
+                    .ignored => {
+                        if (!prepared) {
+                            try self.prepare();
+                            prepared = true;
+                        }
+                        try self.propagateEvent(event);
+                    },
+                }
             }
 
+            if (!prepared) {
+                try self.prepare();
+            }
             try self.redraw();
+
+            self.last_frame_time = frame_timer.lap();
+
+            const total_frame_time: i64 = @as(i64, @intCast(self.last_frame_time)) + self.last_sleep_error;
+            if (total_frame_time < FRAME_TIME_NS) {
+                const left_until_frame = FRAME_TIME_NS - @as(u64, @intCast(total_frame_time));
+
+                var sleep_timer = try std.time.Timer.start();
+                std.time.sleep(left_until_frame);
+                const actual_sleep_time = sleep_timer.lap();
+
+                self.last_sleep_error = @as(i64, @intCast(actual_sleep_time)) - @as(i64, @intCast(left_until_frame));
+            }
         }
     }
 
@@ -83,17 +117,23 @@ pub const Tuile = struct {
         try frame.render(self.backend);
     }
 
-    fn propagateEvent(self: *Tuile, event: events.Event) !void {
+    fn handleEvent(self: *Tuile, event: events.Event) !events.EventResult {
         switch (event) {
             .ctrl_char => |value| {
                 if (value == 'c') {
                     self.is_running = false;
+                    // pass down the event to widgets
+                    return .ignored;
                 }
             },
-            .key => |key| if (key == .Resize) return,
+            .key => |key| if (key == .Resize)
+                return .consumed,
             else => {},
         }
+        return .ignored;
+    }
 
+    fn propagateEvent(self: *Tuile, event: events.Event) !void {
         _ = try self.root.handleEvent(event);
     }
 };

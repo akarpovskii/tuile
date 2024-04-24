@@ -238,7 +238,7 @@ test "append styled" {
     var test_span = Span.init(std.testing.allocator);
     defer test_span.deinit();
 
-    var style = Style{ .fg = .{ .bright = .red } };
+    var style = Style{ .fg = display.color("red") };
 
     try test_span.append(.{ .text = "hello", .style = style });
     try expect(test_span.getChunks().len == 1);
@@ -246,7 +246,7 @@ test "append styled" {
     try expect(std.mem.eql(u8, test_span.getText(), "hello"));
     try expect(std.meta.eql(test_span.getStyleForChunk(0), style));
 
-    style.fg = .{ .bright = .blue };
+    style.fg = display.color("blue");
 
     try test_span.append(.{ .text = " world", .style = style });
     try expect(test_span.getChunks().len == 2);
@@ -260,8 +260,8 @@ test "append slice" {
     defer test_span.deinit();
 
     const slice: []const StyledText = &.{
-        .{ .text = "hello", .style = .{ .fg = .{ .bright = .red } } },
-        .{ .text = " world", .style = .{ .fg = .{ .bright = .blue } } },
+        .{ .text = "hello", .style = .{ .fg = display.color("red") } },
+        .{ .text = " world", .style = .{ .fg = display.color("blue") } },
     };
 
     try test_span.appendSlice(slice);
@@ -278,7 +278,7 @@ test "append format" {
     var test_span = Span.init(std.testing.allocator);
     defer test_span.deinit();
 
-    const style = Style{ .fg = .{ .bright = .red } };
+    const style = Style{ .fg = display.color("red") };
     try test_span.appendFormat("{d} {s}", .{ 1, "hello" }, style);
     try expect(std.mem.eql(u8, test_span.getText(), "1 hello"));
     try expect(std.mem.eql(u8, test_span.getTextForChunk(0), "1 hello"));
@@ -306,7 +306,7 @@ test "unmanaged append styled" {
     var test_span = SpanUnmanaged{};
     defer test_span.deinit(std.testing.allocator);
 
-    var style = Style{ .fg = .{ .bright = .red } };
+    var style = Style{ .fg = display.color("red") };
 
     try test_span.append(std.testing.allocator, .{ .text = "hello", .style = style });
     try expect(test_span.getChunks().len == 1);
@@ -314,7 +314,7 @@ test "unmanaged append styled" {
     try expect(std.mem.eql(u8, test_span.getText(), "hello"));
     try expect(std.meta.eql(test_span.getStyleForChunk(0), style));
 
-    style.fg = .{ .bright = .blue };
+    style.fg = display.color("blue");
 
     try test_span.append(std.testing.allocator, .{ .text = " world", .style = style });
     try expect(test_span.getChunks().len == 2);
@@ -328,8 +328,8 @@ test "unmanaged append slice" {
     defer test_span.deinit(std.testing.allocator);
 
     const slice: []const StyledText = &.{
-        .{ .text = "hello", .style = .{ .fg = .{ .bright = .red } } },
-        .{ .text = " world", .style = .{ .fg = .{ .bright = .blue } } },
+        .{ .text = "hello", .style = .{ .fg = display.color("red") } },
+        .{ .text = " world", .style = .{ .fg = display.color("blue") } },
     };
 
     try test_span.appendSlice(std.testing.allocator, slice);
@@ -346,7 +346,7 @@ test "unmanaged append format" {
     var test_span = SpanUnmanaged{};
     defer test_span.deinit(std.testing.allocator);
 
-    const style = Style{ .fg = .{ .bright = .red } };
+    const style = Style{ .fg = display.color("red") };
     try test_span.appendFormat(std.testing.allocator, "{d} {s}", .{ 1, "hello" }, style);
     try expect(std.mem.eql(u8, test_span.getText(), "1 hello"));
     try expect(std.mem.eql(u8, test_span.getTextForChunk(0), "1 hello"));
@@ -359,8 +359,8 @@ test "append managed span to managed span" {
     var span2 = Span.init(std.testing.allocator);
     defer span2.deinit();
 
-    const style1 = Style{ .fg = .{ .bright = .red } };
-    const style2 = Style{ .fg = .{ .bright = .blue } };
+    const style1 = Style{ .fg = display.color("red") };
+    const style2 = Style{ .fg = display.color("blue") };
 
     try span1.append(.{ .text = "hello", .style = style1 });
     try span2.append(.{ .text = " world", .style = style2 });
@@ -379,8 +379,8 @@ test "append unmanaged span to managed span" {
     var span2 = SpanUnmanaged{};
     defer span2.deinit(std.testing.allocator);
 
-    const style1 = Style{ .fg = .{ .bright = .red } };
-    const style2 = Style{ .fg = .{ .bright = .blue } };
+    const style1 = Style{ .fg = display.color("red") };
+    const style2 = Style{ .fg = display.color("blue") };
 
     try span1.append(.{ .text = "hello", .style = style1 });
     try span2.append(std.testing.allocator, .{ .text = " world", .style = style2 });
@@ -399,8 +399,8 @@ test "append managed span to unmanaged span" {
     var span2 = Span.init(std.testing.allocator);
     defer span2.deinit();
 
-    const style1 = Style{ .fg = .{ .bright = .red } };
-    const style2 = Style{ .fg = .{ .bright = .blue } };
+    const style1 = Style{ .fg = display.color("red") };
+    const style2 = Style{ .fg = display.color("blue") };
 
     try span1.append(std.testing.allocator, .{ .text = "hello", .style = style1 });
     try span2.append(.{ .text = " world", .style = style2 });
@@ -419,8 +419,8 @@ test "append unmanaged span to unmanaged span" {
     var span2 = SpanUnmanaged{};
     defer span2.deinit(std.testing.allocator);
 
-    const style1 = Style{ .fg = .{ .bright = .red } };
-    const style2 = Style{ .fg = .{ .bright = .blue } };
+    const style1 = Style{ .fg = display.color("red") };
+    const style2 = Style{ .fg = display.color("blue") };
 
     try span1.append(std.testing.allocator, .{ .text = "hello", .style = style1 });
     try span2.append(std.testing.allocator, .{ .text = " world", .style = style2 });
@@ -438,8 +438,8 @@ test "view of managed span" {
     defer test_span.deinit();
 
     const slice: []const StyledText = &.{
-        .{ .text = "hello", .style = .{ .fg = .{ .bright = .red } } },
-        .{ .text = " world", .style = .{ .fg = .{ .bright = .blue } } },
+        .{ .text = "hello", .style = .{ .fg = display.color("red") } },
+        .{ .text = " world", .style = .{ .fg = display.color("blue") } },
     };
 
     try test_span.appendSlice(slice);
@@ -458,8 +458,8 @@ test "view of unmanaged span" {
     defer test_span.deinit(std.testing.allocator);
 
     const slice: []const StyledText = &.{
-        .{ .text = "hello", .style = .{ .fg = .{ .bright = .red } } },
-        .{ .text = " world", .style = .{ .fg = .{ .bright = .blue } } },
+        .{ .text = "hello", .style = .{ .fg = display.color("red") } },
+        .{ .text = " world", .style = .{ .fg = display.color("blue") } },
     };
 
     try test_span.appendSlice(std.testing.allocator, slice);
@@ -478,8 +478,8 @@ test "managed span from view" {
     defer span.deinit();
 
     const slice: []const StyledText = &.{
-        .{ .text = "hello", .style = .{ .fg = .{ .bright = .red } } },
-        .{ .text = " world", .style = .{ .fg = .{ .bright = .blue } } },
+        .{ .text = "hello", .style = .{ .fg = display.color("red") } },
+        .{ .text = " world", .style = .{ .fg = display.color("blue") } },
     };
     try span.appendSlice(slice);
 
@@ -499,8 +499,8 @@ test "unmanaged span from view" {
     defer span.deinit(std.testing.allocator);
 
     const slice: []const StyledText = &.{
-        .{ .text = "hello", .style = .{ .fg = .{ .bright = .red } } },
-        .{ .text = " world", .style = .{ .fg = .{ .bright = .blue } } },
+        .{ .text = "hello", .style = .{ .fg = display.color("red") } },
+        .{ .text = " world", .style = .{ .fg = display.color("blue") } },
     };
     try span.appendSlice(std.testing.allocator, slice);
 

@@ -12,20 +12,20 @@ pub fn main() !void {
 
     var multiline_span = tuile.Span.init(tuile_allocator);
     defer multiline_span.deinit();
-    try multiline_span.append(.{ .text = "Multiline\n", .style = .{ .fg = .{ .bright = .red } } });
-    try multiline_span.append(.{ .text = "text", .style = .{ .fg = .{ .bright = .blue } } });
+    try multiline_span.append(.{ .text = "Multiline\n", .style = .{ .fg = tuile.color("red") } });
+    try multiline_span.append(.{ .text = "text", .style = .{ .fg = tuile.color("blue") } });
 
     const layout = tuile.vertical(
         .{ .layout = .{ .flex = 1 } },
         .{
             tuile.themed(
                 .{ .theme = .{
-                    .background = .{ .rgb = tuile.color.Rgb.blue() },
-                    .foreground = .{ .rgb = tuile.color.Rgb.white() },
+                    .background = tuile.color("blue"),
+                    .foreground = tuile.color("white"),
                 } },
                 tuile.themed(
                     .{ .theme = .{
-                        .background = .{ .bright = .yellow },
+                        .background = tuile.color("bright yellow"),
                     } },
                     tuile.block(
                         .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },

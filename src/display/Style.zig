@@ -1,5 +1,5 @@
 const std = @import("std");
-const Color = @import("color.zig").Color;
+const Color = @import("colors.zig").Color;
 
 const Style = @This();
 

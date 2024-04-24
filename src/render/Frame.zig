@@ -13,7 +13,7 @@ size: Vec2,
 
 area: Rect,
 
-fn at(self: Frame, pos: Vec2) *Cell {
+pub fn at(self: Frame, pos: Vec2) *Cell {
     return &self.buffer[pos.y * self.size.x + pos.x];
 }
 

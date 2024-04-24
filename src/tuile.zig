@@ -25,6 +25,11 @@ pub const EventHandler = struct {
 };
 
 pub const Tuile = struct {
+    const Config = struct {
+        // Takes ownership of the backend and destroys it afterwards
+        backend: ?backends.Backend = null,
+    };
+
     backend: backends.Backend,
 
     is_running: std.atomic.Value(bool),
@@ -41,21 +46,28 @@ pub const Tuile = struct {
     frame_buffer: std.ArrayListUnmanaged(render.Cell),
     window_size: Vec2,
 
-    pub fn init() !Tuile {
-        const curses = try backends.Ncurses.create();
-        const root = try widgets.StackLayout.create(.{ .orientation = .vertical }, .{});
+    pub fn init(config: Config) !Tuile {
+        var self = blk: {
+            const backend = if (config.backend) |backend| backend else (try backends.Ncurses.create()).backend();
+            errdefer backend.destroy();
+            const root = try widgets.StackLayout.create(.{ .orientation = .vertical }, .{});
+            errdefer root.destroy();
 
-        return .{
-            .backend = curses.backend(),
-            .is_running = std.atomic.Value(bool).init(false),
-            .root = root,
-            .theme = .{},
-            .last_frame_time = 0,
-            .last_sleep_error = 0,
-            .event_handlers = .{},
-            .frame_buffer = .{},
-            .window_size = Vec2.zero(),
+            break :blk Tuile{
+                .backend = backend,
+                .is_running = std.atomic.Value(bool).init(false),
+                .root = root,
+                .theme = .{},
+                .last_frame_time = 0,
+                .last_sleep_error = 0,
+                .event_handlers = .{},
+                .frame_buffer = .{},
+                .window_size = Vec2.zero(),
+            };
         };
+        errdefer self.deinit();
+        try self.handleResize();
+        return self;
     }
 
     pub fn deinit(self: *Tuile) void {
@@ -76,44 +88,46 @@ pub const Tuile = struct {
         self.is_running.store(false, .release);
     }
 
-    pub fn run(self: *Tuile) !void {
-        try self.handleResize();
+    pub fn step(self: *Tuile) !void {
+        var frame_timer = try std.time.Timer.start();
 
+        var prepared = false;
+        while (try self.backend.pollEvent()) |event| {
+            switch (try self.handleEvent(event)) {
+                .consumed => continue,
+                .ignored => {
+                    if (!prepared) {
+                        try self.prepare();
+                        prepared = true;
+                    }
+                    try self.propagateEvent(event);
+                },
+            }
+        }
+
+        if (!prepared) {
+            try self.prepare();
+        }
+        try self.redraw();
+
+        self.last_frame_time = frame_timer.lap();
+
+        const total_frame_time: i64 = @as(i64, @intCast(self.last_frame_time)) + self.last_sleep_error;
+        if (total_frame_time < FRAME_TIME_NS) {
+            const left_until_frame = FRAME_TIME_NS - @as(u64, @intCast(total_frame_time));
+
+            var sleep_timer = try std.time.Timer.start();
+            std.time.sleep(left_until_frame);
+            const actual_sleep_time = sleep_timer.lap();
+
+            self.last_sleep_error = @as(i64, @intCast(actual_sleep_time)) - @as(i64, @intCast(left_until_frame));
+        }
+    }
+
+    pub fn run(self: *Tuile) !void {
         self.is_running.store(true, .release);
         while (self.is_running.load(.acquire)) {
-            var frame_timer = try std.time.Timer.start();
-
-            var prepared = false;
-            while (try self.backend.pollEvent()) |event| {
-                switch (try self.handleEvent(event)) {
-                    .consumed => continue,
-                    .ignored => {
-                        if (!prepared) {
-                            try self.prepare();
-                            prepared = true;
-                        }
-                        try self.propagateEvent(event);
-                    },
-                }
-            }
-
-            if (!prepared) {
-                try self.prepare();
-            }
-            try self.redraw();
-
-            self.last_frame_time = frame_timer.lap();
-
-            const total_frame_time: i64 = @as(i64, @intCast(self.last_frame_time)) + self.last_sleep_error;
-            if (total_frame_time < FRAME_TIME_NS) {
-                const left_until_frame = FRAME_TIME_NS - @as(u64, @intCast(total_frame_time));
-
-                var sleep_timer = try std.time.Timer.start();
-                std.time.sleep(left_until_frame);
-                const actual_sleep_time = sleep_timer.lap();
-
-                self.last_sleep_error = @as(i64, @intCast(actual_sleep_time)) - @as(i64, @intCast(left_until_frame));
-            }
+            try self.step();
         }
     }
 

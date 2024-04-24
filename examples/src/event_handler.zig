@@ -14,7 +14,7 @@ pub fn stopOnQ(ptr: ?*anyopaque, event: tuile.events.Event) !tuile.events.EventR
 }
 
 pub fn main() !void {
-    var tui = try tuile.Tuile.init();
+    var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
     const layout = tuile.vertical(

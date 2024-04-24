@@ -7,7 +7,7 @@ pub const tuile_allocator = gpa.allocator();
 pub fn main() !void {
     defer _ = gpa.deinit();
 
-    var tui = try tuile.Tuile.init();
+    var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
     var multiline_span = tuile.Span.init(tuile_allocator);

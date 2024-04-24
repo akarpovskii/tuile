@@ -77,7 +77,7 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    var tui = try tuile.Tuile.init();
+    var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
     const layout = tuile.vertical(

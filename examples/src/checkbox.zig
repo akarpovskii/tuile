@@ -65,7 +65,7 @@ const StateView = struct {
 };
 
 pub fn main() !void {
-    var tui = try tuile.Tuile.init();
+    var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
     var state1 = CheckedState{};

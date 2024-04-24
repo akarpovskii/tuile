@@ -174,6 +174,7 @@ pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orienta
         @field(w_cons, max_cross) = @field(constraints, max_cross);
         var size = try w.layout(w_cons);
         @field(size, cross) = @min(@field(size, cross), @field(constraints, max_cross));
+        @field(size, main) = @min(@field(size, main), @field(constraints, max_main));
 
         self.widget_sizes.items[idx] = size;
         fixed_size += @field(size, main);

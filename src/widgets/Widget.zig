@@ -44,6 +44,8 @@ pub fn init(context: anytype) Widget {
         }
 
         pub fn render(pointer: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void {
+            std.debug.assert(area.max.x != std.math.maxInt(u32));
+            std.debug.assert(area.max.y != std.math.maxInt(u32));
             const self: PtrT = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.render(self, area, frame, theme);
         }

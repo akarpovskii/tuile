@@ -101,7 +101,7 @@ test "block with simple borders" {
     try renderAndCompare(
         .{ .x = 20, .y = 3 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .simple },
+            .{ .border = tuile.Border.all(), .border_type = .simple },
             tuile.label(.{ .text = "Label text" }),
         ),
         expected,
@@ -117,7 +117,7 @@ test "block with rounded borders" {
     try renderAndCompare(
         .{ .x = 20, .y = 3 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .rounded },
+            .{ .border = tuile.Border.all(), .border_type = .rounded },
             tuile.label(.{ .text = "Label text" }),
         ),
         expected,
@@ -133,7 +133,7 @@ test "align left inside block" {
     try renderAndCompare(
         .{ .x = 20, .y = 3 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .simple },
+            .{ .border = tuile.Border.all(), .border_type = .simple },
             tuile.label(.{ .text = "Label text", .layout = .{ .alignment = tuile.LayoutProperties.Align.topLeft() } }),
         ),
         expected,
@@ -149,7 +149,7 @@ test "align right inside block" {
     try renderAndCompare(
         .{ .x = 20, .y = 3 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .simple },
+            .{ .border = tuile.Border.all(), .border_type = .simple },
             tuile.label(.{ .text = "Label text", .layout = .{ .alignment = tuile.LayoutProperties.Align.topRight() } }),
         ),
         expected,
@@ -167,7 +167,7 @@ test "align top inside block" {
     try renderAndCompare(
         .{ .x = 20, .y = 5 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .simple, .layout = .{ .flex = 1 } },
+            .{ .border = tuile.Border.all(), .border_type = .simple, .layout = .{ .flex = 1 } },
             tuile.label(.{ .text = "Label text", .layout = .{ .alignment = tuile.LayoutProperties.Align.topCenter() } }),
         ),
         expected,
@@ -185,7 +185,7 @@ test "align bottom inside block" {
     try renderAndCompare(
         .{ .x = 20, .y = 5 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .simple, .layout = .{ .flex = 1 } },
+            .{ .border = tuile.Border.all(), .border_type = .simple, .layout = .{ .flex = 1 } },
             tuile.label(.{ .text = "Label text", .layout = .{ .alignment = tuile.LayoutProperties.Align.bottomCenter() } }),
         ),
         expected,
@@ -203,7 +203,7 @@ test "align bottom left inside block" {
     try renderAndCompare(
         .{ .x = 20, .y = 5 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .simple, .layout = .{ .flex = 1 } },
+            .{ .border = tuile.Border.all(), .border_type = .simple, .layout = .{ .flex = 1 } },
             tuile.label(.{ .text = "Label text", .layout = .{ .alignment = tuile.LayoutProperties.Align.bottomLeft() } }),
         ),
         expected,
@@ -223,7 +223,7 @@ test "block padding" {
     try renderAndCompare(
         .{ .x = 20, .y = 7 },
         tuile.block(
-            .{ .border = tuile.border.Border.all(), .border_type = .simple, .padding = .{
+            .{ .border = tuile.Border.all(), .border_type = .simple, .padding = .{
                 .top = 1,
                 .bottom = 2,
                 .left = 1,
@@ -297,6 +297,192 @@ test "input" {
     try renderAndCompare(
         .{ .x = 16, .y = 2 },
         tuile.input(.{ .placeholder = "placeholder" }),
+        expected,
+    );
+}
+
+test "vertical stack" {
+    const expected =
+        "       L1       \n" ++
+        "       L2       \n" ++
+        "       L3       \n" ++
+        "                \n";
+
+    try renderAndCompare(
+        .{ .x = 16, .y = 4 },
+        tuile.vertical(.{}, .{
+            tuile.label(.{ .text = "L1" }),
+            tuile.label(.{ .text = "L2" }),
+            tuile.label(.{ .text = "L3" }),
+        }),
+        expected,
+    );
+}
+
+test "horizontal stack" {
+    const expected =
+        "     L1L2L3     \n" ++
+        "                \n" ++
+        "                \n";
+
+    try renderAndCompare(
+        .{ .x = 16, .y = 3 },
+        tuile.horizontal(.{}, .{
+            tuile.label(.{ .text = "L1" }),
+            tuile.label(.{ .text = "L2" }),
+            tuile.label(.{ .text = "L3" }),
+        }),
+        expected,
+    );
+}
+
+test "horizontal flex stack" {
+    const expected =
+        "                \n" ++
+        "     L1L2L3     \n" ++
+        "                \n";
+
+    try renderAndCompare(
+        .{ .x = 16, .y = 3 },
+        tuile.horizontal(.{ .layout = .{ .flex = 1 } }, .{
+            tuile.label(.{ .text = "L1" }),
+            tuile.label(.{ .text = "L2" }),
+            tuile.label(.{ .text = "L3" }),
+        }),
+        expected,
+    );
+}
+
+test "vertical stack with flex elements" {
+    const expected =
+        "┌──────────────────┐\n" ++
+        "│                  │\n" ++
+        "│     In block     │\n" ++
+        "│                  │\n" ++
+        "│                  │\n" ++
+        "└──────────────────┘\n" ++
+        "       First        \n" ++
+        "       Second       \n";
+
+    try renderAndCompare(
+        .{ .x = 20, .y = 8 },
+        tuile.vertical(.{ .layout = .{ .flex = 1 } }, .{
+            tuile.block(
+                .{ .layout = .{ .flex = 1 }, .border = tuile.Border.all() },
+                tuile.label(.{ .text = "In block" }),
+            ),
+            tuile.label(.{ .text = "First" }),
+            tuile.label(.{ .text = "Second" }),
+        }),
+        expected,
+    );
+}
+
+test "space for flex elements is distributed according to their weight" {
+    const expected =
+        "┌──────────────────┐\n" ++
+        "│     flex = 1     │\n" ++
+        "└──────────────────┘\n" ++
+        "┌──────────────────┐\n" ++
+        "│                  │\n" ++
+        "│     flex = 2     │\n" ++
+        "│                  │\n" ++
+        "│                  │\n" ++
+        "└──────────────────┘\n";
+
+    try renderAndCompare(
+        .{ .x = 20, .y = 9 },
+        tuile.vertical(.{ .layout = .{ .flex = 1 } }, .{
+            tuile.block(
+                .{ .layout = .{ .flex = 1 }, .border = tuile.Border.all() },
+                tuile.label(.{ .text = "flex = 1" }),
+            ),
+            tuile.block(
+                .{ .layout = .{ .flex = 2 }, .border = tuile.Border.all() },
+                tuile.label(.{ .text = "flex = 2" }),
+            ),
+        }),
+        expected,
+    );
+}
+
+test "spacers between elements" {
+    const expected =
+        "    ┌───────┐        ┌───────┐    \n" ++
+        "    │       │        │       │    \n" ++
+        "    │       │        │       │    \n" ++
+        "    │       │        │       │    \n" ++
+        "    │Block 1│        │Block 2│    \n" ++
+        "    │       │        │       │    \n" ++
+        "    │       │        │       │    \n" ++
+        "    │       │        │       │    \n" ++
+        "    └───────┘        └───────┘    \n";
+
+    try renderAndCompare(
+        .{ .x = 34, .y = 9 },
+        tuile.horizontal(.{ .layout = .{ .flex = 1 } }, .{
+            tuile.spacer(.{ .layout = .{ .flex = 1 } }),
+            tuile.block(
+                .{ .border = tuile.Border.all() },
+                tuile.label(.{ .text = "Block 1" }),
+            ),
+            tuile.spacer(.{ .layout = .{ .flex = 2 } }),
+            tuile.block(
+                .{ .border = tuile.Border.all() },
+                tuile.label(.{ .text = "Block 2" }),
+            ),
+            tuile.spacer(.{ .layout = .{ .flex = 1 } }),
+        }),
+        expected,
+    );
+}
+
+test "spacer inside block" {
+    const expected =
+        "┌────────────────────────────────┐\n" ++
+        "│                                │\n" ++
+        "│                                │\n" ++
+        "│                                │\n" ++
+        "│                                │\n" ++
+        "│                                │\n" ++
+        "│                                │\n" ++
+        "│                                │\n" ++
+        "└────────────────────────────────┘\n";
+
+    try renderAndCompare(
+        .{ .x = 34, .y = 9 },
+        tuile.horizontal(.{ .layout = .{ .flex = 1 } }, .{
+            tuile.block(
+                .{ .border = tuile.Border.all() },
+                tuile.spacer(.{ .layout = .{ .flex = 1 } }),
+            ),
+        }),
+        expected,
+    );
+}
+
+test "spacer with fixed size" {
+    const expected =
+        "              ┌────┐              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              └────┘              \n";
+
+    try renderAndCompare(
+        .{ .x = 34, .y = 9 },
+        tuile.horizontal(.{ .layout = .{ .flex = 1 } }, .{
+            tuile.block(
+                .{ .border = tuile.Border.all() },
+                // Spacer only works in the direction of the layout.
+                // In the cross direction it occupies all the space, same as block.
+                tuile.spacer(.{ .layout = .{ .max_width = 4, .max_height = 4 } }),
+            ),
+        }),
         expected,
     );
 }

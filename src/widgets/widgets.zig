@@ -1,5 +1,6 @@
 pub const Block = @import("Block.zig");
 pub const border = @import("border.zig");
+pub usingnamespace border;
 pub const Button = @import("Button.zig");
 pub const callbacks = @import("callbacks.zig");
 pub const ChangeNotifier = @import("ChangeNotifier.zig");

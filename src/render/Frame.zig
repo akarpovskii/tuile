@@ -22,6 +22,15 @@ fn inside(self: Frame, pos: Vec2) bool {
         self.area.min.y <= pos.y and pos.y < self.area.max.y;
 }
 
+pub fn clear(self: Frame, fg: display.Color, bg: display.Color) void {
+    for (self.buffer) |*cell| {
+        cell.* = Cell{
+            .fg = fg,
+            .bg = bg,
+        };
+    }
+}
+
 pub fn withArea(self: Frame, area: Rect) Frame {
     return Frame{
         .buffer = self.buffer,

@@ -14,17 +14,32 @@ pub usingnamespace display;
 const FRAMES_PER_SECOND = 30;
 const FRAME_TIME_NS = std.time.ns_per_s / FRAMES_PER_SECOND;
 
+pub const EventHandler = struct {
+    handler: *const fn (payload: ?*anyopaque, event: events.Event) anyerror!events.EventResult,
+
+    payload: ?*anyopaque = null,
+
+    pub fn call(self: EventHandler, event: events.Event) anyerror!events.EventResult {
+        return self.handler(self.payload, event);
+    }
+};
+
 pub const Tuile = struct {
     backend: backends.Backend,
 
-    is_running: bool = true,
+    is_running: std.atomic.Value(bool),
 
     root: *widgets.StackLayout,
 
-    theme: display.Theme = .{},
+    theme: display.Theme,
 
     last_frame_time: u64,
     last_sleep_error: i64,
+
+    event_handlers: std.ArrayListUnmanaged(EventHandler),
+
+    frame_buffer: std.ArrayListUnmanaged(render.Cell),
+    window_size: Vec2,
 
     pub fn init() !Tuile {
         const curses = try backends.Ncurses.create();
@@ -32,14 +47,20 @@ pub const Tuile = struct {
 
         return .{
             .backend = curses.backend(),
+            .is_running = std.atomic.Value(bool).init(false),
             .root = root,
+            .theme = .{},
             .last_frame_time = 0,
             .last_sleep_error = 0,
+            .event_handlers = .{},
+            .frame_buffer = .{},
+            .window_size = Vec2.zero(),
         };
     }
 
     pub fn deinit(self: *Tuile) void {
         self.backend.destroy();
+        self.frame_buffer.deinit(internal.allocator);
         self.root.destroy();
     }
 
@@ -47,8 +68,19 @@ pub const Tuile = struct {
         try self.root.add(child);
     }
 
+    pub fn addEventHandler(self: *Tuile, handler: EventHandler) !void {
+        try self.event_handlers.append(internal.allocator, handler);
+    }
+
+    pub fn stop(self: *Tuile) void {
+        self.is_running.store(false, .release);
+    }
+
     pub fn run(self: *Tuile) !void {
-        while (self.is_running) {
+        try self.handleResize();
+
+        self.is_running.store(true, .release);
+        while (self.is_running.load(.acquire)) {
             var frame_timer = try std.time.Timer.start();
 
             var prepared = false;
@@ -90,44 +122,47 @@ pub const Tuile = struct {
     }
 
     fn redraw(self: *Tuile) !void {
-        const window_size = try self.backend.windowSize();
-        const window_area = Rect{
-            .min = Vec2.zero(),
-            .max = window_size,
-        };
-
-        var buffer = try std.ArrayListUnmanaged(render.Cell).initCapacity(internal.allocator, window_size.x * window_size.y);
-        defer buffer.deinit(internal.allocator);
-        buffer.appendNTimesAssumeCapacity(.{ .fg = self.theme.foreground, .bg = self.theme.background }, buffer.capacity);
-
-        var frame = render.Frame{
-            .buffer = buffer.items,
-            .size = window_size,
-            .area = window_area,
-        };
-
         const constraints = .{
-            .max_width = window_size.x,
-            .max_height = window_size.y,
+            .max_width = self.window_size.x,
+            .max_height = self.window_size.y,
         };
         _ = try self.root.layout(constraints);
 
-        try self.root.render(window_area, frame, self.theme);
+        var frame = render.Frame{
+            .buffer = self.frame_buffer.items,
+            .size = self.window_size,
+            .area = .{
+                .min = Vec2.zero(),
+                .max = self.window_size,
+            },
+        };
+        frame.clear(self.theme.foreground, self.theme.background);
+
+        try self.root.render(frame.area, frame, self.theme);
 
         try frame.render(self.backend);
     }
 
     fn handleEvent(self: *Tuile, event: events.Event) !events.EventResult {
+        for (self.event_handlers.items) |handler| {
+            switch (try handler.call(event)) {
+                .consumed => return .consumed,
+                .ignored => {},
+            }
+        }
+
         switch (event) {
             .ctrl_char => |value| {
                 if (value == 'c') {
-                    self.is_running = false;
+                    self.stop();
                     // pass down the event to widgets
                     return .ignored;
                 }
             },
-            .key => |key| if (key == .Resize)
-                return .consumed,
+            .key => |key| if (key == .Resize) {
+                try self.handleResize();
+                return .consumed;
+            },
             else => {},
         }
         return .ignored;
@@ -135,5 +170,11 @@ pub const Tuile = struct {
 
     fn propagateEvent(self: *Tuile, event: events.Event) !void {
         _ = try self.root.handleEvent(event);
+    }
+
+    fn handleResize(self: *Tuile) !void {
+        self.window_size = try self.backend.windowSize();
+        const new_len = self.window_size.x * self.window_size.y;
+        try self.frame_buffer.resize(internal.allocator, new_len);
     }
 };

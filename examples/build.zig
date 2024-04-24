@@ -12,6 +12,7 @@ pub fn build(b: *std.Build) void {
         "threads",
         "checkbox",
         "fps_counter",
+        "event_handler",
     };
     inline for (executables) |name| {
         const exe = b.addExecutable(.{

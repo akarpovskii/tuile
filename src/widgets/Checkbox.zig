@@ -109,6 +109,7 @@ pub fn widget(self: *Checkbox) Widget {
 }
 
 pub fn render(self: *Checkbox, area: Rect, frame: Frame, theme: display.Theme) !void {
+    frame.setStyle(area, .{ .bg = theme.interactive });
     self.focus_handler.render(area, frame, theme);
     if (self.checked) {
         try self.labels[1].render(area, frame, theme);

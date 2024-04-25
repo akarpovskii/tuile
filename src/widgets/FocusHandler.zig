@@ -25,6 +25,6 @@ pub fn handleEvent(self: *FocusHandler, event: events.Event) events.EventResult 
 
 pub fn render(self: *FocusHandler, area: Rect, frame: Frame, theme: display.Theme) void {
     if (self.focused) {
-        frame.setStyle(area, .{ .bg = theme.secondary });
+        frame.setStyle(area, .{ .bg = theme.focused });
     }
 }

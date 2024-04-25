@@ -147,14 +147,16 @@ pub fn layoutProps(self: *Block) LayoutProperties {
     return self.layout_properties;
 }
 
-fn renderBorder(self: *Block, area: Rect, frame: Frame, _: display.Theme) void {
+fn renderBorder(self: *Block, area: Rect, frame: Frame, theme: display.Theme) void {
     const min = area.min;
     const max = area.max;
     const chars = self.border_chars;
 
     if (area.height() > 0) {
-        // frame.set_style(.{ .min = min, .max = .{ .x = max.x, .y = min.y + 1 } }, .{ .fg = theme.primary });
-        // frame.set_style(.{ .min = .{ .x = min.x, .y = max.y - 1 }, .max = max }, .{ .fg = theme.primary });
+        if (self.border.top)
+            frame.setStyle(.{ .min = min, .max = .{ .x = max.x, .y = min.y + 1 } }, .{ .fg = theme.borders });
+        if (self.border.bottom)
+            frame.setStyle(.{ .min = .{ .x = min.x, .y = max.y - 1 }, .max = max }, .{ .fg = theme.borders });
 
         var x = min.x;
         while (x < area.max.x) : (x += 1) {
@@ -166,8 +168,10 @@ fn renderBorder(self: *Block, area: Rect, frame: Frame, _: display.Theme) void {
     }
 
     if (area.width() > 0) {
-        // frame.set_style(.{ .min = min, .max = .{ .x = min.x + 1, .y = max.y } }, .{ .fg = theme.primary });
-        // frame.set_style(.{ .min = .{ .x = max.x - 1, .y = min.y }, .max = max }, .{ .fg = theme.primary });
+        if (self.border.left)
+            frame.setStyle(.{ .min = min, .max = .{ .x = min.x + 1, .y = max.y } }, .{ .fg = theme.borders });
+        if (self.border.right)
+            frame.setStyle(.{ .min = .{ .x = max.x - 1, .y = min.y }, .max = max }, .{ .fg = theme.borders });
 
         var y = min.y;
         while (y < max.y) : (y += 1) {

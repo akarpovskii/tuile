@@ -60,10 +60,11 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
     if (area.height() < 1) {
         return;
     }
-    frame.setStyle(area, .{ .add_effect = .{ .underline = true } });
+    frame.setStyle(area, .{ .bg = theme.interactive, .add_effect = .{ .underline = true } });
+    self.focus_handler.render(area, frame, theme);
 
     const render_placeholder = self.value.items.len == 0;
-    if (render_placeholder) frame.setStyle(area, .{ .add_effect = .{ .dim = true } });
+    if (render_placeholder) frame.setStyle(area, .{ .fg = theme.text_secondary });
 
     const text_to_render = self.currentText();
     const visible = text_to_render[self.view_start..];
@@ -80,9 +81,7 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
             .max = cursor_pos.add(.{ .x = 1, .y = 1 }),
         };
         frame.setStyle(end_area, .{
-            .fg = theme.cursor,
-            .add_effect = .{ .reverse = true },
-            .sub_effect = .{ .dim = true },
+            .bg = theme.solid,
         });
     }
 }

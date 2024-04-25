@@ -70,6 +70,7 @@ pub fn widget(self: *Button) Widget {
 }
 
 pub fn render(self: *Button, area: Rect, frame: Frame, theme: display.Theme) !void {
+    frame.setStyle(area, .{ .bg = theme.interactive });
     self.focus_handler.render(area, frame, theme);
     try self.view.render(area, frame, theme);
 }

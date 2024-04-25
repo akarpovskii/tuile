@@ -12,7 +12,7 @@ const c = @cImport({
 
 const Ncurses = @This();
 
-const NcursesError = error{ LocaleError, GeneralError };
+const NcursesErrors = error{ LocaleError, NcursesError };
 
 scr: *c.struct__win_st,
 
@@ -25,13 +25,13 @@ pub fn create() !*Ncurses {
     if (c.setlocale(c.LC_ALL, "") == null) return error.LocaleError;
 
     const scr = c.initscr();
-    if (c.raw() == c.ERR) return error.GeneralError;
-    if (c.noecho() == c.ERR) return error.GeneralError;
-    if (c.keypad(scr, true) == c.ERR) return error.GeneralError;
+    if (c.raw() == c.ERR) return error.NcursesError;
+    if (c.noecho() == c.ERR) return error.NcursesError;
+    if (c.keypad(scr, true) == c.ERR) return error.NcursesError;
 
     var has_colors = false;
     if (c.has_colors()) {
-        if (c.start_color() == c.ERR) return error.GeneralError;
+        if (c.start_color() == c.ERR) return error.NcursesError;
         has_colors = true;
     }
 
@@ -40,7 +40,7 @@ pub fn create() !*Ncurses {
         visible = 1,
         very_visible = 2,
     };
-    if (c.curs_set(@intFromEnum(Visibility.invisible)) == c.ERR) return error.GeneralError;
+    if (c.curs_set(@intFromEnum(Visibility.invisible)) == c.ERR) return error.NcursesError;
 
     c.timeout(0);
 
@@ -126,7 +126,7 @@ fn parseKey(ch: c_int) ?events.Key {
 }
 
 pub fn refresh(_: *Ncurses) !void {
-    if (c.refresh() == c.ERR) return error.GeneralError;
+    if (c.refresh() == c.ERR) return error.NcursesError;
 }
 
 pub fn printAt(_: *Ncurses, pos: Vec2, text: []const u8) !void {
@@ -137,7 +137,7 @@ pub fn windowSize(self: *Ncurses) !Vec2 {
     _ = self;
     const x = c.getmaxx(c.stdscr);
     const y = c.getmaxy(c.stdscr);
-    if (x == c.ERR or y == c.ERR) return error.GeneralError;
+    if (x == c.ERR or y == c.ERR) return error.NcursesError;
     return .{
         .x = @intCast(x),
         .y = @intCast(y),
@@ -146,12 +146,12 @@ pub fn windowSize(self: *Ncurses) !Vec2 {
 
 pub fn enableEffect(_: *Ncurses, effect: display.Style.Effect) !void {
     const attr = attrForEffect(effect);
-    if (c.attron(attr) == c.ERR) return error.GeneralError;
+    if (c.attron(attr) == c.ERR) return error.NcursesError;
 }
 
 pub fn disableEffect(_: *Ncurses, effect: display.Style.Effect) !void {
     const attr = attrForEffect(effect);
-    if (c.attroff(attr) == c.ERR) return error.GeneralError;
+    if (c.attroff(attr) == c.ERR) return error.NcursesError;
 }
 
 fn attrForEffect(effect: display.Style.Effect) c_int {
@@ -171,7 +171,7 @@ pub fn useColor(self: *Ncurses, color_pair: display.ColorPair) !void {
         return;
     }
     const pair = try self.getOrInitColor(color_pair);
-    if (c.attron(c.COLOR_PAIR(pair)) == c.ERR) return error.GeneralError;
+    if (c.attron(c.COLOR_PAIR(pair)) == c.ERR) return error.NcursesError;
 }
 
 fn getOrInitColor(self: *Ncurses, color_pair: display.ColorPair) !c_int {
@@ -181,7 +181,10 @@ fn getOrInitColor(self: *Ncurses, color_pair: display.ColorPair) !c_int {
 
     var pair: c_short = @intCast(self.color_pairs.count() + 1);
     if (c.COLOR_PAIRS <= pair) {
-        pair -= 1;
+        var iter = self.color_pairs.iterator();
+        const evict = iter.next().?;
+        pair = @intCast(evict.value_ptr.*);
+        _ = self.color_pairs.remove(evict.key_ptr.*);
     }
 
     const init_res = c.init_pair(
@@ -189,7 +192,7 @@ fn getOrInitColor(self: *Ncurses, color_pair: display.ColorPair) !c_int {
         colorToInt(color_pair.fg),
         colorToInt(color_pair.bg),
     );
-    if (init_res == c.ERR) return error.GeneralError;
+    if (init_res == c.ERR) return error.NcursesError;
     try self.color_pairs.put(color_pair, pair);
     return pair;
 }

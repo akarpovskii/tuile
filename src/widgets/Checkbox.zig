@@ -19,11 +19,18 @@ pub const Config = struct {
     // text and span are mutually exclusive, only one of them must be defined
     span: ?display.SpanView = null,
 
+    role: Role = .checkbox,
+
     checked: bool = false,
 
     on_state_change: ?callbacks.Callback(bool) = null,
 
     layout: LayoutProperties = .{},
+};
+
+pub const Role = enum {
+    checkbox,
+    radio,
 };
 
 pub const Checkbox = @This();
@@ -38,11 +45,27 @@ checked: bool,
 
 on_state_change: ?callbacks.Callback(bool),
 
-fn createLabelWithMarker(marker: []const u8, config: Config) !*Label {
+fn createLabelWithMarker(config: Config, checked: bool) !*Label {
     var label = display.Span.init(internal.allocator);
     defer label.deinit();
 
-    try label.appendPlain(marker);
+    switch (config.role) {
+        .checkbox => {
+            if (checked) {
+                try label.appendPlain("[x] ");
+            } else {
+                try label.appendPlain("[ ] ");
+            }
+        },
+        .radio => {
+            if (checked) {
+                try label.appendPlain("(*) ");
+            } else {
+                try label.appendPlain("( ) ");
+            }
+        },
+    }
+
     if (config.text) |text| {
         try label.appendPlain(text);
     } else if (config.span) |span| {
@@ -60,8 +83,8 @@ pub fn create(config: Config) !*Checkbox {
     }
 
     const labels: [2]*Label = .{
-        try createLabelWithMarker("[ ] ", config),
-        try createLabelWithMarker("[*] ", config),
+        try createLabelWithMarker(config, false),
+        try createLabelWithMarker(config, true),
     };
 
     const self = try internal.allocator.create(Checkbox);

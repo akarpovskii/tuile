@@ -261,7 +261,7 @@ test "checkbox" {
 
 test "checked checkbox" {
     const expected =
-        "  [*] Checkbox  \n" ++
+        "  [x] Checkbox  \n" ++
         "                \n";
 
     try renderAndCompare(
@@ -273,7 +273,7 @@ test "checked checkbox" {
 
 test "checkbox group" {
     const expected =
-        "  [*] Option 1  \n" ++
+        "  [x] Option 1  \n" ++
         "  [ ] Option 2  \n" ++
         "  [ ] Option 3  \n" ++
         "                \n";
@@ -479,7 +479,32 @@ test "spacer with fixed size" {
             tuile.block(
                 .{ .border = tuile.Border.all() },
                 // Spacer only works in the direction of the layout.
-                // In the cross direction it occupies all the space, same as block.
+                // In the cross direction it occupies all the space.
+                // Use block with fit_content = true if you want it to be specific size.
+                tuile.spacer(.{ .layout = .{ .max_width = 4, .max_height = 4 } }),
+            ),
+        }),
+        expected,
+    );
+}
+
+test "block fit content" {
+    const expected =
+        "                                  \n" ++
+        "              ┌────┐              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              │    │              \n" ++
+        "              └────┘              \n" ++
+        "                                  \n" ++
+        "                                  \n";
+
+    try renderAndCompare(
+        .{ .x = 34, .y = 9 },
+        tuile.horizontal(.{ .layout = .{ .flex = 1 } }, .{
+            tuile.block(
+                .{ .border = tuile.Border.all(), .fit_content = true },
                 tuile.spacer(.{ .layout = .{ .max_width = 4, .max_height = 4 } }),
             ),
         }),

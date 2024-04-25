@@ -108,11 +108,20 @@ pub fn layout(self: *Block, constraints: Constraints) !Vec2 {
         .x = self.border_widths.left + self.border_widths.right,
         .y = self.border_widths.top + self.border_widths.bottom,
     };
+    const maxInt = std.math.maxInt;
     const inner_constraints = Constraints{
         .min_width = 0,
         .min_height = 0,
-        .max_width = self_constraints.max_width -| border_size.x,
-        .max_height = self_constraints.max_height -| border_size.y,
+
+        .max_width = if (self_constraints.max_width == maxInt(u32))
+            self_constraints.max_width
+        else
+            self_constraints.max_width -| border_size.x,
+
+        .max_height = if (self_constraints.max_height == maxInt(u32))
+            self_constraints.max_height
+        else
+            self_constraints.max_height -| border_size.y,
     };
     self.inner_size = try self.inner.layout(inner_constraints);
 
@@ -120,10 +129,10 @@ pub fn layout(self: *Block, constraints: Constraints) !Vec2 {
         .x = self_constraints.max_width,
         .y = self_constraints.max_height,
     };
-    if (self.fit_content or size.x == std.math.maxInt(u32)) {
+    if (self.fit_content or size.x == maxInt(u32)) {
         size.x = @min(size.x, self.inner_size.x + border_size.x);
     }
-    if (self.fit_content or size.y == std.math.maxInt(u32)) {
+    if (self.fit_content or size.y == maxInt(u32)) {
         size.y = @min(size.y, self.inner_size.y + border_size.y);
     }
 

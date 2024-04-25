@@ -66,6 +66,10 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
         .multiselect = config.multiselect,
         .on_state_change = config.on_state_change,
     };
+    for (self.view.widgets.items) |child| {
+        var option: *Checkbox = @ptrCast(@alignCast(child.context));
+        option.layout_properties.alignment.h = LayoutProperties.HAlign.left;
+    }
     return self;
 }
 

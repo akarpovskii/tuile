@@ -57,7 +57,7 @@ pub const Tuile = struct {
                 .backend = backend,
                 .is_running = std.atomic.Value(bool).init(false),
                 .root = root,
-                .theme = .{},
+                .theme = display.Theme.sky(),
                 .last_frame_time = 0,
                 .last_sleep_error = 0,
                 .event_handlers = .{},
@@ -150,7 +150,7 @@ pub const Tuile = struct {
                 .max = self.window_size,
             },
         };
-        frame.clear(self.theme.foreground, self.theme.background);
+        frame.clear(self.theme.text_primary, self.theme.background);
 
         try self.root.render(frame.area, frame, self.theme);
 

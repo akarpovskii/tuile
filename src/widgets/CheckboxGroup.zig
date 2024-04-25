@@ -66,9 +66,20 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
         .multiselect = config.multiselect,
         .on_state_change = config.on_state_change,
     };
-    for (self.view.widgets.items) |child| {
-        var option: *Checkbox = @ptrCast(@alignCast(child.context));
-        option.layout_properties.alignment.h = LayoutProperties.HAlign.left;
+
+    if (self.view.widgets.items.len > 0) {
+        var found_checked = false;
+        for (self.view.widgets.items) |child| {
+            var option: *Checkbox = @ptrCast(@alignCast(child.context));
+            option.layout_properties.alignment.h = LayoutProperties.HAlign.left;
+
+            if (!self.multiselect and option.checked) {
+                if (found_checked) {
+                    option.checked = false;
+                }
+                found_checked = true;
+            }
+        }
     }
     return self;
 }
@@ -91,6 +102,23 @@ pub fn layout(self: *CheckboxGroup, constraints: Constraints) !Vec2 {
 }
 
 pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResult {
+    if (!self.multiselect) {
+        switch (event) {
+            .char => |char| switch (char) {
+                ' ' => {
+                    if (self.view.focused) |focused| {
+                        const focused_option: *Checkbox = @ptrCast(@alignCast(self.view.widgets.items[focused].context));
+                        if (focused_option.checked) {
+                            return .ignored;
+                        }
+                    }
+                },
+                else => {},
+            },
+            else => {},
+        }
+    }
+
     const res = try self.view.handleEvent(event);
     if (res == .ignored) {
         return res;

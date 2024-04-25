@@ -8,14 +8,7 @@ const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display/display.zig");
-
-pub const StatefulWidget = @This();
-
-builder: Builder,
-
-view: ?Widget,
-
-build_context: BuildContext,
+const FocusHandler = @import("FocusHandler.zig");
 
 const Builder = struct {
     const VTable = struct {
@@ -131,12 +124,23 @@ pub const BuildContext = struct {
     }
 };
 
+pub const StatefulWidget = @This();
+
+builder: Builder,
+
+view: ?Widget,
+
+build_context: BuildContext,
+
+focus_handler: FocusHandler,
+
 pub fn create(builder: anytype, state: anytype) !*StatefulWidget {
     const self = try internal.allocator.create(StatefulWidget);
     self.* = StatefulWidget{
         .builder = Builder.init(builder),
         .view = null,
         .build_context = BuildContext.init(state),
+        .focus_handler = FocusHandler{},
     };
     return self;
 }
@@ -161,7 +165,16 @@ pub fn layout(self: *StatefulWidget, constraints: Constraints) !Vec2 {
 }
 
 pub fn handleEvent(self: *StatefulWidget, event: events.Event) !events.EventResult {
-    return try self.view.?.handleEvent(event);
+    const res = try self.view.?.handleEvent(event);
+    if (res == .ignored) {
+        return res;
+    }
+    switch (event) {
+        .focus_in => _ = self.focus_handler.handleEvent(event),
+        .focus_out => _ = self.focus_handler.handleEvent(event),
+        else => {},
+    }
+    return res;
 }
 
 pub fn layoutProps(self: *StatefulWidget) LayoutProperties {
@@ -173,5 +186,8 @@ pub fn prepare(self: *StatefulWidget) !void {
         if (self.view) |view| view.destroy();
         self.build_context.unsubscribe(&self.build_context);
         self.view = try self.builder.build(&self.build_context);
+        if (self.focus_handler.focused) {
+            _ = try self.view.?.handleEvent(.{ .focus_in = .front });
+        }
     }
 }

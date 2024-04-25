@@ -36,7 +36,8 @@ pub const PartialTheme = init_partial: {
 };
 
 pub const Config = struct {
-    theme: PartialTheme,
+    theme: ?display.Theme = null,
+    override: PartialTheme = .{},
 };
 
 inner: Widget,
@@ -44,10 +45,24 @@ inner: Widget,
 partial_theme: PartialTheme,
 
 pub fn create(config: Config, inner: anytype) !*Themed {
+    var partial: PartialTheme = .{};
+    if (config.theme) |theme| {
+        inline for (@typeInfo(display.Theme).Struct.fields) |field| {
+            @field(partial, field.name) = @field(theme, field.name);
+        }
+    }
+    inline for (@typeInfo(display.Theme).Struct.fields) |field| {
+        const part = &@field(partial, field.name);
+        const override = @field(config.override, field.name);
+        if (override) |value| {
+            part.* = value;
+        }
+    }
+
     const self = try internal.allocator.create(Themed);
     self.* = Themed{
         .inner = try Widget.fromAny(inner),
-        .partial_theme = config.theme,
+        .partial_theme = partial,
     };
     return self;
 }
@@ -71,7 +86,7 @@ pub fn render(self: *Themed, area: Rect, frame: Frame, theme: display.Theme) !vo
         }
     }
 
-    frame.setStyle(area, .{ .fg = new_theme.foreground, .bg = new_theme.background });
+    frame.setStyle(area, .{ .fg = new_theme.text_primary, .bg = new_theme.background });
     return try self.inner.render(area, frame, new_theme);
 }
 

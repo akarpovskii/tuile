@@ -61,6 +61,11 @@ pub fn widget(self: *Block) Widget {
     return Widget.init(self);
 }
 
+pub fn setInner(self: *Block, new_widget: Widget) void {
+    self.inner.destroy();
+    self.inner = new_widget;
+}
+
 pub fn render(self: *Block, area: Rect, frame: Frame, theme: display.Theme) !void {
     var content_area = Rect{
         .min = .{

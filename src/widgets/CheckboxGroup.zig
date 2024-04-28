@@ -71,7 +71,7 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
         var found_checked = false;
         for (self.view.widgets.items) |child| {
             var option: *Checkbox = @ptrCast(@alignCast(child.context));
-            option.layout_properties.alignment.h = LayoutProperties.HAlign.left;
+            option.view.layout_properties.alignment.h = LayoutProperties.HAlign.left;
 
             if (!self.multiselect and option.checked) {
                 if (found_checked) {

@@ -77,7 +77,7 @@ pub const Tuile = struct {
     }
 
     pub fn add(self: *Tuile, child: anytype) !void {
-        try self.root.add(child);
+        try self.root.addChild(child);
     }
 
     pub fn addEventHandler(self: *Tuile, handler: EventHandler) !void {

@@ -35,72 +35,43 @@ pub const Role = enum {
 
 pub const Checkbox = @This();
 
-labels: [2]*Label,
+role: Role,
+
+view: *Label,
 
 focus_handler: FocusHandler = .{},
-
-layout_properties: LayoutProperties,
 
 checked: bool,
 
 on_state_change: ?callbacks.Callback(bool),
-
-fn createLabelWithMarker(config: Config, checked: bool) !*Label {
-    var label = display.Span.init(internal.allocator);
-    defer label.deinit();
-
-    switch (config.role) {
-        .checkbox => {
-            if (checked) {
-                try label.appendPlain("[x] ");
-            } else {
-                try label.appendPlain("[ ] ");
-            }
-        },
-        .radio => {
-            if (checked) {
-                try label.appendPlain("(*) ");
-            } else {
-                try label.appendPlain("( ) ");
-            }
-        },
-    }
-
-    if (config.text) |text| {
-        try label.appendPlain(text);
-    } else if (config.span) |span| {
-        try label.appendSpan(span);
-    }
-
-    return try Label.create(
-        .{ .span = label.view(), .layout = config.layout },
-    );
-}
 
 pub fn create(config: Config) !*Checkbox {
     if (config.text == null and config.span == null) {
         @panic("text and span are mutually exclusive, only one of them must be defined");
     }
 
-    const labels: [2]*Label = .{
-        try createLabelWithMarker(config, false),
-        try createLabelWithMarker(config, true),
-    };
+    var label: display.Span = undefined;
+    if (config.text) |text| {
+        label = try createDecoratedLabel(text);
+    } else if (config.span) |span| {
+        label = try createDecoratedLabel(span);
+    }
+    defer label.deinit();
+
+    const view = try Label.create(.{ .span = label.view(), .layout = config.layout });
 
     const self = try internal.allocator.create(Checkbox);
     self.* = Checkbox{
-        .labels = labels,
+        .view = view,
+        .role = config.role,
         .checked = config.checked,
-        .layout_properties = config.layout,
         .on_state_change = config.on_state_change,
     };
     return self;
 }
 
 pub fn destroy(self: *Checkbox) void {
-    for (self.labels) |label| {
-        label.destroy();
-    }
+    self.view.destroy();
     internal.allocator.destroy(self);
 }
 
@@ -108,22 +79,45 @@ pub fn widget(self: *Checkbox) Widget {
     return Widget.init(self);
 }
 
+pub fn setText(self: *Checkbox, text: []const u8) !void {
+    const label = try createDecoratedLabel(text);
+    defer label.deinit();
+    self.view.setSpan(label.view());
+}
+
+pub fn setSpan(self: *Checkbox, span: display.SpanView) !void {
+    const label = try createDecoratedLabel(span);
+    defer label.deinit();
+    self.view.setSpan(label.view());
+}
+
 pub fn render(self: *Checkbox, area: Rect, frame: Frame, theme: display.Theme) !void {
     frame.setStyle(area, .{ .bg = theme.interactive });
     self.focus_handler.render(area, frame, theme);
-    if (self.checked) {
-        try self.labels[1].render(area, frame, theme);
-    } else {
-        try self.labels[0].render(area, frame, theme);
+
+    if (self.view.content.getText().len < 4) {
+        @panic("inner view must be at least 4 characters long for the bullet marker");
     }
+    switch (self.role) {
+        .checkbox => {
+            std.mem.copyForwards(u8, self.view.content.text.items, "[ ] ");
+            if (self.checked) {
+                self.view.content.text.items[1] = 'x';
+            }
+        },
+        .radio => {
+            std.mem.copyForwards(u8, self.view.content.text.items, "( ) ");
+            if (self.checked) {
+                self.view.content.text.items[1] = '*';
+            }
+        },
+    }
+
+    try self.view.render(area, frame, theme);
 }
 
 pub fn layout(self: *Checkbox, constraints: Constraints) !Vec2 {
-    if (self.checked) {
-        return try self.labels[1].layout(constraints);
-    } else {
-        return try self.labels[0].layout(constraints);
-    }
+    return try self.view.layout(constraints);
 }
 
 pub fn handleEvent(self: *Checkbox, event: events.Event) !events.EventResult {
@@ -147,5 +141,22 @@ pub fn handleEvent(self: *Checkbox, event: events.Event) !events.EventResult {
 }
 
 pub fn layoutProps(self: *Checkbox) LayoutProperties {
-    return self.layout_properties;
+    return self.view.layout_properties;
+}
+
+fn createDecoratedLabel(text: anytype) !display.Span {
+    var label = display.Span.init(internal.allocator);
+    errdefer label.deinit();
+    try label.appendPlain("[ ] ");
+
+    const TextT = @TypeOf(text);
+    if (TextT == []const u8) {
+        try label.appendPlain(text);
+    } else if (TextT == display.SpanView) {
+        try label.appendSpan(text);
+    } else {
+        @compileError("expected []const u8 or SpanView, got " ++ @typeName(TextT));
+    }
+
+    return label;
 }

@@ -56,6 +56,18 @@ pub fn widget(self: *Input) Widget {
     return Widget.init(self);
 }
 
+pub fn setPlaceholder(self: *Input, text: []const u8) !void {
+    internal.allocator.free(self.placeholder);
+    self.placeholder = try internal.allocator.dupe(u8, text);
+}
+
+pub fn setValue(self: *Input, value: []const u8) !void {
+    self.value.deinit(internal.allocator);
+    self.value = std.ArrayListUnmanaged(u8){};
+    try self.value.appendSlice(internal.allocator, value);
+    self.cursor = value.len;
+}
+
 pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !void {
     if (area.height() < 1) {
         return;

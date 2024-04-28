@@ -37,33 +37,24 @@ pub const PartialTheme = init_partial: {
 
 pub const Config = struct {
     theme: ?display.Theme = null,
+
     override: PartialTheme = .{},
 };
 
 inner: Widget,
 
-partial_theme: PartialTheme,
+theme: PartialTheme,
 
 pub fn create(config: Config, inner: anytype) !*Themed {
-    var partial: PartialTheme = .{};
-    if (config.theme) |theme| {
-        inline for (@typeInfo(display.Theme).Struct.fields) |field| {
-            @field(partial, field.name) = @field(theme, field.name);
-        }
-    }
-    inline for (@typeInfo(display.Theme).Struct.fields) |field| {
-        const part = &@field(partial, field.name);
-        const override = @field(config.override, field.name);
-        if (override) |value| {
-            part.* = value;
-        }
-    }
-
     const self = try internal.allocator.create(Themed);
     self.* = Themed{
         .inner = try Widget.fromAny(inner),
-        .partial_theme = partial,
+        .theme = .{},
     };
+    if (config.theme) |theme| {
+        self.setTheme(theme);
+    }
+    self.updateTheme(config.override);
     return self;
 }
 
@@ -76,10 +67,25 @@ pub fn widget(self: *Themed) Widget {
     return Widget.init(self);
 }
 
+pub fn setTheme(self: *Themed, theme: display.Theme) void {
+    inline for (@typeInfo(display.Theme).Struct.fields) |field| {
+        @field(self.theme, field.name) = @field(theme, field.name);
+    }
+}
+
+pub fn updateTheme(self: *Themed, update: PartialTheme) void {
+    inline for (@typeInfo(display.Theme).Struct.fields) |field| {
+        const override = @field(update, field.name);
+        if (override) |value| {
+            @field(self.theme, field.name) = value;
+        }
+    }
+}
+
 pub fn render(self: *Themed, area: Rect, frame: Frame, theme: display.Theme) !void {
     var new_theme = theme;
     inline for (@typeInfo(display.Theme).Struct.fields) |field| {
-        const part = @field(self.partial_theme, field.name);
+        const part = @field(self.theme, field.name);
         const new = &@field(new_theme, field.name);
         if (part) |value| {
             new.* = value;

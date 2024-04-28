@@ -37,16 +37,13 @@ pub fn create(config: Config) !*Button {
         @panic("text and span are mutually exclusive, only one of them must be defined");
     }
 
-    var label = display.Span.init(internal.allocator);
-    defer label.deinit();
-
-    try label.appendPlain("[");
+    var label: display.Span = undefined;
     if (config.text) |text| {
-        try label.appendPlain(text);
+        label = try createDecoratedLabel(text);
     } else if (config.span) |span| {
-        try label.appendSpan(span);
+        label = try createDecoratedLabel(span);
     }
-    try label.appendPlain("]");
+    defer label.deinit();
 
     const view = try Label.create(
         .{ .span = label.view(), .layout = config.layout },
@@ -67,6 +64,18 @@ pub fn destroy(self: *Button) void {
 
 pub fn widget(self: *Button) Widget {
     return Widget.init(self);
+}
+
+pub fn setLabelText(self: *Button, text: []const u8) !void {
+    const label = try createDecoratedLabel(text);
+    defer label.deinit();
+    try self.view.setSpan(label.view());
+}
+
+pub fn setLabelSpan(self: *Button, span: display.SpanView) !void {
+    const label = try createDecoratedLabel(span);
+    defer label.deinit();
+    try self.view.setSpan(label.view());
 }
 
 pub fn render(self: *Button, area: Rect, frame: Frame, theme: display.Theme) !void {
@@ -101,4 +110,24 @@ pub fn handleEvent(self: *Button, event: events.Event) !events.EventResult {
 
 pub fn layoutProps(self: *Button) LayoutProperties {
     return self.view.layoutProps();
+}
+
+fn createDecoratedLabel(text: anytype) !display.Span {
+    var label = display.Span.init(internal.allocator);
+    errdefer label.deinit();
+
+    try label.appendPlain("[");
+
+    const TextT = @TypeOf(text);
+    if (TextT == []const u8) {
+        try label.appendPlain(text);
+    } else if (TextT == display.SpanView) {
+        try label.appendSpan(text);
+    } else {
+        @compileError("expected []const u8 or SpanView, got " ++ @typeName(TextT));
+    }
+
+    try label.appendPlain("]");
+
+    return label;
 }

@@ -37,7 +37,7 @@ pub const Config = struct {
 
 pub const Label = @This();
 
-content: display.Span,
+content: display.SpanUnmanaged,
 
 rows: std.ArrayListUnmanaged(Row),
 
@@ -49,14 +49,14 @@ pub fn create(config: Config) !*Label {
     }
     const self = try internal.allocator.create(Label);
     self.* = Label{
-        .content = display.Span.init(internal.allocator),
+        .content = display.SpanUnmanaged{},
         .rows = .{},
         .layout_properties = config.layout,
     };
     if (config.text) |text| {
-        try self.content.appendPlain(text);
+        try self.content.appendPlain(internal.allocator, text);
     } else if (config.span) |span| {
-        try self.content.appendSpan(span);
+        try self.content.appendSpan(internal.allocator, span);
     }
     return self;
 }
@@ -66,12 +66,23 @@ pub fn destroy(self: *Label) void {
         row.deinit(internal.allocator);
     }
     self.rows.deinit(internal.allocator);
-    self.content.deinit();
+    self.content.deinit(internal.allocator);
     internal.allocator.destroy(self);
 }
 
 pub fn widget(self: *Label) Widget {
     return Widget.init(self);
+}
+
+pub fn setText(self: *Label, text: []const u8) !void {
+    self.content.deinit(internal.allocator);
+    self.content = display.SpanUnmanaged{};
+    try self.content.appendPlain(internal.allocator, text);
+}
+
+pub fn setSpan(self: *Label, span: display.SpanView) !void {
+    self.content.deinit(internal.allocator);
+    self.content = try display.SpanUnmanaged.fromView(internal.allocator, span);
 }
 
 pub fn render(self: *Label, area: Rect, frame: Frame, _: display.Theme) !void {

@@ -87,7 +87,7 @@ const ProgressView = struct {
         );
 
         if (state.progress == 100) {
-            try stack.add(
+            try stack.addChild(
                 tuile.button(.{
                     .text = "Restart",
                     .on_press = .{
@@ -97,7 +97,7 @@ const ProgressView = struct {
                 }),
             );
         } else {
-            try stack.add(
+            try stack.addChild(
                 tuile.spacer(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
             );
         }

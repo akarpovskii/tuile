@@ -62,8 +62,17 @@ pub fn create(config: Config, children: anytype) !*StackLayout {
     return self;
 }
 
-pub fn add(self: *StackLayout, child: anytype) !void {
+pub fn addChild(self: *StackLayout, child: anytype) !void {
     try self.widgets.append(internal.allocator, try Widget.fromAny(child));
+}
+
+pub fn removeChild(self: *StackLayout, child: Widget) !void {
+    for (0..self.widgets.items.len) |i| {
+        if (self.widgets.items[i].context == child.context) {
+            _ = self.widgets.orderedRemove(i);
+            break;
+        }
+    }
 }
 
 pub fn destroy(self: *StackLayout) void {
@@ -236,7 +245,7 @@ pub fn handleEvent(self: *StackLayout, event: events.Event) !events.EventResult 
         return .consumed;
     }
 
-    if (self.focused == null) {
+    if (self.focused == null or self.focused.? > self.widgets.items.len) {
         // If nothing is focused, pressing Tab or Shift+Tab
         // technically generates two events: FocusIn and Key/ShiftKey.
         // If this is the case, we only need to pass down FocusIn to avoid changing the focus twice.

@@ -126,6 +126,8 @@ pub const BuildContext = struct {
 
 pub const StatefulWidget = @This();
 
+pub usingnamespace Widget.LeafWidget.Mixin(StatefulWidget);
+
 builder: Builder,
 
 view: ?Widget,

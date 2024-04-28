@@ -21,6 +21,8 @@ pub const Config = struct {
 
 const Input = @This();
 
+pub usingnamespace Widget.LeafWidget.Mixin(Input);
+
 placeholder: []const u8,
 
 on_value_changed: ?callbacks.Callback([]const u8),

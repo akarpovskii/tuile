@@ -22,6 +22,8 @@ pub const Config = struct {
 
 pub const StackLayout = @This();
 
+pub usingnamespace Widget.MultiChildWidget.Mixin(StackLayout, .widgets);
+
 widgets: std.ArrayListUnmanaged(Widget),
 
 widget_sizes: std.ArrayListUnmanaged(Vec2),
@@ -235,6 +237,11 @@ pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orienta
     return self_size;
 }
 
+// https://github.com/ziglang/zig/pull/19786
+fn handleEvent2(self: *StackLayout, event: events.Event) anyerror!events.EventResult {
+    return self.handleEvent(event);
+}
+
 pub fn handleEvent(self: *StackLayout, event: events.Event) !events.EventResult {
     if (event == .focus_in) {
         var iter = WidgetsIterator.inDirection(self.widgets.items, event.focus_in);
@@ -263,7 +270,7 @@ pub fn handleEvent(self: *StackLayout, event: events.Event) !events.EventResult 
             },
         }
 
-        if (try self.handleEvent(.{ .focus_in = direction }) == .ignored) {
+        if (try self.handleEvent2(.{ .focus_in = direction }) == .ignored) {
             return .ignored;
         }
         if (supress_further) {

@@ -37,6 +37,8 @@ pub const Config = struct {
 
 pub const Label = @This();
 
+pub usingnamespace Widget.LeafWidget.Mixin(Label);
+
 content: display.SpanUnmanaged,
 
 rows: std.ArrayListUnmanaged(Row),

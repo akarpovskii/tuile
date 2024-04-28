@@ -19,6 +19,8 @@ pub const Config = struct {
 
 const Spacer = @This();
 
+pub usingnamespace Widget.LeafWidget.Mixin(Spacer);
+
 layout_properties: LayoutProperties,
 
 pub fn create(config: Config) !*Spacer {

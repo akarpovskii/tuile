@@ -13,6 +13,8 @@ const display = @import("../display/display.zig");
 
 const Block = @This();
 
+pub usingnamespace Widget.SingleChildWidget.Mixin(Block, .inner);
+
 pub const Config = struct {
     border: border.Border = border.Border.none(),
 

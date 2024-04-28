@@ -26,6 +26,8 @@ pub const Config = struct {
 
 pub const Button = @This();
 
+pub usingnamespace Widget.LeafWidget.Mixin(Button);
+
 view: *Label,
 
 focus_handler: FocusHandler = .{},

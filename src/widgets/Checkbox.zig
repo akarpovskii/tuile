@@ -35,6 +35,8 @@ pub const Role = enum {
 
 pub const Checkbox = @This();
 
+pub usingnamespace Widget.LeafWidget.Mixin(Checkbox);
+
 role: Role,
 
 view: *Label,

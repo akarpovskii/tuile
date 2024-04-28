@@ -6,6 +6,8 @@ const FPSCounter = struct {
         layout: tuile.LayoutProperties = .{},
     };
 
+    pub usingnamespace tuile.Widget.LeafWidget.Mixin(FPSCounter);
+
     allocator: std.mem.Allocator,
 
     layout_properties: tuile.LayoutProperties,

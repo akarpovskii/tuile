@@ -11,6 +11,8 @@ const display = @import("../display/display.zig");
 
 const Themed = @This();
 
+pub usingnamespace Widget.SingleChildWidget.Mixin(Themed, .inner);
+
 pub const PartialTheme = init_partial: {
     const original = @typeInfo(display.Theme).Struct.fields;
     const len = original.len;

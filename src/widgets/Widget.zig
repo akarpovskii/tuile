@@ -28,6 +28,44 @@ const VTable = struct {
     // In which case they must call prepare() on all of their children.
     // Tuile guarantees to call prepare() before any other method.
     prepare: *const fn (context: *anyopaque) anyerror!void,
+
+    children: *const fn (context: *anyopaque) []Widget,
+};
+
+pub const LeafWidget = struct {
+    pub fn Mixin(comptime Self: type) type {
+        return struct {
+            pub fn children(_: *Self) []Widget {
+                return &.{};
+            }
+        };
+    }
+};
+
+pub const SingleChildWidget = struct {
+    pub fn Mixin(comptime Self: type, comptime child: std.meta.FieldEnum(Self)) type {
+        const child_field = std.meta.fieldInfo(Self, child);
+        return struct {
+            pub fn children(self: *Self) []Widget {
+                return (&@field(self, child_field.name))[0..1];
+            }
+        };
+    }
+};
+
+pub const MultiChildWidget = struct {
+    pub fn Mixin(comptime Self: type, comptime children_: std.meta.FieldEnum(Self)) type {
+        const child_field = std.meta.fieldInfo(Self, children_);
+        return struct {
+            pub fn children(self: *Self) []Widget {
+                if (@hasField(child_field.type, "items")) {
+                    return @field(self, child_field.name).items;
+                } else {
+                    return @field(self, child_field.name);
+                }
+            }
+        };
+    }
 };
 
 pub fn init(context: anytype) Widget {
@@ -75,6 +113,11 @@ pub fn init(context: anytype) Widget {
                 try ptr_info.Pointer.child.prepare(self);
             }
         }
+
+        pub fn children(pointer: *anyopaque) []Widget {
+            const self: PtrT = @ptrCast(@alignCast(pointer));
+            return ptr_info.Pointer.child.children(self);
+        }
     };
 
     return Widget{
@@ -86,6 +129,7 @@ pub fn init(context: anytype) Widget {
             .handle_event = vtable.handleEvent,
             .layout_props = vtable.layoutProps,
             .prepare = vtable.prepare,
+            .children = vtable.children,
         },
     };
 }

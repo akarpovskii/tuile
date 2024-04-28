@@ -22,7 +22,9 @@ pub const Config = struct {
 
 pub const CheckboxGroup = @This();
 
-view: *StackLayout,
+pub usingnamespace Widget.SingleChildWidget.Mixin(CheckboxGroup, .view);
+
+view: Widget,
 
 multiselect: bool,
 
@@ -59,17 +61,20 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
 
     const self = try internal.allocator.create(CheckboxGroup);
     self.* = CheckboxGroup{
-        .view = try StackLayout.create(
-            .{ .layout = config.layout },
-            options,
+        .view = try Widget.fromAny(
+            StackLayout.create(
+                .{ .layout = config.layout },
+                options,
+            ),
         ),
         .multiselect = config.multiselect,
         .on_state_change = config.on_state_change,
     };
 
-    if (self.view.widgets.items.len > 0) {
+    const stack: *StackLayout = @ptrCast(@alignCast(self.view.context));
+    if (stack.widgets.items.len > 0) {
         var found_checked = false;
-        for (self.view.widgets.items) |child| {
+        for (stack.widgets.items) |child| {
             var option: *Checkbox = @ptrCast(@alignCast(child.context));
             option.view.layout_properties.alignment.h = LayoutProperties.HAlign.left;
 
@@ -106,8 +111,9 @@ pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResul
         switch (event) {
             .char => |char| switch (char) {
                 ' ' => {
-                    if (self.view.focused) |focused| {
-                        const focused_option: *Checkbox = @ptrCast(@alignCast(self.view.widgets.items[focused].context));
+                    const stack: *StackLayout = @ptrCast(@alignCast(self.view.context));
+                    if (stack.focused) |focused| {
+                        const focused_option: *Checkbox = @ptrCast(@alignCast(stack.widgets.items[focused].context));
                         if (focused_option.checked) {
                             return .ignored;
                         }
@@ -128,15 +134,16 @@ pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResul
         .char => |char| switch (char) {
             ' ' => {
                 // Safe - this option received and consumed the event
-                const focused = self.view.focused.?;
-                const checked_option: *Checkbox = @ptrCast(@alignCast(self.view.widgets.items[focused].context));
+                const stack: *StackLayout = @ptrCast(@alignCast(self.view.context));
+                const focused = stack.focused.?;
+                const checked_option: *Checkbox = @ptrCast(@alignCast(stack.widgets.items[focused].context));
                 if (self.on_state_change) |on_state_change| {
                     on_state_change.call(focused, checked_option.checked);
                 }
 
                 // Uncheck everything else
                 if (!self.multiselect) {
-                    for (self.view.widgets.items, 0..) |*opt_w, idx| {
+                    for (stack.widgets.items, 0..) |*opt_w, idx| {
                         if (idx == focused) {
                             continue;
                         }

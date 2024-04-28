@@ -13,6 +13,8 @@ const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     // text and span are mutually exclusive, only one of them must be defined
     text: ?[]const u8 = null,
 
@@ -35,7 +37,10 @@ pub const Role = enum {
 
 pub const Checkbox = @This();
 
-pub usingnamespace Widget.LeafWidget.Mixin(Checkbox);
+pub usingnamespace Widget.Leaf.Mixin(Checkbox);
+pub usingnamespace Widget.Base.Mixin(Checkbox, .widget_base);
+
+widget_base: Widget.Base,
 
 role: Role,
 
@@ -64,6 +69,7 @@ pub fn create(config: Config) !*Checkbox {
 
     const self = try internal.allocator.create(Checkbox);
     self.* = Checkbox{
+        .widget_base = try Widget.Base.init(config.id),
         .view = view,
         .role = config.role,
         .checked = config.checked,
@@ -73,6 +79,7 @@ pub fn create(config: Config) !*Checkbox {
 }
 
 pub fn destroy(self: *Checkbox) void {
+    self.widget_base.deinit();
     self.view.destroy();
     internal.allocator.destroy(self);
 }

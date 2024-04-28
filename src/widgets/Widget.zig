@@ -6,6 +6,7 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const events = @import("../events.zig");
 const display = @import("../display/display.zig");
+const internal = @import("../internal.zig");
 
 pub const Widget = @This();
 
@@ -30,9 +31,11 @@ const VTable = struct {
     prepare: *const fn (context: *anyopaque) anyerror!void,
 
     children: *const fn (context: *anyopaque) []Widget,
+
+    id: *const fn (context: *anyopaque) ?[]const u8,
 };
 
-pub const LeafWidget = struct {
+pub const Leaf = struct {
     pub fn Mixin(comptime Self: type) type {
         return struct {
             pub fn children(_: *Self) []Widget {
@@ -42,7 +45,7 @@ pub const LeafWidget = struct {
     }
 };
 
-pub const SingleChildWidget = struct {
+pub const SingleChild = struct {
     pub fn Mixin(comptime Self: type, comptime child: std.meta.FieldEnum(Self)) type {
         const child_field = std.meta.fieldInfo(Self, child);
         return struct {
@@ -53,7 +56,7 @@ pub const SingleChildWidget = struct {
     }
 };
 
-pub const MultiChildWidget = struct {
+pub const MultiChild = struct {
     pub fn Mixin(comptime Self: type, comptime children_: std.meta.FieldEnum(Self)) type {
         const child_field = std.meta.fieldInfo(Self, children_);
         return struct {
@@ -63,6 +66,31 @@ pub const MultiChildWidget = struct {
                 } else {
                     return @field(self, child_field.name);
                 }
+            }
+        };
+    }
+};
+
+pub const Base = struct {
+    id: ?[]const u8,
+
+    pub fn init(widget_id: ?[]const u8) !Base {
+        return Base{
+            .id = if (widget_id) |id| try internal.allocator.dupe(u8, id) else null,
+        };
+    }
+
+    pub fn deinit(self: *Base) void {
+        if (self.id) |v| {
+            internal.allocator.free(v);
+        }
+    }
+
+    pub fn Mixin(comptime Self: type, comptime base: std.meta.FieldEnum(Self)) type {
+        const base_field = std.meta.fieldInfo(Self, base);
+        return struct {
+            pub fn id(self: *Self) ?[]const u8 {
+                return @field(self, base_field.name).id;
             }
         };
     }
@@ -118,6 +146,11 @@ pub fn init(context: anytype) Widget {
             const self: PtrT = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.children(self);
         }
+
+        pub fn id(pointer: *anyopaque) ?[]const u8 {
+            const self: PtrT = @ptrCast(@alignCast(pointer));
+            return ptr_info.Pointer.child.id(self);
+        }
     };
 
     return Widget{
@@ -130,6 +163,7 @@ pub fn init(context: anytype) Widget {
             .layout_props = vtable.layoutProps,
             .prepare = vtable.prepare,
             .children = vtable.children,
+            .id = vtable.id,
         },
     };
 }

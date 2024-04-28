@@ -11,11 +11,9 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display/display.zig");
 
-const Block = @This();
-
-pub usingnamespace Widget.SingleChildWidget.Mixin(Block, .inner);
-
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     border: border.Border = border.Border.none(),
 
     border_type: border.BorderType = .solid,
@@ -26,6 +24,13 @@ pub const Config = struct {
 
     layout: LayoutProperties = .{},
 };
+
+const Block = @This();
+
+pub usingnamespace Widget.SingleChild.Mixin(Block, .inner);
+pub usingnamespace Widget.Base.Mixin(Block, .widget_base);
+
+widget_base: Widget.Base,
 
 inner: Widget,
 
@@ -44,6 +49,7 @@ layout_properties: LayoutProperties,
 pub fn create(config: Config, inner: anytype) !*Block {
     const self = try internal.allocator.create(Block);
     self.* = Block{
+        .widget_base = try Widget.Base.init(config.id),
         .inner = try Widget.fromAny(inner),
         .border = config.border,
         .border_type = config.border_type,
@@ -55,6 +61,7 @@ pub fn create(config: Config, inner: anytype) !*Block {
 }
 
 pub fn destroy(self: *Block) void {
+    self.widget_base.deinit();
     self.inner.destroy();
     internal.allocator.destroy(self);
 }

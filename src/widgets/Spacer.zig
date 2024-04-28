@@ -12,6 +12,8 @@ const Theme = @import("../display/Theme.zig");
 const maxInt = std.math.maxInt;
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     // Spacer must either be flexible, or both max height and width must be defined.
     // Setting flex and max height/width at the same time may result in unexpected layout.
     layout: LayoutProperties = .{ .flex = 1 },
@@ -19,7 +21,10 @@ pub const Config = struct {
 
 const Spacer = @This();
 
-pub usingnamespace Widget.LeafWidget.Mixin(Spacer);
+pub usingnamespace Widget.Leaf.Mixin(Spacer);
+pub usingnamespace Widget.Base.Mixin(Spacer, .widget_base);
+
+widget_base: Widget.Base,
 
 layout_properties: LayoutProperties,
 
@@ -31,12 +36,14 @@ pub fn create(config: Config) !*Spacer {
 
     const self = try internal.allocator.create(Spacer);
     self.* = Spacer{
+        .widget_base = try Widget.Base.init(config.id),
         .layout_properties = config.layout,
     };
     return self;
 }
 
 pub fn destroy(self: *Spacer) void {
+    self.widget_base.deinit();
     internal.allocator.destroy(self);
 }
 

@@ -15,6 +15,8 @@ pub const Orientation = enum {
 };
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     orientation: Orientation = .vertical,
 
     layout: LayoutProperties = .{},
@@ -22,7 +24,10 @@ pub const Config = struct {
 
 pub const StackLayout = @This();
 
-pub usingnamespace Widget.MultiChildWidget.Mixin(StackLayout, .widgets);
+pub usingnamespace Widget.MultiChild.Mixin(StackLayout, .widgets);
+pub usingnamespace Widget.Base.Mixin(StackLayout, .widget_base);
+
+widget_base: Widget.Base,
 
 widgets: std.ArrayListUnmanaged(Widget),
 
@@ -56,6 +61,7 @@ pub fn create(config: Config, children: anytype) !*StackLayout {
 
     const self = try internal.allocator.create(StackLayout);
     self.* = StackLayout{
+        .widget_base = try Widget.Base.init(config.id),
         .widgets = widgets,
         .widget_sizes = std.ArrayListUnmanaged(Vec2){},
         .orientation = config.orientation,
@@ -78,6 +84,7 @@ pub fn removeChild(self: *StackLayout, child: Widget) !void {
 }
 
 pub fn destroy(self: *StackLayout) void {
+    self.widget_base.deinit();
     for (self.widgets.items) |w| {
         w.destroy();
     }

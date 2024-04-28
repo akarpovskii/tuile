@@ -12,6 +12,8 @@ const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     placeholder: []const u8 = "",
 
     on_value_changed: ?callbacks.Callback([]const u8) = null,
@@ -21,7 +23,10 @@ pub const Config = struct {
 
 const Input = @This();
 
-pub usingnamespace Widget.LeafWidget.Mixin(Input);
+pub usingnamespace Widget.Leaf.Mixin(Input);
+pub usingnamespace Widget.Base.Mixin(Input, .widget_base);
+
+widget_base: Widget.Base,
 
 placeholder: []const u8,
 
@@ -40,6 +45,7 @@ view_start: usize = 0,
 pub fn create(config: Config) !*Input {
     const self = try internal.allocator.create(Input);
     self.* = Input{
+        .widget_base = try Widget.Base.init(config.id),
         .on_value_changed = config.on_value_changed,
         .placeholder = try internal.allocator.dupe(u8, config.placeholder),
         .value = std.ArrayListUnmanaged(u8){},
@@ -49,6 +55,7 @@ pub fn create(config: Config) !*Input {
 }
 
 pub fn destroy(self: *Input) void {
+    self.widget_base.deinit();
     self.value.deinit(internal.allocator);
     internal.allocator.free(self.placeholder);
     internal.allocator.destroy(self);

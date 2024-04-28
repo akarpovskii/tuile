@@ -6,7 +6,10 @@ const FPSCounter = struct {
         layout: tuile.LayoutProperties = .{},
     };
 
-    pub usingnamespace tuile.Widget.LeafWidget.Mixin(FPSCounter);
+    pub usingnamespace tuile.Widget.Leaf.Mixin(FPSCounter);
+    pub usingnamespace tuile.Widget.Base.Mixin(FPSCounter, .widget_base);
+
+    widget_base: tuile.Widget.Base,
 
     allocator: std.mem.Allocator,
 
@@ -24,6 +27,7 @@ const FPSCounter = struct {
     pub fn create(allocator: std.mem.Allocator, config: Config) !*FPSCounter {
         const self = try allocator.create(FPSCounter);
         self.* = FPSCounter{
+            .widget_base = try tuile.Widget.Base.init(null),
             .allocator = allocator,
             .layout_properties = config.layout,
         };
@@ -32,6 +36,7 @@ const FPSCounter = struct {
     }
 
     pub fn destroy(self: *FPSCounter) void {
+        self.widget_base.deinit();
         self.allocator.destroy(self);
     }
 

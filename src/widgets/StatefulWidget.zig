@@ -126,7 +126,10 @@ pub const BuildContext = struct {
 
 pub const StatefulWidget = @This();
 
-pub usingnamespace Widget.LeafWidget.Mixin(StatefulWidget);
+pub usingnamespace Widget.Leaf.Mixin(StatefulWidget);
+pub usingnamespace Widget.Base.Mixin(StatefulWidget, .widget_base);
+
+widget_base: Widget.Base,
 
 builder: Builder,
 
@@ -139,6 +142,7 @@ focus_handler: FocusHandler,
 pub fn create(builder: anytype, state: anytype) !*StatefulWidget {
     const self = try internal.allocator.create(StatefulWidget);
     self.* = StatefulWidget{
+        .widget_base = try Widget.Base.init(null),
         .builder = Builder.init(builder),
         .view = null,
         .build_context = BuildContext.init(state),
@@ -148,6 +152,7 @@ pub fn create(builder: anytype, state: anytype) !*StatefulWidget {
 }
 
 pub fn destroy(self: *StatefulWidget) void {
+    self.widget_base.deinit();
     if (self.view) |view| {
         view.destroy();
     }

@@ -13,6 +13,8 @@ const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     multiselect: bool = false,
 
     on_state_change: ?callbacks.Callback(.{ usize, bool }) = null,
@@ -22,7 +24,10 @@ pub const Config = struct {
 
 pub const CheckboxGroup = @This();
 
-pub usingnamespace Widget.SingleChildWidget.Mixin(CheckboxGroup, .view);
+pub usingnamespace Widget.SingleChild.Mixin(CheckboxGroup, .view);
+pub usingnamespace Widget.Base.Mixin(CheckboxGroup, .widget_base);
+
+widget_base: Widget.Base,
 
 view: Widget,
 
@@ -61,6 +66,7 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
 
     const self = try internal.allocator.create(CheckboxGroup);
     self.* = CheckboxGroup{
+        .widget_base = try Widget.Base.init(config.id),
         .view = try Widget.fromAny(
             StackLayout.create(
                 .{ .layout = config.layout },
@@ -90,6 +96,7 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
 }
 
 pub fn destroy(self: *CheckboxGroup) void {
+    self.widget_base.deinit();
     self.view.destroy();
     internal.allocator.destroy(self);
 }

@@ -26,6 +26,8 @@ const Row = struct {
 };
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     // text and span are mutually exclusive, only one of them must be defined
     text: ?[]const u8 = null,
 
@@ -37,7 +39,10 @@ pub const Config = struct {
 
 pub const Label = @This();
 
-pub usingnamespace Widget.LeafWidget.Mixin(Label);
+pub usingnamespace Widget.Leaf.Mixin(Label);
+pub usingnamespace Widget.Base.Mixin(Label, .widget_base);
+
+widget_base: Widget.Base,
 
 content: display.SpanUnmanaged,
 
@@ -51,6 +56,7 @@ pub fn create(config: Config) !*Label {
     }
     const self = try internal.allocator.create(Label);
     self.* = Label{
+        .widget_base = try Widget.Base.init(config.id),
         .content = display.SpanUnmanaged{},
         .rows = .{},
         .layout_properties = config.layout,
@@ -64,6 +70,7 @@ pub fn create(config: Config) !*Label {
 }
 
 pub fn destroy(self: *Label) void {
+    self.widget_base.deinit();
     for (self.rows.items) |*row| {
         row.deinit(internal.allocator);
     }

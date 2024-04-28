@@ -13,6 +13,8 @@ const display = @import("../display/display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     // text and span are mutually exclusive, only one of them must be defined
     text: ?[]const u8 = null,
 
@@ -26,7 +28,10 @@ pub const Config = struct {
 
 pub const Button = @This();
 
-pub usingnamespace Widget.LeafWidget.Mixin(Button);
+pub usingnamespace Widget.Leaf.Mixin(Button);
+pub usingnamespace Widget.Base.Mixin(Button, .widget_base);
+
+widget_base: Widget.Base,
 
 view: *Label,
 
@@ -53,6 +58,7 @@ pub fn create(config: Config) !*Button {
 
     const self = try internal.allocator.create(Button);
     self.* = Button{
+        .widget_base = try Widget.Base.init(config.id),
         .view = view,
         .on_press = config.on_press,
     };
@@ -60,6 +66,7 @@ pub fn create(config: Config) !*Button {
 }
 
 pub fn destroy(self: *Button) void {
+    self.widget_base.deinit();
     self.view.destroy();
     internal.allocator.destroy(self);
 }

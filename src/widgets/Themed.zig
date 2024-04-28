@@ -9,10 +9,6 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display/display.zig");
 
-const Themed = @This();
-
-pub usingnamespace Widget.SingleChildWidget.Mixin(Themed, .inner);
-
 pub const PartialTheme = init_partial: {
     const original = @typeInfo(display.Theme).Struct.fields;
     const len = original.len;
@@ -38,10 +34,19 @@ pub const PartialTheme = init_partial: {
 };
 
 pub const Config = struct {
+    id: ?[]const u8 = null,
+
     theme: ?display.Theme = null,
 
     override: PartialTheme = .{},
 };
+
+const Themed = @This();
+
+pub usingnamespace Widget.SingleChild.Mixin(Themed, .inner);
+pub usingnamespace Widget.Base.Mixin(Themed, .widget_base);
+
+widget_base: Widget.Base,
 
 inner: Widget,
 
@@ -50,6 +55,7 @@ theme: PartialTheme,
 pub fn create(config: Config, inner: anytype) !*Themed {
     const self = try internal.allocator.create(Themed);
     self.* = Themed{
+        .widget_base = try Widget.Base.init(config.id),
         .inner = try Widget.fromAny(inner),
         .theme = .{},
     };
@@ -61,6 +67,7 @@ pub fn create(config: Config, inner: anytype) !*Themed {
 }
 
 pub fn destroy(self: *Themed) void {
+    self.widget_base.deinit();
     self.inner.destroy();
     internal.allocator.destroy(self);
 }

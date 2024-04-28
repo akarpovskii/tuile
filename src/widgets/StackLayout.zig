@@ -203,6 +203,10 @@ pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orienta
         @field(w_cons, max_cross) = @field(constraints, max_cross);
         var size = try w.layout(w_cons);
         @field(size, cross) = @min(@field(size, cross), @field(constraints, max_cross));
+        @field(size, main) = widget_main_size;
+        if (@field(size, cross) == std.math.maxInt(u32)) {
+            @field(size, cross) = @field(self_size, cross);
+        }
 
         self.widget_sizes.items[idx] = size;
         @field(self_size, main) += @field(size, main);

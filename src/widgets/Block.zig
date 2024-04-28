@@ -31,28 +31,21 @@ inner_size: Vec2 = Vec2.zero(),
 
 border: border.Border,
 
-border_chars: border.BorderCharacters,
+border_type: border.BorderType,
 
-border_widths: Padding,
+padding: Padding,
 
 fit_content: bool,
 
 layout_properties: LayoutProperties,
 
 pub fn create(config: Config, inner: anytype) !*Block {
-    const border_chars = border.BorderCharacters.fromType(config.border_type);
-
     const self = try internal.allocator.create(Block);
     self.* = Block{
         .inner = try Widget.fromAny(inner),
         .border = config.border,
-        .border_chars = border_chars,
-        .border_widths = .{
-            .top = @intFromBool(config.border.top) + config.padding.top,
-            .bottom = @intFromBool(config.border.bottom) + config.padding.bottom,
-            .left = @intFromBool(config.border.left) + config.padding.left,
-            .right = @intFromBool(config.border.right) + config.padding.right,
-        },
+        .border_type = config.border_type,
+        .padding = config.padding,
         .fit_content = config.fit_content,
         .layout_properties = config.layout,
     };
@@ -71,12 +64,12 @@ pub fn widget(self: *Block) Widget {
 pub fn render(self: *Block, area: Rect, frame: Frame, theme: display.Theme) !void {
     var content_area = Rect{
         .min = .{
-            .x = area.min.x + self.border_widths.left,
-            .y = area.min.y + self.border_widths.top,
+            .x = area.min.x + @intFromBool(self.border.left) + self.padding.left,
+            .y = area.min.y + @intFromBool(self.border.top) + self.padding.top,
         },
         .max = .{
-            .x = area.max.x -| self.border_widths.right,
-            .y = area.max.y -| self.border_widths.bottom,
+            .x = area.max.x -| (@intFromBool(self.border.right) + self.padding.right),
+            .y = area.max.y -| (@intFromBool(self.border.bottom) + self.padding.bottom),
         },
     };
 
@@ -85,7 +78,10 @@ pub fn render(self: *Block, area: Rect, frame: Frame, theme: display.Theme) !voi
     } else {
         var inner_area = Rect{
             .min = content_area.min,
-            .max = content_area.min.add(self.inner_size),
+            .max = .{
+                .x = content_area.min.x + @min(content_area.width(), self.inner_size.x),
+                .y = content_area.min.y + @min(content_area.height(), self.inner_size.y),
+            },
         };
 
         const props = self.inner.layoutProps();
@@ -105,8 +101,8 @@ pub fn layout(self: *Block, constraints: Constraints) !Vec2 {
         .max_height = @min(props.max_height, constraints.max_height),
     };
     const border_size = Vec2{
-        .x = self.border_widths.left + self.border_widths.right,
-        .y = self.border_widths.top + self.border_widths.bottom,
+        .x = @intFromBool(self.border.left) + self.padding.left + @intFromBool(self.border.right) + self.padding.right,
+        .y = @intFromBool(self.border.top) + self.padding.top + @intFromBool(self.border.bottom) + self.padding.bottom,
     };
     const maxInt = std.math.maxInt;
     const inner_constraints = Constraints{
@@ -130,10 +126,10 @@ pub fn layout(self: *Block, constraints: Constraints) !Vec2 {
         .y = self_constraints.max_height,
     };
     if (self.fit_content or size.x == maxInt(u32)) {
-        size.x = @min(size.x, self.inner_size.x + border_size.x);
+        size.x = @min(size.x, self.inner_size.x +| border_size.x);
     }
     if (self.fit_content or size.y == maxInt(u32)) {
-        size.y = @min(size.y, self.inner_size.y + border_size.y);
+        size.y = @min(size.y, self.inner_size.y +| border_size.y);
     }
 
     return size;
@@ -150,7 +146,7 @@ pub fn layoutProps(self: *Block) LayoutProperties {
 fn renderBorder(self: *Block, area: Rect, frame: Frame, theme: display.Theme) void {
     const min = area.min;
     const max = area.max;
-    const chars = self.border_chars;
+    const chars = border.BorderCharacters.fromType(self.border_type);
 
     if (area.height() > 0) {
         if (self.border.top)

@@ -46,16 +46,16 @@ pub fn render(_: *Spacer, _: Rect, _: Frame, _: Theme) !void {}
 
 pub fn layout(self: *Spacer, constraints: Constraints) !Vec2 {
     const props = self.layout_properties;
-    var size = Vec2{
+    const size = Vec2{
         .x = @min(props.max_width, constraints.max_width),
         .y = @min(props.max_height, constraints.max_height),
     };
-    if (size.x == maxInt(u32)) {
-        size.x = 0;
-    }
-    if (size.y == maxInt(u32)) {
-        size.y = 0;
-    }
+    // if (size.x == maxInt(u32)) {
+    //     size.x = 0;
+    // }
+    // if (size.y == maxInt(u32)) {
+    //     size.y = 0;
+    // }
     return size;
 }
 

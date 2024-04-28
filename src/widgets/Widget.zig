@@ -53,9 +53,9 @@ pub fn init(context: anytype) Widget {
         pub fn layout(pointer: *anyopaque, constraints: Constraints) anyerror!Vec2 {
             std.debug.assert(constraints.min_width <= constraints.max_width);
             std.debug.assert(constraints.min_height <= constraints.max_height);
+            // std.debug.print("{any} - {any}\n", .{ PtrT, constraints });
             const self: PtrT = @ptrCast(@alignCast(pointer));
             const size = try ptr_info.Pointer.child.layout(self, constraints);
-            // std.debug.print("{any}\n", .{T});
             return size;
         }
 

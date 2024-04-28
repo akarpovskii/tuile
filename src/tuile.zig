@@ -10,6 +10,8 @@ pub usingnamespace widgets;
 pub const display = @import("display/display.zig");
 pub usingnamespace display;
 
+const Task = widgets.Callback(void);
+
 // Make it user-driven?
 const FRAMES_PER_SECOND = 30;
 const FRAME_TIME_NS = std.time.ns_per_s / FRAMES_PER_SECOND;
@@ -46,6 +48,9 @@ pub const Tuile = struct {
     frame_buffer: std.ArrayListUnmanaged(render.Cell),
     window_size: Vec2,
 
+    task_queue: std.fifo.LinearFifo(Task, .Dynamic),
+    task_queue_mutex: std.Thread.Mutex,
+
     pub fn init(config: Config) !Tuile {
         var self = blk: {
             const backend = if (config.backend) |backend| backend else (try backends.Ncurses.create()).backend();
@@ -63,6 +68,8 @@ pub const Tuile = struct {
                 .event_handlers = .{},
                 .frame_buffer = .{},
                 .window_size = Vec2.zero(),
+                .task_queue = std.fifo.LinearFifo(Task, .Dynamic).init(internal.allocator),
+                .task_queue_mutex = .{},
             };
         };
         errdefer self.deinit();
@@ -71,6 +78,7 @@ pub const Tuile = struct {
     }
 
     pub fn deinit(self: *Tuile) void {
+        self.task_queue.deinit();
         self.backend.destroy();
         self.frame_buffer.deinit(internal.allocator);
         self.root.destroy();
@@ -96,6 +104,12 @@ pub const Tuile = struct {
             }
         }
         return error.NotFound;
+    }
+
+    pub fn scheduleTask(self: *Tuile, task: Task) !void {
+        self.task_queue_mutex.lock();
+        defer self.task_queue_mutex.unlock();
+        try self.task_queue.writeItem(task);
     }
 
     pub fn addEventHandler(self: *Tuile, handler: EventHandler) !void {
@@ -127,6 +141,15 @@ pub const Tuile = struct {
             try self.prepare();
         }
         try self.redraw();
+
+        const queued_task = blk: {
+            self.task_queue_mutex.lock();
+            defer self.task_queue_mutex.unlock();
+            break :blk self.task_queue.readItem();
+        };
+        if (queued_task) |task| {
+            task.call();
+        }
 
         self.last_frame_time = frame_timer.lap();
 

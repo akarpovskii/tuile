@@ -3,6 +3,7 @@ pub const border = @import("border.zig");
 pub usingnamespace border;
 pub const Button = @import("Button.zig");
 pub const callbacks = @import("callbacks.zig");
+pub const Callback = callbacks.Callback;
 pub const ChangeNotifier = @import("ChangeNotifier.zig");
 pub const Checkbox = @import("Checkbox.zig");
 pub const CheckboxGroup = @import("CheckboxGroup.zig");

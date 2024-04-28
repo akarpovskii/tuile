@@ -74,13 +74,16 @@ pub fn addChild(self: *StackLayout, child: anytype) !void {
     try self.widgets.append(internal.allocator, try Widget.fromAny(child));
 }
 
-pub fn removeChild(self: *StackLayout, child: Widget) !void {
+pub fn removeChild(self: *StackLayout, child: Widget) error{NotFound}!Widget {
     for (0..self.widgets.items.len) |i| {
         if (self.widgets.items[i].context == child.context) {
-            _ = self.widgets.orderedRemove(i);
-            break;
+            if (i == self.focused) {
+                self.focused = null;
+            }
+            return self.widgets.orderedRemove(i);
         }
     }
+    return error.NotFound;
 }
 
 pub fn destroy(self: *StackLayout) void {

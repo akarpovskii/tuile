@@ -12,20 +12,19 @@ const AppState = struct {
 
     progress: usize,
 
-    notifier: tuile.ChangeNotifier,
-    pub usingnamespace tuile.ChangeNotifier.Mixin(@This(), .notifier);
+    tui: *tuile.Tuile,
 
     const progress_step: usize = 5;
 
-    pub fn init(allocator: std.mem.Allocator) !*AppState {
+    pub fn init(allocator: std.mem.Allocator, tui: *tuile.Tuile) !*AppState {
         const self = try allocator.create(AppState);
         errdefer allocator.destroy(self);
         self.* = AppState{
             .allocator = allocator,
             .progress = 0,
-            .notifier = tuile.ChangeNotifier.init(),
             .mutex = std.Thread.Mutex{},
             .thread = try std.Thread.spawn(.{}, AppState.update_loop, .{self}),
+            .tui = tui,
         };
         return self;
     }
@@ -36,7 +35,6 @@ const AppState = struct {
         self.mutex.unlock();
         self.thread.join();
 
-        self.notifier.deinit();
         self.allocator.destroy(self);
     }
 
@@ -51,62 +49,64 @@ const AppState = struct {
             if (self.progress == 100) continue;
 
             self.progress += progress_step;
-            self.notifyListeners();
+            self.tui.scheduleTask(.{ .cb = @ptrCast(&AppState.updateProgress), .payload = self }) catch unreachable;
         }
     }
 
-    pub fn onReset(ptr: ?*anyopaque) void {
-        const self: *AppState = @ptrCast(@alignCast(ptr.?));
-        self.mutex.lock();
-        defer self.mutex.unlock();
-        self.progress = 0;
-        self.notifyListeners();
-    }
-};
+    pub fn onReset(self_opt: ?*AppState) void {
+        const self = self_opt.?;
+        {
+            self.mutex.lock();
+            defer self.mutex.unlock();
+            self.progress = 0;
+        }
 
-const ProgressView = struct {
-    pub fn build(_: *ProgressView, context: *tuile.StatefulWidget.BuildContext) !tuile.Widget {
-        const state = try context.watch(AppState);
-        state.mutex.lock();
-        defer state.mutex.unlock();
+        const stack_widget = self.tui.findById("progress-stack") catch unreachable;
+        const reset_button = self.tui.findById("reset-button") catch unreachable;
+
+        var stack = stack_widget.as(tuile.StackLayout) orelse unreachable;
+        _ = stack.removeChild(reset_button) catch unreachable;
+        stack.addChild(tuile.spacer(.{
+            .id = "progress-spacer",
+            .layout = .{ .max_width = 1, .max_height = 1 },
+        })) catch unreachable;
+        // Safe to call, we are in the main thread
+        self.updateProgress();
+    }
+
+    pub fn updateProgress(self: *AppState) void {
+        const progress = blk: {
+            self.mutex.lock();
+            defer self.mutex.unlock();
+            break :blk self.progress;
+        };
 
         const steps: usize = 100 / AppState.progress_step;
-        const filled = state.progress / AppState.progress_step;
+        const filled = progress / AppState.progress_step;
         var buffer: [steps * "█".len]u8 = undefined;
         var bar = buffer[0 .. filled * "█".len];
         for (0..filled) |i| {
             std.mem.copyForwards(u8, bar[i * "█".len ..], "█");
         }
+        const progress_widget = self.tui.findById("progress-label") catch unreachable;
+        var label = progress_widget.as(tuile.Label) orelse unreachable;
+        label.setText(bar) catch unreachable;
 
-        const stack = try tuile.vertical(
-            .{ .layout = .{ .flex = 1 } },
-            .{
-                tuile.label(.{ .text = bar, .layout = .{ .alignment = tuile.LayoutProperties.Align.center() } }),
-                tuile.spacer(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
-            },
-        );
+        if (progress == 100) {
+            const stack_widget = self.tui.findById("progress-stack") catch unreachable;
+            const spacer_widget = self.tui.findById("progress-spacer") catch unreachable;
 
-        if (state.progress == 100) {
-            try stack.addChild(
-                tuile.button(.{
-                    .text = "Restart",
-                    .on_press = .{
-                        .cb = AppState.onReset,
-                        .payload = state,
-                    },
-                }),
-            );
-        } else {
-            try stack.addChild(
-                tuile.spacer(.{ .layout = .{ .max_width = 1, .max_height = 1 } }),
-            );
+            var stack = stack_widget.as(tuile.StackLayout) orelse unreachable;
+            _ = stack.removeChild(spacer_widget) catch unreachable;
+            stack.addChild(tuile.button(.{
+                .id = "reset-button",
+                .text = "Restart",
+                .on_press = .{
+                    .cb = @ptrCast(&AppState.onReset),
+                    .payload = self,
+                },
+            })) catch unreachable;
         }
-
-        const widget = try tuile.block(
-            .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
-            stack,
-        );
-        return widget.widget();
     }
 };
 
@@ -118,15 +118,21 @@ pub fn main() !void {
     var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
-    var app_state = try AppState.init(allocator);
+    var app_state = try AppState.init(allocator, &tui);
     defer app_state.deinit();
-    var progress_view = ProgressView{};
 
     const layout = tuile.vertical(
         .{ .layout = .{ .flex = 1 } },
-        .{
-            tuile.stateful(&progress_view, app_state),
-        },
+        .{tuile.block(
+            .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
+            tuile.vertical(
+                .{ .id = "progress-stack", .layout = .{ .flex = 1 } },
+                .{
+                    tuile.label(.{ .id = "progress-label", .text = "", .layout = .{ .alignment = tuile.LayoutProperties.Align.center() } }),
+                    tuile.spacer(.{ .id = "progress-spacer", .layout = .{ .max_width = 1, .max_height = 1 } }),
+                },
+            ),
+        )},
     );
 
     try tui.add(layout);

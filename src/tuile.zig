@@ -80,6 +80,24 @@ pub const Tuile = struct {
         try self.root.addChild(child);
     }
 
+    pub fn findById(self: *Tuile, id: []const u8) (std.mem.Allocator.Error || error{NotFound})!widgets.Widget {
+        var stack = std.ArrayListUnmanaged(widgets.Widget){};
+        defer stack.deinit(internal.allocator);
+        try stack.append(internal.allocator, self.root.widget());
+        while (stack.items.len > 0) {
+            const w = stack.pop();
+            if (w.id()) |widget_id| {
+                if (std.mem.eql(u8, widget_id, id)) {
+                    return w;
+                }
+            }
+            for (w.children()) |child| {
+                try stack.append(internal.allocator, child);
+            }
+        }
+        return error.NotFound;
+    }
+
     pub fn addEventHandler(self: *Tuile, handler: EventHandler) !void {
         try self.event_handlers.append(internal.allocator, handler);
     }

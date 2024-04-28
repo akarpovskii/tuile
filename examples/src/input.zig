@@ -1,89 +1,44 @@
 const std = @import("std");
 const tuile = @import("tuile");
 
-const ListState = struct {
-    allocator: std.mem.Allocator,
-
-    items: std.ArrayList([]const u8),
-
+const ListApp = struct {
     input: ?[]const u8 = null,
 
-    change_notifier: tuile.ChangeNotifier,
-    pub usingnamespace tuile.ChangeNotifier.Mixin(@This(), .change_notifier);
+    tui: *tuile.Tuile,
 
-    pub fn init(allocator: std.mem.Allocator) ListState {
-        return ListState{
-            .allocator = allocator,
-            .items = std.ArrayList([]const u8).init(allocator),
-            .change_notifier = tuile.ChangeNotifier.init(),
-        };
-    }
-
-    pub fn deinit(self: *ListState) void {
-        for (self.items.items) |item| {
-            self.allocator.free(item);
-        }
-        self.change_notifier.deinit();
-        self.items.deinit();
-    }
-
-    pub fn onPress(ptr: ?*anyopaque) void {
-        const self: *ListState = @ptrCast(@alignCast(ptr.?));
+    pub fn onPress(opt_self: ?*ListApp) void {
+        const self = opt_self.?;
         if (self.input) |input| {
             if (input.len > 0) {
-                self.items.append(self.allocator.dupe(u8, input) catch @panic("OOM")) catch @panic("OOM");
-                self.notifyListeners();
+                const list_widget: tuile.Widget = self.tui.findById("list-id") catch unreachable;
+                var list = list_widget.as(tuile.StackLayout) orelse unreachable;
+                list.addChild(tuile.label(.{ .text = input })) catch unreachable;
             }
         }
     }
 
-    pub fn inputChanged(ptr: ?*anyopaque, value: []const u8) void {
-        const self: *ListState = @ptrCast(@alignCast(ptr.?));
+    pub fn inputChanged(opt_self: ?*ListApp, value: []const u8) void {
+        const self = opt_self.?;
         self.input = value;
     }
 };
 
-const ListView = struct {
-    allocator: std.mem.Allocator,
-
-    pub fn build(self: *ListView, context: *tuile.StatefulWidget.BuildContext) !tuile.Widget {
-        const state: *ListState = try context.watch(ListState);
-
-        var lines = try std.ArrayList(*tuile.Label).initCapacity(self.allocator, state.items.items.len);
-        defer lines.deinit();
-        for (state.items.items) |item| {
-            lines.append(try tuile.label(.{ .text = item })) catch unreachable;
-        }
-
-        const widget = try tuile.block(
-            .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
-            try tuile.vertical(
-                .{},
-                lines.items,
-            ),
-        );
-
-        return widget.widget();
-    }
-};
-
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
     var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
-    var list_state = ListState.init(allocator);
-    defer list_state.deinit();
-
-    var list_view = ListView{ .allocator = allocator };
+    var list_app = ListApp{ .tui = &tui };
 
     const layout = tuile.vertical(
         .{ .layout = .{ .flex = 1 } },
         .{
-            tuile.stateful(&list_view, &list_state),
+            tuile.block(
+                .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
+                tuile.vertical(
+                    .{ .id = "list-id" },
+                    .{},
+                ),
+            ),
 
             tuile.horizontal(
                 .{},
@@ -91,15 +46,15 @@ pub fn main() !void {
                     tuile.input(.{
                         .layout = .{ .flex = 1 },
                         .on_value_changed = .{
-                            .cb = ListState.inputChanged,
-                            .payload = &list_state,
+                            .cb = @ptrCast(&ListApp.inputChanged),
+                            .payload = &list_app,
                         },
                     }),
                     tuile.button(.{
                         .text = "Submit",
                         .on_press = .{
-                            .cb = ListState.onPress,
-                            .payload = &list_state,
+                            .cb = @ptrCast(&ListApp.onPress),
+                            .payload = &list_app,
                         },
                     }),
                 },

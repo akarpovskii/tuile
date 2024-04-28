@@ -76,7 +76,7 @@ pub const Base = struct {
 
     pub fn init(widget_id: ?[]const u8) !Base {
         return Base{
-            .id = if (widget_id) |id| try internal.allocator.dupe(u8, id) else null,
+            .id = if (widget_id) |id_value| try internal.allocator.dupe(u8, id_value) else null,
         };
     }
 
@@ -96,75 +96,83 @@ pub const Base = struct {
     }
 };
 
-pub fn init(context: anytype) Widget {
-    const PtrT = @TypeOf(context);
-    const ptr_info = @typeInfo(PtrT);
-    comptime if (ptr_info != .Pointer) {
-        @compileError("expected a widget pointer, got " ++ @typeName(PtrT));
-    };
-
+pub fn constructVTable(comptime T: type) VTable {
     const vtable = struct {
         pub fn destroy(pointer: *anyopaque) void {
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.destroy(self);
+            const self: *T = @ptrCast(@alignCast(pointer));
+            return T.destroy(self);
         }
 
         pub fn render(pointer: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void {
             std.debug.assert(area.max.x != std.math.maxInt(u32));
             std.debug.assert(area.max.y != std.math.maxInt(u32));
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.render(self, area, frame, theme);
+            const self: *T = @ptrCast(@alignCast(pointer));
+            return T.render(self, area, frame, theme);
         }
 
         pub fn layout(pointer: *anyopaque, constraints: Constraints) anyerror!Vec2 {
             std.debug.assert(constraints.min_width <= constraints.max_width);
             std.debug.assert(constraints.min_height <= constraints.max_height);
-            // std.debug.print("{any} - {any}\n", .{ PtrT, constraints });
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            const size = try ptr_info.Pointer.child.layout(self, constraints);
+            // std.debug.print("{any} - {any}\n", .{ *T, constraints });
+            const self: *T = @ptrCast(@alignCast(pointer));
+            const size = try T.layout(self, constraints);
             return size;
         }
 
         pub fn handleEvent(pointer: *anyopaque, event: events.Event) anyerror!events.EventResult {
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.handleEvent(self, event);
+            const self: *T = @ptrCast(@alignCast(pointer));
+            return T.handleEvent(self, event);
         }
 
         pub fn layoutProps(pointer: *anyopaque) LayoutProperties {
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.layoutProps(self);
+            const self: *T = @ptrCast(@alignCast(pointer));
+            return T.layoutProps(self);
         }
 
         pub fn prepare(pointer: *anyopaque) anyerror!void {
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            if (@hasDecl(ptr_info.Pointer.child, "prepare")) {
-                try ptr_info.Pointer.child.prepare(self);
+            const self: *T = @ptrCast(@alignCast(pointer));
+            if (@hasDecl(T, "prepare")) {
+                try T.prepare(self);
             }
         }
 
         pub fn children(pointer: *anyopaque) []Widget {
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.children(self);
+            const self: *T = @ptrCast(@alignCast(pointer));
+            return T.children(self);
         }
 
         pub fn id(pointer: *anyopaque) ?[]const u8 {
-            const self: PtrT = @ptrCast(@alignCast(pointer));
-            return ptr_info.Pointer.child.id(self);
+            const self: *T = @ptrCast(@alignCast(pointer));
+            return T.id(self);
         }
+    };
+
+    return VTable{
+        .destroy = vtable.destroy,
+        .render = vtable.render,
+        .layout = vtable.layout,
+        .handle_event = vtable.handleEvent,
+        .layout_props = vtable.layoutProps,
+        .prepare = vtable.prepare,
+        .children = vtable.children,
+        .id = vtable.id,
+    };
+}
+
+pub fn init(context: anytype) Widget {
+    const PtrT = @TypeOf(context);
+    comptime if (@typeInfo(PtrT) != .Pointer) {
+        @compileError("expected a widget pointer, got " ++ @typeName(PtrT));
+    };
+    const T = std.meta.Child(PtrT);
+
+    const VTableImpl = struct {
+        const vtable = constructVTable(T);
     };
 
     return Widget{
         .context = context,
-        .vtable = &.{
-            .destroy = vtable.destroy,
-            .render = vtable.render,
-            .layout = vtable.layout,
-            .handle_event = vtable.handleEvent,
-            .layout_props = vtable.layoutProps,
-            .prepare = vtable.prepare,
-            .children = vtable.children,
-            .id = vtable.id,
-        },
+        .vtable = &VTableImpl.vtable,
     };
 }
 
@@ -192,6 +200,14 @@ pub inline fn prepare(self: Widget) anyerror!void {
     return self.vtable.prepare(self.context);
 }
 
+pub inline fn children(self: Widget) []Widget {
+    return self.vtable.children(self.context);
+}
+
+pub inline fn id(self: Widget) ?[]const u8 {
+    return self.vtable.id(self.context);
+}
+
 pub fn fromAny(any: anytype) anyerror!Widget {
     const ok = if (@typeInfo(@TypeOf(any)) == .ErrorUnion)
         try any
@@ -202,4 +218,14 @@ pub fn fromAny(any: anytype) anyerror!Widget {
         ok
     else
         ok.widget();
+}
+
+pub fn as(self: Widget, T: type) ?*T {
+    const vtable_t = constructVTable(T);
+    inline for (std.meta.fields(VTable)) |field| {
+        if (@field(self.vtable, field.name) != @field(vtable_t, field.name)) {
+            return null;
+        }
+    }
+    return @ptrCast(@alignCast(self.context));
 }

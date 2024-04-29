@@ -17,7 +17,7 @@
 <h3 align="center">Tuile</h3>
 
   <p align="center">
-    A Terminal UI library for Zig.
+    A Text User Interface library for Zig.
     <br />
     Breaking changes are possible.
     <br />
@@ -62,7 +62,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-Tuile is a Terminal UI library written in Zig.
+Tuile is a Text User Interface library written in Zig.
 
 The only currently supported backend is ncurses, but if you want to see another one submit a PR or file a [feature request](https://github.com/akarpovskii/tuile/issues/new?labels=enhancement&template=feature-request.md).
 

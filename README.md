@@ -159,6 +159,7 @@ You can find more examples in the [examples folder](./examples/)
 
 In no particular order:
 
+- [ ] CI on Windows needs ncurses - figure out how to do it
 - [ ] Documentation
 - [ ] Grid layout
 - [ ] Windows and dialogs

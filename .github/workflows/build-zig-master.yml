@@ -1,0 +1,33 @@
+name: Zig master
+
+on:
+  push:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        # platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: master
+
+      - name: Zig version
+        run: zig version
+
+      - name: Build all examples
+        run: |
+          cd examples
+          zig build --summary all
+          cd ..
+
+      - name: Run all tests
+        run: zig build test --summary all

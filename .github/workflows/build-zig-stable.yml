@@ -30,5 +30,11 @@ jobs:
       - name: Zig version
         run: zig version
 
+      - name: Build all examples
+        run: |
+          cd examples
+          zig build --summary all
+          cd ..
+
       - name: Run all tests
         run: zig build test --summary all

@@ -107,7 +107,7 @@ Checkout the other examples [here](./examples/).
 1. Add dependency to your `build.zig.zon`
 
 ```sh
-zig fetch --save https://github.com/akarpovskii/tuile/archive/refs/tags/{VERSION}.tar.gz
+zig fetch --save https://github.com/akarpovskii/tuile/archive/refs/tags/v0.1.0.tar.gz
 ```
 
 2. Import Tuile in `build.zig` and link ncurses:

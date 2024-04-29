@@ -61,15 +61,15 @@ const AppState = struct {
             self.progress = 0;
         }
 
-        const stack_widget = self.tui.findById("progress-stack") catch unreachable;
-        const reset_button = self.tui.findById("reset-button") catch unreachable;
+        const stack = self.tui.findByIdTyped(tuile.StackLayout, "progress-stack") orelse unreachable;
+        const reset = self.tui.findById("reset-button") orelse unreachable;
 
-        var stack = stack_widget.as(tuile.StackLayout) orelse unreachable;
-        _ = stack.removeChild(reset_button) catch unreachable;
+        _ = stack.removeChild(reset) catch unreachable;
         stack.addChild(tuile.spacer(.{
             .id = "progress-spacer",
             .layout = .{ .max_width = 1, .max_height = 1 },
         })) catch unreachable;
+
         // Safe to call, we are in the main thread
         self.updateProgress();
     }
@@ -88,16 +88,14 @@ const AppState = struct {
         for (0..filled) |i| {
             std.mem.copyForwards(u8, bar[i * "█".len ..], "█");
         }
-        const progress_widget = self.tui.findById("progress-label") catch unreachable;
-        var label = progress_widget.as(tuile.Label) orelse unreachable;
+        const label = self.tui.findByIdTyped(tuile.Label, "progress-label") orelse unreachable;
         label.setText(bar) catch unreachable;
 
         if (progress == 100) {
-            const stack_widget = self.tui.findById("progress-stack") catch unreachable;
-            const spacer_widget = self.tui.findById("progress-spacer") catch unreachable;
+            const stack = self.tui.findByIdTyped(tuile.StackLayout, "progress-stack") orelse unreachable;
+            const spacer = self.tui.findById("progress-spacer") orelse unreachable;
 
-            var stack = stack_widget.as(tuile.StackLayout) orelse unreachable;
-            _ = stack.removeChild(spacer_widget) catch unreachable;
+            _ = stack.removeChild(spacer) catch unreachable;
             stack.addChild(tuile.button(.{
                 .id = "reset-button",
                 .text = "Restart",
@@ -118,9 +116,6 @@ pub fn main() !void {
     var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
-    var app_state = try AppState.init(allocator, &tui);
-    defer app_state.deinit();
-
     const layout = tuile.vertical(
         .{ .layout = .{ .flex = 1 } },
         .{tuile.block(
@@ -136,6 +131,9 @@ pub fn main() !void {
     );
 
     try tui.add(layout);
+
+    var app_state = try AppState.init(allocator, &tui);
+    defer app_state.deinit();
 
     try tui.run();
 }

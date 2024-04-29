@@ -10,8 +10,7 @@ const ListApp = struct {
         const self = opt_self.?;
         if (self.input) |input| {
             if (input.len > 0) {
-                const list_widget: tuile.Widget = self.tui.findById("list-id") catch unreachable;
-                var list = list_widget.as(tuile.StackLayout) orelse unreachable;
+                const list = self.tui.findByIdTyped(tuile.StackLayout, "list-id") orelse unreachable;
                 list.addChild(tuile.label(.{ .text = input })) catch unreachable;
             }
         }

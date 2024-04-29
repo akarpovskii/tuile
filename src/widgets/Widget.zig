@@ -229,3 +229,17 @@ pub fn as(self: Widget, T: type) ?*T {
     }
     return @ptrCast(@alignCast(self.context));
 }
+
+pub fn findById(self: Widget, widget_id: []const u8) ?Widget {
+    if (self.id()) |w_id| {
+        if (std.mem.eql(u8, w_id, widget_id)) {
+            return self;
+        }
+    }
+    for (self.children()) |child| {
+        if (child.findById(widget_id)) |found| {
+            return found;
+        }
+    }
+    return null;
+}

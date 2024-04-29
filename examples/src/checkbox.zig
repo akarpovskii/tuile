@@ -2,37 +2,6 @@ const std = @import("std");
 const tuile = @import("tuile");
 
 const CheckedState = struct {
-    checked: [3]bool = .{ false, false, false },
-
-    notifier: tuile.ChangeNotifier = tuile.ChangeNotifier.init(),
-    pub usingnamespace tuile.ChangeNotifier.Mixin(@This(), .notifier);
-
-    pub fn onGroupState(ptr: ?*anyopaque, idx: usize, state: bool) void {
-        var self: *CheckedState = @ptrCast(@alignCast(ptr.?));
-        self.checked[idx] = state;
-        self.notifyListeners();
-    }
-
-    pub fn onState0(ptr: ?*anyopaque, state: bool) void {
-        var self: *CheckedState = @ptrCast(@alignCast(ptr.?));
-        self.checked[0] = state;
-        self.notifyListeners();
-    }
-
-    pub fn onState1(ptr: ?*anyopaque, state: bool) void {
-        var self: *CheckedState = @ptrCast(@alignCast(ptr.?));
-        self.checked[1] = state;
-        self.notifyListeners();
-    }
-
-    pub fn onState2(ptr: ?*anyopaque, state: bool) void {
-        var self: *CheckedState = @ptrCast(@alignCast(ptr.?));
-        self.checked[2] = state;
-        self.notifyListeners();
-    }
-};
-
-const StateView = struct {
     const labels_on: [3][]const u8 = .{
         "State 1 - 1",
         "State 2 - 1",
@@ -45,22 +14,50 @@ const StateView = struct {
         "State 3 - 0",
     };
 
-    pub fn build(_: *StateView, context: *tuile.StatefulWidget.BuildContext) !tuile.Widget {
-        const state = try context.watch(CheckedState);
+    checked: [3]bool = .{ false, false, false },
+
+    tui: *tuile.Tuile,
+
+    ids: [3][]const u8,
+
+    pub fn onGroupState(ptr: ?*CheckedState, idx: usize, state: bool) void {
+        var self = ptr.?;
+        self.checked[idx] = state;
+        self.updateLabels();
+    }
+
+    pub fn onState0(ptr: ?*CheckedState, state: bool) void {
+        var self = ptr.?;
+        self.checked[0] = state;
+        self.updateLabels();
+    }
+
+    pub fn onState1(ptr: ?*CheckedState, state: bool) void {
+        var self = ptr.?;
+        self.checked[1] = state;
+        self.updateLabels();
+    }
+
+    pub fn onState2(ptr: ?*CheckedState, state: bool) void {
+        var self = ptr.?;
+        self.checked[2] = state;
+        self.updateLabels();
+    }
+
+    fn updateLabels(self: CheckedState) void {
         var labels: [3][]const u8 = undefined;
-        for (&labels, labels_on, labels_off, state.checked) |*label, on, off, checked| {
+        for (&labels, labels_on, labels_off, self.checked) |*label, on, off, checked| {
             if (checked) {
                 label.* = on;
             } else {
                 label.* = off;
             }
         }
-        const widget = try tuile.vertical(.{}, .{
-            tuile.label(.{ .text = labels[0] }),
-            tuile.label(.{ .text = labels[1] }),
-            tuile.label(.{ .text = labels[2] }),
-        });
-        return widget.widget();
+
+        for (self.ids, labels) |id, text| {
+            const label = self.tui.findByIdTyped(tuile.Label, id) orelse unreachable;
+            label.setText(text) catch unreachable;
+        }
     }
 };
 
@@ -68,10 +65,8 @@ pub fn main() !void {
     var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
-    var state1 = CheckedState{};
-    var state2 = CheckedState{};
-    var view1 = StateView{};
-    var view2 = StateView{};
+    var state1 = CheckedState{ .tui = &tui, .ids = [3][]const u8{ "state-1-1", "state-1-2", "state-1-3" } };
+    var state2 = CheckedState{ .tui = &tui, .ids = [3][]const u8{ "state-2-1", "state-2-2", "state-2-3" } };
 
     const layout = tuile.horizontal(
         .{},
@@ -86,19 +81,23 @@ pub fn main() !void {
                         .{
                             tuile.checkbox(.{
                                 .text = "Option 1",
-                                .on_state_change = .{ .cb = CheckedState.onState0, .payload = &state1 },
+                                .on_state_change = .{ .cb = @ptrCast(&CheckedState.onState0), .payload = &state1 },
                             }),
                             tuile.checkbox(.{
                                 .text = "Option 2",
-                                .on_state_change = .{ .cb = CheckedState.onState1, .payload = &state1 },
+                                .on_state_change = .{ .cb = @ptrCast(&CheckedState.onState1), .payload = &state1 },
                             }),
                             tuile.checkbox(.{
                                 .text = "Option 3",
-                                .on_state_change = .{ .cb = CheckedState.onState2, .payload = &state1 },
+                                .on_state_change = .{ .cb = @ptrCast(&CheckedState.onState2), .payload = &state1 },
                             }),
                         },
                     ),
-                    tuile.stateful(&view1, &state1),
+                    tuile.vertical(.{}, .{
+                        tuile.label(.{ .id = state1.ids[0], .text = "" }),
+                        tuile.label(.{ .id = state1.ids[1], .text = "" }),
+                        tuile.label(.{ .id = state1.ids[2], .text = "" }),
+                    }),
                 }),
             ),
             tuile.spacer(.{ .layout = .{ .max_width = 10, .max_height = 1 } }),
@@ -109,7 +108,7 @@ pub fn main() !void {
                     tuile.checkbox_group(
                         .{
                             .multiselect = true,
-                            .on_state_change = .{ .cb = CheckedState.onGroupState, .payload = &state2 },
+                            .on_state_change = .{ .cb = @ptrCast(&CheckedState.onGroupState), .payload = &state2 },
                         },
                         .{
                             tuile.checkbox(.{ .text = "Option 1" }),
@@ -117,7 +116,11 @@ pub fn main() !void {
                             tuile.checkbox(.{ .text = "Option 3" }),
                         },
                     ),
-                    tuile.stateful(&view2, &state2),
+                    tuile.vertical(.{}, .{
+                        tuile.label(.{ .id = state2.ids[0], .text = "" }),
+                        tuile.label(.{ .id = state2.ids[1], .text = "" }),
+                        tuile.label(.{ .id = state2.ids[2], .text = "" }),
+                    }),
                 }),
             ),
             tuile.spacer(.{}),
@@ -125,6 +128,9 @@ pub fn main() !void {
     );
 
     try tui.add(layout);
+
+    state1.updateLabels();
+    state2.updateLabels();
 
     try tui.run();
 }

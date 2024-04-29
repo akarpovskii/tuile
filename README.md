@@ -115,6 +115,7 @@ zig fetch --save https://github.com/akarpovskii/tuile/archive/refs/tags/{VERSION
 ```zig
 const tuile = b.dependency("tuile", .{});
 exe.root_module.addImport("tuile", tuile.module("tuile"));
+exe.linkLibC();
 exe.linkSystemLibrary("ncurses");
 ```
 

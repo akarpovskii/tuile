@@ -24,6 +24,7 @@ pub fn build(b: *std.Build) void {
         });
 
         exe.root_module.addImport("tuile", tuile.module("tuile"));
+        exe.linkLibC();
         exe.linkSystemLibrary("ncurses");
 
         b.installArtifact(exe);

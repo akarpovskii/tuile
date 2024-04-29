@@ -4,31 +4,6 @@ const tuile = @import("tuile");
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 pub const tuile_allocator = gpa.allocator();
 
-fn generatePalette() !tuile.Span {
-    var span = tuile.Span.init(tuile_allocator);
-    for (1..257) |i| {
-        const rgb = tuile.Palette256.lookup_table[i - 1];
-        const color = tuile.Color{ .rgb = .{ .r = rgb[0], .g = rgb[1], .b = rgb[2] } };
-        if (i <= 16) {
-            if (i == 1) {
-                try span.appendPlain("    ");
-            }
-            try span.append(.{ .text = "    ", .style = .{ .fg = color, .bg = color } });
-            if (i == 16) {
-                try span.appendPlain("    \n");
-            }
-        } else if (i <= 232) {
-            try span.append(.{ .text = "  ", .style = .{ .fg = color, .bg = color } });
-            if ((i - 16) % 36 == 0) {
-                try span.appendPlain("\n");
-            }
-        } else {
-            try span.append(.{ .text = "   ", .style = .{ .fg = color, .bg = color } });
-        }
-    }
-    return span;
-}
-
 fn generateStyles() !tuile.Span {
     var span = tuile.Span.init(tuile_allocator);
     try span.appendPlain("Styles: ");
@@ -101,12 +76,13 @@ const CustomThemeState = struct {
     }
 
     fn updateTheme(self: CustomThemeState) void {
-        const theme = switch (self.theme) {
+        var theme = switch (self.theme) {
             0 => tuile.Theme.amber(),
             1 => tuile.Theme.lime(),
             2 => tuile.Theme.sky(),
             else => unreachable,
         };
+        theme.background_primary = theme.background_secondary;
         const themed = self.tui.findByIdTyped(tuile.Themed, "themed") orelse unreachable;
         themed.setTheme(theme);
     }
@@ -143,9 +119,6 @@ pub fn main() !void {
     var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
-    var palette = try generatePalette();
-    defer palette.deinit();
-
     var styles = try generateStyles();
     defer styles.deinit();
 
@@ -159,7 +132,6 @@ pub fn main() !void {
     const layout = tuile.vertical(
         .{ .layout = .{ .flex = 1 } },
         .{
-            tuile.label(.{ .span = palette.view() }),
             tuile.label(.{ .span = styles.view() }),
 
             tuile.themed(
@@ -266,9 +238,8 @@ pub fn main() !void {
 
     try tui.add(layout);
 
-    try tui.run();
-}
+    custom_theme_state.updateBorder();
+    custom_theme_state.updateTheme();
 
-fn handlePress(label: []const u8) void {
-    std.debug.print("\tPressed {s}", .{label});
+    try tui.run();
 }

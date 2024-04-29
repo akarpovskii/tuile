@@ -184,7 +184,7 @@ pub const Tuile = struct {
                 .max = self.window_size,
             },
         };
-        frame.clear(self.theme.text_primary, self.theme.background);
+        frame.clear(self.theme.text_primary, self.theme.background_primary);
 
         try self.root.render(frame.area, frame, self.theme);
 

@@ -101,7 +101,7 @@ pub fn render(self: *Themed, area: Rect, frame: Frame, theme: display.Theme) !vo
         }
     }
 
-    frame.setStyle(area, .{ .fg = new_theme.text_primary, .bg = new_theme.background });
+    frame.setStyle(area, .{ .fg = new_theme.text_primary, .bg = new_theme.background_primary });
     return try self.inner.render(area, frame, new_theme);
 }
 

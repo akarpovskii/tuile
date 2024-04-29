@@ -4,3 +4,4 @@ build/
 build-*/
 docgen_tmp/
 *.log
+.DS_Store

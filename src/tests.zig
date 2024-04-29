@@ -3,7 +3,6 @@ const tuile = @import("tuile.zig");
 const internal = @import("internal.zig");
 
 comptime {
-    _ = @import("widgets/ChangeNotifier.zig");
     _ = @import("widgets/callbacks.zig");
     _ = @import("display/span.zig");
     _ = @import("display/colors.zig");

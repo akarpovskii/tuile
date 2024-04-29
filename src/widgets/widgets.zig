@@ -4,7 +4,6 @@ pub usingnamespace border;
 pub const Button = @import("Button.zig");
 pub const callbacks = @import("callbacks.zig");
 pub const Callback = callbacks.Callback;
-pub const ChangeNotifier = @import("ChangeNotifier.zig");
 pub const Checkbox = @import("Checkbox.zig");
 pub const CheckboxGroup = @import("CheckboxGroup.zig");
 pub const Constraints = @import("Constraints.zig");
@@ -18,7 +17,6 @@ pub const VAlign = LayoutProperties.VAlign;
 pub const Padding = @import("Padding.zig");
 pub const Spacer = @import("Spacer.zig");
 pub const StackLayout = @import("StackLayout.zig");
-pub const StatefulWidget = @import("StatefulWidget.zig");
 pub const Themed = @import("Themed.zig");
 pub const Widget = @import("Widget.zig");
 
@@ -40,5 +38,4 @@ pub fn vertical(config: StackLayout.Config, children: anytype) !*StackLayout {
     cfg.orientation = .vertical;
     return StackLayout.create(cfg, children);
 }
-pub const stateful = StatefulWidget.create;
 pub const themed = Themed.create;

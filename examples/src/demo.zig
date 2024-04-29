@@ -137,13 +137,6 @@ const UserInputState = struct {
     }
 };
 
-const UserInputView = struct {
-    pub fn build(_: *UserInputView, context: *tuile.StatefulWidget.BuildContext) !tuile.Widget {
-        const state: *UserInputState = try context.watch(UserInputState);
-        return (try tuile.label(.{ .text = state.input })).widget();
-    }
-};
-
 pub fn main() !void {
     defer _ = gpa.deinit();
 

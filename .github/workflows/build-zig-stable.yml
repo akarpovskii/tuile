@@ -25,4 +25,4 @@ jobs:
         run: zig version
 
       - name: Run all tests
-        run: zig build test
+        run: zig build test --summary all

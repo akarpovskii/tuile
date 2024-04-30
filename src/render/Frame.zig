@@ -3,7 +3,7 @@ const Cell = @import("Cell.zig");
 const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const Backend = @import("../backends/Backend.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 
 const Frame = @This();
 

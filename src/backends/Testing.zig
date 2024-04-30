@@ -3,8 +3,8 @@ const internal = @import("../internal.zig");
 const Backend = @import("Backend.zig");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
-const display = @import("../display/display.zig");
-const render = @import("../render/render.zig");
+const display = @import("../display.zig");
+const render = @import("../render.zig");
 
 const Testing = @This();
 

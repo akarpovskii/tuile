@@ -9,7 +9,7 @@ const border = @import("border.zig");
 const Padding = @import("Padding.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 
 pub const Config = struct {
     id: ?[]const u8 = null,

@@ -1,7 +1,7 @@
 const Rect = @import("../Rect.zig");
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 
 const FocusHandler = @This();
 

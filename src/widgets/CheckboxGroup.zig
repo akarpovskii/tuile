@@ -9,7 +9,7 @@ const StackLayout = @import("StackLayout.zig");
 const Checkbox = @import("Checkbox.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {

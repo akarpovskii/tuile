@@ -2,12 +2,12 @@ const std = @import("std");
 const internal = @import("internal.zig");
 pub const Vec2 = @import("Vec2.zig");
 pub const Rect = @import("Rect.zig");
-pub const backends = @import("backends/backends.zig");
-pub const render = @import("render/render.zig");
+pub const backends = @import("backends.zig");
+pub const render = @import("render.zig");
 pub const events = @import("events.zig");
-pub const widgets = @import("widgets/widgets.zig");
+pub const widgets = @import("widgets.zig");
 pub usingnamespace widgets;
-pub const display = @import("display/display.zig");
+pub const display = @import("display.zig");
 pub usingnamespace display;
 
 const Task = widgets.Callback(void);

@@ -1,7 +1,7 @@
 const std = @import("std");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 
 const Backend = @This();
 

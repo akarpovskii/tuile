@@ -5,7 +5,7 @@ const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const events = @import("../events.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 const internal = @import("../internal.zig");
 
 pub const Widget = @This();

@@ -8,7 +8,7 @@ const Frame = @import("../render/Frame.zig");
 const FocusHandler = @import("FocusHandler.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {

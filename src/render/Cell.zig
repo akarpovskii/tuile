@@ -1,5 +1,5 @@
 const std = @import("std");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 const Cell = @This();
 
 // Doesn't own the memory

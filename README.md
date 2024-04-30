@@ -166,6 +166,7 @@ In no particular order:
 - [ ] Menu bar
 - [ ] More widgets
 - [ ] Other backends
+- [ ] Unicode support
 
 See the [open issues][issues-url] for a full list of proposed features (and known issues).
 

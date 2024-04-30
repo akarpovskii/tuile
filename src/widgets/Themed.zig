@@ -7,7 +7,7 @@ const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
-const display = @import("../display/display.zig");
+const display = @import("../display.zig");
 
 pub const PartialTheme = init_partial: {
     const original = @typeInfo(display.Theme).Struct.fields;

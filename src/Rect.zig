@@ -35,7 +35,7 @@ pub fn diag(self: Rect) Vec2 {
     return self.max.sub(self.min);
 }
 
-// Other area must fit inside this area, otherwise the result will be clamped
+/// Other area must fit inside this area, otherwise the result will be clamped
 pub fn alignH(self: Rect, alignment: HAlign, other: Rect) Rect {
     var min = Vec2{
         .x = self.min.x,
@@ -49,7 +49,7 @@ pub fn alignH(self: Rect, alignment: HAlign, other: Rect) Rect {
     return Rect{ .min = min, .max = min.add(other.diag()) };
 }
 
-// Other area must fit inside this area, otherwise the result will be clamped
+/// Other area must fit inside this area, otherwise the result will be clamped
 pub fn alignV(self: Rect, alignment: VAlign, other: Rect) Rect {
     var min = Vec2{
         .x = other.min.x,
@@ -63,7 +63,7 @@ pub fn alignV(self: Rect, alignment: VAlign, other: Rect) Rect {
     return Rect{ .min = min, .max = min.add(other.diag()) };
 }
 
-// Other area must fit inside this area, otherwise the result will be clamped
+/// Other area must fit inside this area, otherwise the result will be clamped
 pub fn alignInside(self: Rect, alignment: Align, other: Rect) Rect {
     const h = self.alignH(alignment.h, other);
     const v = self.alignV(alignment.v, h);

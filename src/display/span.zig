@@ -2,12 +2,14 @@ const std = @import("std");
 const display = @import("../display.zig");
 const Style = display.Style;
 
+/// A text with an associated style
 pub const StyledText = struct {
     text: []const u8,
 
     style: Style,
 };
 
+/// A chunk of text between [start; end) with an associated style
 pub const StyledChunk = struct {
     start: usize,
 
@@ -16,6 +18,9 @@ pub const StyledChunk = struct {
     style: Style,
 };
 
+/// A spanned styled text.
+/// The text can be split into multiple chunks, each having it's own style.
+/// This is a managed version that owns the text.
 pub const Span = struct {
     text: std.ArrayList(u8),
 
@@ -107,6 +112,7 @@ pub const Span = struct {
     }
 };
 
+/// Unmanaged version of `Span`.
 pub const SpanUnmanaged = struct {
     text: std.ArrayListUnmanaged(u8) = .{},
 
@@ -191,6 +197,8 @@ pub const SpanUnmanaged = struct {
     }
 };
 
+/// A simple view of a span.
+/// Doesn't own the content, the referenced span must live longer than the view.
 pub const SpanView = struct {
     text: []const u8,
 

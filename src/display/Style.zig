@@ -3,12 +3,16 @@ const Color = @import("colors.zig").Color;
 
 const Style = @This();
 
+/// Foreground (text) color
 fg: ?Color = null,
 
+/// Background color
 bg: ?Color = null,
 
+/// Which effect to enable when rendering
 add_effect: ?Effect = null,
 
+/// Which effect to disable when rendering
 sub_effect: ?Effect = null,
 
 pub const Effect = struct {
@@ -20,6 +24,8 @@ pub const Effect = struct {
     bold: bool = false,
     italic: bool = false,
 
+    /// Enables the effects in `self` that are enabled in `other`.
+    /// This is effectively a `self or other` operation.
     pub fn add(self: Effect, other: Effect) Effect {
         var result: Effect = .{};
         inline for (std.meta.fields(Effect)) |field| {
@@ -28,6 +34,8 @@ pub const Effect = struct {
         return result;
     }
 
+    /// Disables the effects in `self` that are enabled in `other`.
+    /// This is effectively a `self and !other` operation.
     pub fn sub(self: Effect, other: Effect) Effect {
         var result: Effect = .{};
         inline for (std.meta.fields(Effect)) |field| {
@@ -37,6 +45,8 @@ pub const Effect = struct {
     }
 };
 
+/// Adds two styles together.
+/// All non-null values from `other` override the values of `self`.
 pub fn add(self: Style, other: Style) Style {
     var new = self;
     if (other.fg) |fg| new.fg = fg;

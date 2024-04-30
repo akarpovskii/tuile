@@ -13,20 +13,25 @@ const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
-    // text and span are mutually exclusive, only one of them must be defined
+    /// `text` and `span` are mutually exclusive, only one of them must be defined.
     text: ?[]const u8 = null,
 
-    // text and span are mutually exclusive, only one of them must be defined
+    /// `text` and `span` are mutually exclusive, only one of them must be defined.
     span: ?display.SpanView = null,
 
+    /// See `Role`.
     role: Role = .checkbox,
 
+    /// The initial state of the Checkbox.
     checked: bool = false,
 
+    /// Checkbox will call this when its state changes.
     on_state_change: ?callbacks.Callback(bool) = null,
 
+    /// Layout properties of the widget, see `LayoutProperties`.
     layout: LayoutProperties = .{},
 };
 

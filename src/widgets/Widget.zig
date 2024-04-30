@@ -15,26 +15,52 @@ context: *anyopaque,
 vtable: *const VTable,
 
 const VTable = struct {
+    /// Tuile owns the widgets and calls `destroy` when needed.
     destroy: *const fn (context: *anyopaque) void,
 
-    render: *const fn (context: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void,
+    /// A unique identifier of a widget to be used in `Tuile.findById` and `Widget.findById`.
+    id: *const fn (context: *anyopaque) ?[]const u8,
 
-    layout: *const fn (context: *anyopaque, constraints: Constraints) anyerror!Vec2,
-
-    handle_event: *const fn (context: *anyopaque, event: events.Event) anyerror!events.EventResult,
-
-    layout_props: *const fn (context: *anyopaque) LayoutProperties,
-
-    // Optional, widgets may not implement this method unless they have children.
-    // In which case they must call prepare() on all of their children.
-    // Tuile guarantees to call prepare() before any other method.
-    prepare: *const fn (context: *anyopaque) anyerror!void,
-
+    /// See `Leaf`, `SingleChild`, `MultiChild`.
     children: *const fn (context: *anyopaque) []Widget,
 
-    id: *const fn (context: *anyopaque) ?[]const u8,
+    /// Layout properties of a widget
+    layout_props: *const fn (context: *anyopaque) LayoutProperties,
+
+    /// Optional, widgets may not implement this method unless they have children.
+    /// In which case they must call prepare() on all of their children.
+    /// Tuile guarantees to call `prepare` before any other method in the event loop.
+    prepare: *const fn (context: *anyopaque) anyerror!void,
+
+    /// Constraints go down, sizes go up, parent sets position.
+    /// * A widget receives its constraints from the parent.
+    /// * Then it goes over its children, calculates their constraints,
+    ///   and asks each one what size it wants to be.
+    /// * Then it positions each children
+    /// * Finally, it calculates its own size and returns the size to the parent.
+    ///
+    /// * A widget must satisfy the constraints given to it by its parent.
+    /// * A widget doesn't decide its position on the screen.
+    /// * A parent might set `max_width` or `max_height` to std.math.maxInt(u32)
+    ///   if it doesn't have anough information to align the child. In which case
+    ///   the child should tell the parent a finite desired size.
+    layout: *const fn (context: *anyopaque, constraints: Constraints) anyerror!Vec2,
+
+    /// Widgets must draw themselves inside of `area`. Writes outside of `area` are ignored.
+    /// `theme` is the currently used theme which can be overridden by the `Themed` widget.
+    /// `render` is guaranteed to be called after `layout`.
+    render: *const fn (context: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void,
+
+    /// If a widget returns .consumed, the event is considered fulfilled and is not propagated further.
+    /// If a widget returns .ignored, the event is passed to the next widget in the tree.
+    handle_event: *const fn (context: *anyopaque, event: events.Event) anyerror!events.EventResult,
 };
 
+/// Marks a widget with no children.
+/// To reduce the boilerplate, widgets can use the inner `Mixin` to generate the `children` method.
+/// To mark a widget add the following:
+/// `pub usingnamespace Leaf.Mixin(@This());`
+/// See `Label` for an example.
 pub const Leaf = struct {
     pub fn Mixin(comptime Self: type) type {
         return struct {
@@ -45,6 +71,12 @@ pub const Leaf = struct {
     }
 };
 
+/// Marks a widget with one child
+/// To reduce the boilerplate, widgets can use the inner `Mixin` to generate the `children` method.
+/// To mark a widget add the following:
+/// `pub usingnamespace SingleChild.Mixin(@This(), .child_field_name);`
+/// where `child_field_name` has type Widget.
+/// See `Block` for an example.
 pub const SingleChild = struct {
     pub fn Mixin(comptime Self: type, comptime child: std.meta.FieldEnum(Self)) type {
         const child_field = std.meta.fieldInfo(Self, child);
@@ -56,6 +88,12 @@ pub const SingleChild = struct {
     }
 };
 
+/// Marks a widget with multiple children.
+/// To reduce the boilerplate, widgets can use the inner `Mixin` to generate the `children` method.
+/// To mark a widget add the following:
+/// `pub usingnamespace MultiChild.Mixin(@This(), .child_field_name);`
+/// where `child_field_name` must either be `[]Widget`, or it must have `items` field of type `Widget[]` (like std.ArrayList).
+/// See `StackLayout` for an example.
 pub const MultiChild = struct {
     pub fn Mixin(comptime Self: type, comptime children_: std.meta.FieldEnum(Self)) type {
         const child_field = std.meta.fieldInfo(Self, children_);
@@ -72,6 +110,7 @@ pub const MultiChild = struct {
 };
 
 pub const Base = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8,
 
     pub fn init(widget_id: ?[]const u8) !Base {
@@ -220,6 +259,10 @@ pub fn fromAny(any: anytype) anyerror!Widget {
         ok.widget();
 }
 
+/// Does a "dynamic cast" by comparing the vtables of `self` and `T`.
+/// If all the fields are equal, returns *T, otherwise returns null.
+/// For this method to work, widgets are encouraged to delegate
+/// the vtable creation to `Widget.init`.
 pub fn as(self: Widget, T: type) ?*T {
     const vtable_t = constructVTable(T);
     inline for (std.meta.fields(VTable)) |field| {
@@ -230,6 +273,7 @@ pub fn as(self: Widget, T: type) ?*T {
     return @ptrCast(@alignCast(self.context));
 }
 
+/// Searches for a child (or self) with `id` equals `widget_id`.
 pub fn findById(self: Widget, widget_id: []const u8) ?Widget {
     if (self.id()) |w_id| {
         if (std.mem.eql(u8, w_id, widget_id)) {

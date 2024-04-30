@@ -12,16 +12,23 @@ const Constraints = @import("Constraints.zig");
 const display = @import("../display.zig");
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
+    /// Which borders are visible, see `Border`.
     border: border.Border = border.Border.none(),
 
+    /// The type of border, see `BorderType`.
     border_type: border.BorderType = .solid,
 
+    /// Additional padding around the inner widget, see `Padding`.
     padding: Padding = .{},
 
+    /// When `fit_content` is `false`, Block will try to take all the available space
+    /// in the cross direction of a layout.
     fit_content: bool = false,
 
+    /// Layout properties of the widget, see `LayoutProperties`.
     layout: LayoutProperties = .{},
 };
 

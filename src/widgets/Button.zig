@@ -13,16 +13,19 @@ const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
-    // text and span are mutually exclusive, only one of them must be defined
+    /// `text` and `span` are mutually exclusive, only one of them must be defined.
     text: ?[]const u8 = null,
 
-    // text and span are mutually exclusive, only one of them must be defined
+    /// `text` and `span` are mutually exclusive, only one of them must be defined.
     span: ?display.SpanView = null,
 
+    /// Button will call this when it is pressed.
     on_press: ?callbacks.Callback(void) = null,
 
+    /// Layout properties of the widget, see `LayoutProperties`.
     layout: LayoutProperties = .{},
 };
 

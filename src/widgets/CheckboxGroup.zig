@@ -13,12 +13,18 @@ const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
+    /// Controls if selecting multiple boxes is allowed.
+    /// When `multiselect` is `false`, the widget will deselect previously selected option
+    /// and `on_state_change` callback will be fired for that option.
     multiselect: bool = false,
 
+    /// CheckboxGroup will call this on every state change.
     on_state_change: ?callbacks.Callback(.{ usize, bool }) = null,
 
+    /// Layout properties of the widget, see `LayoutProperties`.
     layout: LayoutProperties = .{},
 };
 
@@ -77,11 +83,11 @@ pub fn create(config: Config, options: anytype) !*CheckboxGroup {
         .on_state_change = config.on_state_change,
     };
 
-    const stack: *StackLayout = @ptrCast(@alignCast(self.view.context));
+    const stack: *StackLayout = self.view.as(StackLayout) orelse @panic("Created StackLayout, but unable to cast widget");
     if (stack.widgets.items.len > 0) {
         var found_checked = false;
         for (stack.widgets.items) |child| {
-            var option: *Checkbox = @ptrCast(@alignCast(child.context));
+            var option: *Checkbox = child.as(Checkbox) orelse @panic("Option was a checkbox, but unable to cast widget");
             option.view.layout_properties.alignment.h = LayoutProperties.HAlign.left;
 
             if (!self.multiselect and option.checked) {
@@ -141,9 +147,9 @@ pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResul
         .char => |char| switch (char) {
             ' ' => {
                 // Safe - this option received and consumed the event
-                const stack: *StackLayout = @ptrCast(@alignCast(self.view.context));
+                const stack: *StackLayout = self.view.as(StackLayout) orelse @panic("Created StackLayout, but unable to cast widget");
                 const focused = stack.focused.?;
-                const checked_option: *Checkbox = @ptrCast(@alignCast(stack.widgets.items[focused].context));
+                const checked_option: *Checkbox = stack.widgets.items[focused].as(Checkbox) orelse @panic("Option was a checkbox, but unable to cast widget");
                 if (self.on_state_change) |on_state_change| {
                     on_state_change.call(focused, checked_option.checked);
                 }
@@ -154,7 +160,7 @@ pub fn handleEvent(self: *CheckboxGroup, event: events.Event) !events.EventResul
                         if (idx == focused) {
                             continue;
                         }
-                        const option: *Checkbox = @ptrCast(@alignCast(opt_w.context));
+                        const option: *Checkbox = opt_w.as(Checkbox) orelse @panic("Option was a checkbox, but unable to cast widget");
                         if (option.checked) {
                             const nested_result = try option.handleEvent(.{ .char = ' ' });
                             std.debug.assert(nested_result == .consumed);

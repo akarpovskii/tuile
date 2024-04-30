@@ -12,12 +12,16 @@ const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
+    /// Text to be used as a placeholder when the input is empty.
     placeholder: []const u8 = "",
 
+    /// Input will call this when its value changes.
     on_value_changed: ?callbacks.Callback([]const u8) = null,
 
+    /// Layout properties of the widget, see `LayoutProperties`.
     layout: LayoutProperties = .{},
 };
 

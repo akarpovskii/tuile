@@ -15,10 +15,13 @@ pub const Orientation = enum {
 };
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
+    /// Controls if the layout is vertical or horizontal.
     orientation: Orientation = .vertical,
 
+    /// Layout properties of the widget, see `LayoutProperties`.
     layout: LayoutProperties = .{},
 };
 

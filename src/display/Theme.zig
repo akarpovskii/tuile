@@ -5,20 +5,29 @@ const color = colors.color;
 
 const Theme = @This();
 
+/// Used by widgets to print main text and foreground
 text_primary: Color,
 
+/// Used by widgets to print alternative or not unimportant text
 text_secondary: Color,
 
+/// The primary background of the application
 background_primary: Color,
 
+/// Widgets may use this color to stand out from the main background
 background_secondary: Color,
 
+/// Used by all interactive components
 interactive: Color,
 
+/// Color of the focused interactive element
 focused: Color,
 
+/// Borders of the Block widget
 borders: Color,
 
+/// A solid color that widgets may use to highlight something.
+/// For example, Input uses it for the color of the cursor.
 solid: Color,
 
 pub fn amber() Theme {

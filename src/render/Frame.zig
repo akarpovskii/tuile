@@ -7,10 +7,14 @@ const display = @import("../display.zig");
 
 const Frame = @This();
 
+/// Doesn't own the memory. Must be at least `size.x * size.y`.
 buffer: []Cell,
 
+/// The size of the buffer.
 size: Vec2,
 
+/// The area on which Frame is allowed to operate.
+/// Any writes outside of the area are ignored.
 area: Rect,
 
 pub fn at(self: Frame, pos: Vec2) *Cell {

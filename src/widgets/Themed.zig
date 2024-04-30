@@ -34,10 +34,13 @@ pub const PartialTheme = init_partial: {
 };
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
+    /// Base theme to use. Can be optional, in which case will use whatever is passed to the `render` function.
     theme: ?display.Theme = null,
 
+    /// Partially override the current theme.
     override: PartialTheme = .{},
 };
 

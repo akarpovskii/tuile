@@ -50,10 +50,17 @@ pub const Rgb = struct {
 };
 
 pub const Color = union(enum) {
+    /// Usually the first 8 system colors
     dark: BaseColor,
+    /// Usually the second 8 system colors
     bright: BaseColor,
+    /// 8-bit RGB color.
+    /// Backends might coerse it to the closest supported color variant, see `Palette256`.
     rgb: Rgb,
 
+    /// Parses a string representation of a color.
+    /// Supports named colors like `dark red`, `bright white`, or `red` (RGB),
+    /// as well as hex rgb codes like `#D3E7A6` or functional notation `rgb(r, g, b)`.
     pub fn fromString(str: []const u8) error{UnrecognizedColor}!Color {
         const eql = std.ascii.eqlIgnoreCase;
         if (eql(str, "dark black")) return .{ .dark = .black };
@@ -127,12 +134,13 @@ pub const ColorPair = struct {
     bg: Color,
 };
 
-// This function is intended to be used with strings knows at comptime.
-// For everything else use Color.fromString directly.
+/// This function is intended to be used with strings knows at comptime.
+/// For everything else use `Color.fromString` directly.
 pub fn color(comptime str: []const u8) Color {
     return comptime Color.fromString(str) catch @compileError("unrecognized color " ++ str);
 }
 
+/// Xterm 256 color palette
 pub const Palette256 = struct {
     pub const lookup_table: [256][3]u8 = init_lut: {
         var palette: [256][3]u8 = undefined;
@@ -180,23 +188,23 @@ pub const Palette256 = struct {
         break :init_lut palette;
     };
 
-    // Uses Manhatten distance to find the closest color
+    /// Uses Manhatten distance to find the closest color
     pub fn findClosest(rgb: Rgb) u8 {
         return findClosestInRange(rgb, 0, null);
     }
 
-    // Uses Manhatten distance to find the closest color
-    // Ignores the first 16 colors
+    /// Uses Manhatten distance to find the closest color
+    /// Ignores the first 16 colors
     pub fn findClosestNonSystem(rgb: Rgb) u8 {
         return findClosestInRange(rgb, 16, null);
     }
 
-    // Uses Manhatten distance to find the closest color of the first 16
+    /// Uses Manhatten distance to find the closest color of the first 16
     pub fn findClosestSystem(rgb: Rgb) u8 {
         return findClosestInRange(rgb, 0, 16);
     }
 
-    // Uses Manhatten distance to find the closest color
+    /// Uses Manhatten distance to find the closest color
     pub fn findClosestInRange(rgb: Rgb, start: u8, end: ?u8) u8 {
         var lut_idx: u8 = start;
         var distance: u32 = std.math.maxInt(u32);

@@ -12,10 +12,12 @@ const Theme = @import("../display/Theme.zig");
 const maxInt = std.math.maxInt;
 
 pub const Config = struct {
+    /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
     id: ?[]const u8 = null,
 
-    // Spacer must either be flexible, or both max height and width must be defined.
-    // Setting flex and max height/width at the same time may result in unexpected layout.
+    /// Layout properties of the widget, see `LayoutProperties`.
+    /// Spacer must either be flexible, or both max height and width must be defined.
+    /// Setting flex and max height/width at the same time may result in unexpected layout.
     layout: LayoutProperties = .{ .flex = 1 },
 };
 

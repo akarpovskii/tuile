@@ -18,12 +18,23 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    const lib_unit_tests = b.addTest(.{
+        .root_source_file = b.path("src/tests.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     module.addOptions("build_options", options);
+    lib_unit_tests.root_module.addOptions("build_options", options);
 
     switch (backend) {
         .ncurses => {
             module.link_libc = true;
             module.linkSystemLibrary("ncurses", .{});
+
+            lib_unit_tests.linkLibC();
+            lib_unit_tests.linkSystemLibrary("ncurses");
         },
         .crossterm => {
             const build_crab = b.dependency("build.crab", .{
@@ -52,19 +63,15 @@ pub fn build(b: *std.Build) void {
                 "--quiet",
             });
 
+            module.link_libc = true;
             module.addLibraryPath(crossterm_lib_path.dirname());
             module.linkSystemLibrary("crossterm", .{});
+
+            lib_unit_tests.linkLibC();
+            lib_unit_tests.addLibraryPath(crossterm_lib_path.dirname());
+            lib_unit_tests.linkSystemLibrary("crossterm");
         },
     }
-
-    const lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/tests.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-    lib_unit_tests.linkLibC();
-    lib_unit_tests.linkSystemLibrary("ncurses");
-    lib_unit_tests.root_module.addOptions("build_options", options);
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
     run_lib_unit_tests.has_side_effects = true;

@@ -63,11 +63,11 @@ pub fn build(b: *std.Build) void {
                 "--quiet",
             });
 
-            module.link_libc = true;
+            module.link_libcpp = true;
             module.addLibraryPath(crossterm_lib_path.dirname());
             module.linkSystemLibrary("crossterm", .{});
 
-            lib_unit_tests.linkLibC();
+            lib_unit_tests.linkLibCpp();
             lib_unit_tests.addLibraryPath(crossterm_lib_path.dirname());
             lib_unit_tests.linkSystemLibrary("crossterm");
         },

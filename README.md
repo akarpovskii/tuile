@@ -110,13 +110,11 @@ Checkout the other examples [here](./examples/).
 zig fetch --save https://github.com/akarpovskii/tuile/archive/refs/tags/v0.1.0.tar.gz
 ```
 
-2. Import Tuile in `build.zig` and link ncurses:
+2. Import Tuile in `build.zig`:
 
 ```zig
 const tuile = b.dependency("tuile", .{});
 exe.root_module.addImport("tuile", tuile.module("tuile"));
-exe.linkLibC();
-exe.linkSystemLibrary("ncurses");
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

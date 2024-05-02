@@ -64,6 +64,7 @@ pub fn build(b: *std.Build) void {
     });
     lib_unit_tests.linkLibC();
     lib_unit_tests.linkSystemLibrary("ncurses");
+    lib_unit_tests.root_module.addOptions("build_options", options);
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
     run_lib_unit_tests.has_side_effects = true;

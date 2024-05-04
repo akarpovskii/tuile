@@ -53,7 +53,7 @@ pub const Tuile = struct {
 
     pub fn init(config: Config) !Tuile {
         var self = blk: {
-            const backend = if (config.backend) |backend| backend else (try backends.Ncurses.create()).backend();
+            const backend = if (config.backend) |backend| backend else try backends.createBackend();
             errdefer backend.destroy();
             const root = try widgets.StackLayout.create(.{ .orientation = .vertical }, .{});
             errdefer root.destroy();

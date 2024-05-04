@@ -10,13 +10,18 @@ jobs:
   ci:
     strategy:
       matrix:
-        # platform: [ubuntu-latest, macos-latest, windows-latest]
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        backend: [ncurses, crossterm]
+        exclude:
+          - platform: windows-latest
+            backend: ncurses
+
     runs-on: ${{ matrix.platform }}
+    if: ${{ matrix.platform }}
 
     steps:
       - uses: actions/checkout@v4
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: goto-bus-stop/setup-zig@2a9625d550eefc3a9b1a43d342ad655f563f8241
         with:
           version: master
 
@@ -26,8 +31,8 @@ jobs:
       - name: Build all examples
         run: |
           cd examples
-          zig build --summary all
+          zig build -Dbackend=${{ matrix.backend }} --summary all
           cd ..
 
       - name: Run all tests
-        run: zig build test --summary all
+        run: zig build test -Dbackend=${{ matrix.backend }} --summary all

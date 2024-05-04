@@ -4,6 +4,16 @@ To run an example, use `zig build <exaple name>`, e.g. `zig build demo`.
 
 All examples were recorded using [VHS](https://github.com/charmbracelet/vhs). Corresponding tapes can be found in the [`images`](./images/) folder.
 
+## Selecting a Backend
+
+To select a backend in the examples, add `-Dbackend=<backend name>` to `zig build` command. For example:
+
+```zig
+zig build demo -Dbackend=crossterm
+```
+
+See [`Backends`](../docs/Backends.md) for more info.
+
 ## [`demo`](./src/demo.zig)
 
 Simple demo showcasing the library capabilities.

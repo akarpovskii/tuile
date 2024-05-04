@@ -4,7 +4,11 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const tuile = b.dependency("tuile", .{});
+    const backend = b.option([]const u8, "backend", "Backend");
+    const tuile = if (backend) |back|
+        b.dependency("tuile", .{ .backend = back })
+    else
+        b.dependency("tuile", .{});
 
     const executables: []const []const u8 = &.{
         "demo",
@@ -24,9 +28,6 @@ pub fn build(b: *std.Build) void {
         });
 
         exe.root_module.addImport("tuile", tuile.module("tuile"));
-        exe.linkLibC();
-        exe.linkSystemLibrary("ncurses");
-
         b.installArtifact(exe);
 
         const run_cmd = b.addRunArtifact(exe);

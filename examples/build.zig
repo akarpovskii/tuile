@@ -4,8 +4,11 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const backend = b.option([]const u8, "backend", "Backend") orelse "ncurses";
-    const tuile = b.dependency("tuile", .{ .backend = backend });
+    const backend = b.option([]const u8, "backend", "Backend");
+    const tuile = if (backend) |back|
+        b.dependency("tuile", .{ .backend = back })
+    else
+        b.dependency("tuile", .{});
 
     const executables: []const []const u8 = &.{
         "demo",

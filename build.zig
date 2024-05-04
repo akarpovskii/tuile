@@ -96,7 +96,11 @@ pub fn build(b: *std.Build) void {
 }
 
 fn requestedBackend(b: *std.Build) Backend {
-    const backend_str = b.option([]const u8, "backend", "Backend") orelse @tagName(Backend.ncurses);
+    const backend_str = b.option([]const u8, "backend", "Backend") orelse
+        switch (@import("builtin").target.os.tag) {
+        .windows => @tagName(Backend.crossterm),
+        else => @tagName(Backend.ncurses),
+    };
 
     var backend: Backend = undefined;
     if (std.ascii.eqlIgnoreCase(backend_str, @tagName(Backend.ncurses))) {

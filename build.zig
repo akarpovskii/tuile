@@ -44,7 +44,7 @@ pub fn build(b: *std.Build) void {
             const build_crossterm = b.addRunArtifact(build_crab.artifact("build_crab"));
 
             build_crossterm.addArg("--out");
-            const crossterm_lib_path = build_crossterm.addOutputFileArg("libcrossterm.a");
+            var crossterm_lib_path = build_crossterm.addOutputFileArg("libcrossterm.a");
 
             build_crossterm.addArg("--deps");
             _ = build_crossterm.addDepFileOutputArg("libcrossterm.d");
@@ -62,6 +62,21 @@ pub fn build(b: *std.Build) void {
                 "--release",
                 "--quiet",
             });
+
+            if (@import("builtin").target.os.tag == .windows) {
+                build_crossterm.addArg("--target");
+                build_crossterm.addArg("x86_64-pc-windows-gnu");
+
+                const strip_symbols = b.addRunArtifact(build_crab.artifact("strip_symbols"));
+                strip_symbols.addArg("--archive");
+                strip_symbols.addFileArg(crossterm_lib_path);
+                strip_symbols.addArg("--temp-dir");
+                strip_symbols.addDirectoryArg(target_dir);
+                strip_symbols.addArg("--remove-symbol");
+                strip_symbols.addArg("___chkstk_ms");
+                strip_symbols.addArg("--output");
+                crossterm_lib_path = strip_symbols.addOutputFileArg("libcrossterm.a");
+            }
 
             module.link_libcpp = true;
             module.addLibraryPath(crossterm_lib_path.dirname());

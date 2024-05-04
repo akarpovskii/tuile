@@ -127,7 +127,10 @@ pub extern "C" fn crossterm_poll_event() -> Key {
     if event::poll(Duration::from_secs(0)).unwrap() {
         let event = event::read().unwrap();
         match event {
-            event::Event::Key(event) => event.into(),
+            event::Event::Key(event) => match event.kind {
+                event::KeyEventKind::Press => event.into(),
+                _ => Default::default()
+            },
             event::Event::Resize(_, _) => {
                 // TODO: Make it a sepearate method and call in Tuile.handleResize?
                 queue!(

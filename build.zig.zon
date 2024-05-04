@@ -3,8 +3,8 @@
     .version = "0.1.0",
     .dependencies = .{
         .@"build.crab" = .{
-            .url = "https://github.com/akarpovskii/build.crab/archive/refs/tags/v0.1.0.tar.gz",
-            .hash = "1220e1ecbdc5e57639100c9f031a81b769efc4f8a1f3b3229fc97312acb024ed55ac",
+            .url = "https://github.com/akarpovskii/build.crab/archive/refs/tags/v0.1.1.tar.gz",
+            .hash = "1220a029a10878f7a13fdc8ec7c4762132aa16d970974deaab138e18cb0f7b091337",
         },
     },
     .minimum_zig_version = "0.12.0",

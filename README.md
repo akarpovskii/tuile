@@ -79,28 +79,7 @@ Checkout the other examples [here](./examples/).
 ### Prerequisites
 
 * Zig 0.12.0+
-* ncurses
-    * macOS
-
-        A version of ncurses should already be installed in your system (or is it shipped with XCode and the command line tools?), so you don't have to do anything.
-
-        Alternatively, you can install a different version using Homebrew:
-        ```sh
-        brew install ncurses
-        ```
-        In which case you might need to tell Zig where to find the library by adding `exe.addLibraryPath(...)` to you `build.zig`.
-
-    * Linux
-
-        ```sh
-        sudo apt-get install libncurses5-dev libncursesw5-dev
-        ```
-
-    * Windows
-
-        Prebuilt binaries are available on the [official website](https://invisible-island.net/ncurses/#download_mingw).
-
-        _TODO: Add a specific instruction._
+* See [`Backends`](docs/Backends.md) for the list of requirements depending on the backend you want to use.
 
 ### Installation
 
@@ -157,7 +136,6 @@ You can find more examples in the [examples folder](./examples/)
 
 In no particular order:
 
-- [ ] CI on Windows needs ncurses - figure out how to do it
 - [ ] Documentation
 - [ ] Grid layout
 - [ ] Windows and dialogs

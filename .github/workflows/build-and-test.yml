@@ -1,7 +1,7 @@
 name: Build & Test
 
 on:
-  workflow-call:
+  workflow_call:
     inputs:
       zig-version:
         required: true

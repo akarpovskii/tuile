@@ -14,5 +14,5 @@ concurrency:
 jobs:
   build-and-test-master:
     uses: ./.github/workflows/build-and-test.yml
-      with:
-        zig-version: master
+    with:
+      zig-version: master

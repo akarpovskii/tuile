@@ -16,5 +16,5 @@ concurrency:
 jobs:
   build-and-test-stable:
     uses: ./.github/workflows/build-and-test.yml
-      with:
-        zig-version: 0.12.0
+    with:
+      zig-version: 0.12.0

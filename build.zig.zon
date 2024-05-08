@@ -8,7 +8,7 @@
         },
         .@"tuile-crossterm" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/archive/refs/tags/v0.1.1.tar.gz",
-            .hash = "122028fc4b5eaa687393179b553eb8fdace1d07e297a7a54764f25af5ab3580debac",
+            .hash = "122085bc1c3b03e30bb46d1ad296033d1e94cb063ab78fd2665348d002e7b05f6cf4",
         },
         .@"tuile-crossterm-aarch64-apple-darwin" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.1/libtuile_crossterm-aarch64-apple-darwin.tar.gz",

@@ -37,54 +37,41 @@ pub fn build(b: *std.Build) void {
             lib_unit_tests.linkSystemLibrary("ncurses");
         },
         .crossterm => {
-            const build_crab = b.dependency("build.crab", .{
-                .optimize = .ReleaseSafe,
-            });
+            const use_prebuilt = b.option(bool, "prebuilt", "Use prebuilt crossterm library") orelse true;
 
-            const build_crossterm = b.addRunArtifact(build_crab.artifact("build_crab"));
+            const build_crab = @import("build.crab");
+            var crossterm_lib_path: std.Build.LazyPath = undefined;
 
-            build_crossterm.addArg("--out");
-            var crossterm_lib_path = build_crossterm.addOutputFileArg("libcrossterm.a");
-
-            build_crossterm.addArg("--deps");
-            _ = build_crossterm.addDepFileOutputArg("libcrossterm.d");
-
-            build_crossterm.addArg("--manifest-path");
-            _ = build_crossterm.addFileArg(b.path("src/backends/crossterm/Cargo.toml"));
-
-            const cargo_target = b.addNamedWriteFiles("cargo-target");
-            const target_dir = cargo_target.getDirectory();
-            build_crossterm.addArg("--target-dir");
-            build_crossterm.addDirectoryArg(target_dir);
-
-            build_crossterm.addArgs(&[_][]const u8{
-                "--",
-                "--release",
-                "--quiet",
-            });
-
-            if (@import("builtin").target.os.tag == .windows) {
-                build_crossterm.addArg("--target");
-                build_crossterm.addArg("x86_64-pc-windows-gnu");
-
-                const strip_symbols = b.addRunArtifact(build_crab.artifact("strip_symbols"));
-                strip_symbols.addArg("--archive");
-                strip_symbols.addFileArg(crossterm_lib_path);
-                strip_symbols.addArg("--temp-dir");
-                strip_symbols.addDirectoryArg(target_dir);
-                strip_symbols.addArg("--remove-symbol");
-                strip_symbols.addArg("___chkstk_ms");
-                strip_symbols.addArg("--output");
-                crossterm_lib_path = strip_symbols.addOutputFileArg("libcrossterm.a");
+            if (use_prebuilt) {
+                const rust_target = build_crab.Target.fromZig(@import("builtin").target) catch @panic("unable to convert target triple to Rust");
+                std.log.info("Using prebuilt crossterm backend for target {}", .{rust_target});
+                const prebuilt_name = b.fmt("tuile-crossterm-{}", .{rust_target});
+                const prebuilt = b.dependency(prebuilt_name, .{});
+                crossterm_lib_path = prebuilt.path("libtuile_crossterm.a");
+            } else {
+                std.log.info("Building crossterm backend from source", .{});
+                const tuile_crossterm = b.dependency("tuile-crossterm", .{});
+                crossterm_lib_path = build_crab.addRustStaticlibWithUserOptions(
+                    b,
+                    .{
+                        .name = "libtuile_crossterm.a",
+                        .manifest_path = tuile_crossterm.path("Cargo.toml"),
+                        .cargo_args = &.{
+                            "--release",
+                            "--quiet",
+                        },
+                    },
+                    .{ .optimize = .ReleaseSafe },
+                );
             }
 
             module.link_libcpp = true;
             module.addLibraryPath(crossterm_lib_path.dirname());
-            module.linkSystemLibrary("crossterm", .{});
+            module.linkSystemLibrary("tuile_crossterm", .{});
 
             lib_unit_tests.linkLibCpp();
             lib_unit_tests.addLibraryPath(crossterm_lib_path.dirname());
-            lib_unit_tests.linkSystemLibrary("crossterm");
+            lib_unit_tests.linkSystemLibrary("tuile_crossterm");
         },
     }
 
@@ -96,11 +83,12 @@ pub fn build(b: *std.Build) void {
 }
 
 fn requestedBackend(b: *std.Build) Backend {
-    const backend_str = b.option([]const u8, "backend", "Backend") orelse
-        switch (@import("builtin").target.os.tag) {
-        .windows => @tagName(Backend.crossterm),
-        else => @tagName(Backend.ncurses),
+    const default_backend = switch (@import("builtin").target.os.tag) {
+        .windows => Backend.crossterm,
+        // else => Backend.ncurses,
+        else => Backend.crossterm,
     };
+    const backend_str = @tagName(b.option(Backend, "backend", "Terminal manipulation backend") orelse default_backend);
 
     var backend: Backend = undefined;
     if (std.ascii.eqlIgnoreCase(backend_str, @tagName(Backend.ncurses))) {

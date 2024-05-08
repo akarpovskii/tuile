@@ -1,10 +1,42 @@
 .{
     .name = "tuile",
-    .version = "0.1.0",
+    .version = "0.1.1",
     .dependencies = .{
         .@"build.crab" = .{
-            .url = "https://github.com/akarpovskii/build.crab/archive/refs/tags/v0.1.1.tar.gz",
-            .hash = "1220a029a10878f7a13fdc8ec7c4762132aa16d970974deaab138e18cb0f7b091337",
+            .url = "https://github.com/akarpovskii/build.crab/archive/refs/tags/v0.1.3.tar.gz",
+            .hash = "122061052accf7450dba1afd2575335585989a637a80d88253f7960a2796be4288d6",
+        },
+        .@"tuile-crossterm" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/archive/refs/tags/v0.1.0.tar.gz",
+            .hash = "122028fc4b5eaa687393179b553eb8fdace1d07e297a7a54764f25af5ab3580debac",
+        },
+        .@"tuile-crossterm-aarch64-apple-darwin" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.0/libtuile_crossterm-aarch64-apple-darwin.tar.gz",
+            .hash = "122038ab872234e9a5dc3c8896cb5c54f0923659c6988a4f8ab31a914f069fc61d70",
+        },
+        .@"tuile-crossterm-aarch64-unknown-linux-gnu" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.0/libtuile_crossterm-aarch64-unknown-linux-gnu.tar.gz",
+            .hash = "1220cfa5811c6a89d8346bd562bd30af290bb67f5b4609530f171ad5b29d0ef22475",
+        },
+        .@"tuile-crossterm-i686-pc-windows-gnu" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.0/libtuile_crossterm-i686-pc-windows-gnu.tar.gz",
+            .hash = "12208cf4ee119850a1692a0d227bf5711806a7da9fb7224ca38beb09ee5213bae04e",
+        },
+        .@"tuile-crossterm-i686-unknown-linux-gnu" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.0/libtuile_crossterm-i686-unknown-linux-gnu.tar.gz",
+            .hash = "1220825aa02bc63ed943a05a2ab92d8e08a1827079a3bbdce74d3fc15374c8be34fa",
+        },
+        .@"tuile-crossterm-x86_64-apple-darwin" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.0/libtuile_crossterm-x86_64-apple-darwin.tar.gz",
+            .hash = "12201d8ca2a7ea2c2bdfc46ad2d950648707336a352ca81c396283de6793daa8b003",
+        },
+        .@"tuile-crossterm-x86_64-pc-windows-gnu" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.0/libtuile_crossterm-x86_64-pc-windows-gnu.tar.gz",
+            .hash = "1220298ef4c0811c250f39a7ff771c9d023737893af164c8fe74cb0446e0f0638977",
+        },
+        .@"tuile-crossterm-x86_64-unknown-linux-gnu" = .{
+            .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.0/libtuile_crossterm-x86_64-unknown-linux-gnu.tar.gz",
+            .hash = "12203b342eb4f61aa0e03a95dffd3ae14e31ea1200285ac8e23b813aa6b80faf0243",
         },
     },
     .minimum_zig_version = "0.12.0",

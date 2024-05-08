@@ -64,7 +64,7 @@
 
 Tuile is a Text User Interface library written in Zig.
 
-The only currently supported backend is ncurses, but if you want to see another one submit a PR or file a [feature request](https://github.com/akarpovskii/tuile/issues/new?labels=enhancement&template=feature-request.md).
+Tuile currently support ncurses and crossterm backends, but if you want to see another one submit a PR or file a [feature request](https://github.com/akarpovskii/tuile/issues/new?labels=enhancement&template=feature-request.md).
 
 ![Demo VHS recording](./examples/images/demo.png)
 

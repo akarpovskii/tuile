@@ -1,0 +1,18 @@
+name: Build & Test - Zig master
+
+on:
+  push:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+concurrency:
+  # Cancels pending runs when a PR gets updated.
+  group: ${{ github.head_ref || github.run_id }}-${{ github.actor }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test-master:
+    uses: ./.github/workflows/build-and-test.yml
+      with:
+        zig-version: master

@@ -1,20 +1,24 @@
-name: Zig master
+name: Build & Test
 
 on:
-  push:
-    branches: [ "main" ]
-
-  workflow_dispatch:
+  workflow-call:
+    inputs:
+      zig-version:
+        required: true
+        type: string
 
 jobs:
-  ci:
+  build-and-test:
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
         backend: [ncurses, crossterm]
+        prebuilt: [true, false]
         exclude:
           - platform: windows-latest
             backend: ncurses
+          - backend: ncurses
+            prebuilt: true
 
     runs-on: ${{ matrix.platform }}
 
@@ -22,7 +26,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: goto-bus-stop/setup-zig@2a9625d550eefc3a9b1a43d342ad655f563f8241
         with:
-          version: master
+          version: ${{ inputs.zig-version }}
 
       - name: Zig version
         run: zig version
@@ -30,8 +34,8 @@ jobs:
       - name: Build all examples
         run: |
           cd examples
-          zig build -Dbackend=${{ matrix.backend }} --summary all
+          zig build -Dbackend=${{ matrix.backend }} -Dprebuilt=${{ matrix.prebuilt }} --summary all
           cd ..
 
       - name: Run all tests
-        run: zig build test -Dbackend=${{ matrix.backend }} --summary all
+        run: zig build test -Dbackend=${{ matrix.backend }} -Dprebuilt=${{ matrix.prebuilt }} --summary all

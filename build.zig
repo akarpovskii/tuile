@@ -9,9 +9,10 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const backend = requestedBackend(b);
-    const options = b.addOptions();
-    options.addOption(Backend, "backend", backend);
+    const user_options = Options.init(b);
+
+    const module_options = b.addOptions();
+    module_options.addOption(Backend, "backend", user_options.backend);
 
     const module = b.addModule("tuile", .{
         .root_source_file = .{ .path = "src/tuile.zig" },
@@ -25,10 +26,10 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    module.addOptions("build_options", options);
-    lib_unit_tests.root_module.addOptions("build_options", options);
+    module.addOptions("build_options", module_options);
+    lib_unit_tests.root_module.addOptions("build_options", module_options);
 
-    switch (backend) {
+    switch (user_options.backend) {
         .ncurses => {
             module.link_libc = true;
             module.linkSystemLibrary("ncurses", .{});
@@ -37,12 +38,10 @@ pub fn build(b: *std.Build) void {
             lib_unit_tests.linkSystemLibrary("ncurses");
         },
         .crossterm => {
-            const use_prebuilt = b.option(bool, "prebuilt", "Use prebuilt crossterm library") orelse true;
-
             const build_crab = @import("build.crab");
             var crossterm_lib_path: std.Build.LazyPath = undefined;
 
-            if (use_prebuilt) {
+            if (user_options.prebuilt) {
                 const rust_target = build_crab.Target.fromZig(@import("builtin").target) catch @panic("unable to convert target triple to Rust");
                 std.log.info("Using prebuilt crossterm backend for target {}", .{rust_target});
                 const prebuilt_name = b.fmt("tuile-crossterm-{}", .{rust_target});
@@ -82,34 +81,44 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_lib_unit_tests.step);
 }
 
-fn requestedBackend(b: *std.Build) Backend {
-    const default_backend = switch (@import("builtin").target.os.tag) {
-        .windows => Backend.crossterm,
-        // else => Backend.ncurses,
-        else => Backend.crossterm,
-    };
-    const backend_str = @tagName(b.option(Backend, "backend", "Terminal manipulation backend") orelse default_backend);
+pub const Options = struct {
+    backend: Backend = .crossterm,
+    prebuilt: bool = true,
 
-    var backend: Backend = undefined;
-    if (std.ascii.eqlIgnoreCase(backend_str, @tagName(Backend.ncurses))) {
-        backend = .ncurses;
-    } else if (std.ascii.eqlIgnoreCase(backend_str, @tagName(Backend.crossterm))) {
-        backend = .crossterm;
-    } else {
-        const names = comptime blk: {
-            const info = @typeInfo(Backend);
-            const fields = info.Enum.fields;
-            var names: [fields.len][]const u8 = undefined;
-            for (&names, fields) |*name, field| {
-                name.* = field.name;
-            }
-            break :blk names;
-        };
-
-        @panic(b.fmt(
-            "Option {s} is not a valid backend. Valid options are: {}",
-            .{ backend_str, std.json.fmt(names, .{}) },
-        ));
+    pub fn init(b: *std.Build) Options {
+        var opts: Options = .{};
+        opts.backend = requestedBackend(b) orelse opts.backend;
+        opts.prebuilt = b.option(bool, "prebuilt", "Use prebuilt crossterm backend") orelse opts.prebuilt;
+        if (opts.prebuilt and opts.backend != .crossterm) {
+            @panic("prebuilt option is only available with crossterm backend");
+        }
+        return opts;
     }
-    return backend;
-}
+
+    fn requestedBackend(b: *std.Build) ?Backend {
+        const backend_str = @tagName(b.option(Backend, "backend", "Terminal manipulation backend") orelse return null);
+
+        var backend: Backend = undefined;
+        if (std.ascii.eqlIgnoreCase(backend_str, @tagName(Backend.ncurses))) {
+            backend = .ncurses;
+        } else if (std.ascii.eqlIgnoreCase(backend_str, @tagName(Backend.crossterm))) {
+            backend = .crossterm;
+        } else {
+            const names = comptime blk: {
+                const info = @typeInfo(Backend);
+                const fields = info.Enum.fields;
+                var names: [fields.len][]const u8 = undefined;
+                for (&names, fields) |*name, field| {
+                    name.* = field.name;
+                }
+                break :blk names;
+            };
+
+            @panic(b.fmt(
+                "Option {s} is not a valid backend. Valid options are: {}",
+                .{ backend_str, std.json.fmt(names, .{}) },
+            ));
+        }
+        return backend;
+    }
+};

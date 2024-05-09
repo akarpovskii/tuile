@@ -49,6 +49,7 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
+    <li><a href="#cross-compilation">Cross-compilation</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -64,7 +65,9 @@
 
 Tuile is a Text User Interface library written in Zig.
 
-Tuile uses [`crossterm`](docs/Backends.md#crossterm) backend by default. Follow [here](docs/Backends.md) to see the list of supported backends, or file a [feature request](https://github.com/akarpovskii/tuile/issues/new?labels=enhancement&template=feature-request.md) if you want to see another one.
+Tuile uses [`crossterm`](docs/Backends.md#crossterm) backend by default which works on all UNIX and Windows terminals and supports cross-compilation (powered by [`build.crab`](https://github.com/akarpovskii/build.crab)).
+
+See [`Backends`](docs/Backends.md) for the list of supported backends, or file a [feature request](https://github.com/akarpovskii/tuile/issues/new?labels=enhancement&template=feature-request.md) if you want to have another one added.
 
 ![Demo VHS recording](./examples/images/demo.png)
 
@@ -79,7 +82,8 @@ Checkout the other examples [here](./examples/).
 ### Prerequisites
 
 * Zig 0.12.0+
-* See [`Backends`](docs/Backends.md) for the list of requirements depending on the backend you want to use.
+
+* Non-default [`backends`](docs/Backends.md) may have additional requirements.
 
 ### Installation
 
@@ -126,6 +130,23 @@ pub fn main() !void {
 ```
 
 You can find more examples in the [examples folder](./examples/)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- CROSS-COMPILATION -->
+## Cross-compilation
+
+To compile an application that uses Tuile for another target, just add `-Dtarget=<desired target>` when building your app and make sure to forward it to Tuile:
+
+#### **`build.zig`**
+```zig
+const target = b.standardTargetOptions(.{});
+const tuile = b.dependency("tuile", .{
+  .target = target
+});
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

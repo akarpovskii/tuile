@@ -8,7 +8,7 @@ on:
 
 concurrency:
   # Cancels pending runs when a PR gets updated.
-  group: ${{ github.head_ref || github.run_id }}-${{ github.actor }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ github.actor }}
   cancel-in-progress: true
 
 jobs:
@@ -16,3 +16,10 @@ jobs:
     uses: ./.github/workflows/build-and-test.yml
     with:
       zig-version: master
+
+  build-and-test-master-success:
+    needs: [build-and-test-master]
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Success
+        run: echo 'Success'

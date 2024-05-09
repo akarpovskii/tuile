@@ -42,7 +42,7 @@ pub fn build(b: *std.Build) void {
             var crossterm_lib_path: std.Build.LazyPath = undefined;
 
             if (user_options.prebuilt) {
-                const rust_target = build_crab.Target.fromZig(@import("builtin").target) catch @panic("unable to convert target triple to Rust");
+                const rust_target = build_crab.Target.fromZig(target.result) catch @panic("unable to convert target triple to Rust");
                 std.log.info("Using prebuilt crossterm backend for target {}", .{rust_target});
                 const prebuilt_name = b.fmt("tuile-crossterm-{}", .{rust_target});
                 const prebuilt = b.dependency(prebuilt_name, .{});
@@ -60,7 +60,7 @@ pub fn build(b: *std.Build) void {
                             "--quiet",
                         },
                     },
-                    .{ .optimize = .ReleaseSafe },
+                    .{ .target = target, .optimize = .ReleaseSafe },
                 );
             }
 

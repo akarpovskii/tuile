@@ -7,6 +7,8 @@ pub fn build(b: *std.Build) void {
     const user_options = @import("tuile").Options.init(b);
 
     const tuile = b.dependency("tuile", .{
+        .target = target,
+        .optimize = optimize,
         .backend = user_options.backend,
         .prebuilt = user_options.prebuilt,
     });

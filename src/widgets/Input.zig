@@ -10,6 +10,8 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
+const DisplayWidth = @import("DisplayWidth");
+const grapheme = @import("grapheme");
 
 pub const Config = struct {
     /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
@@ -96,8 +98,10 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
     _ = try frame.writeSymbols(area.min, visible, area.width());
 
     if (self.focus_handler.focused) {
+        const dw = DisplayWidth{ .data = &internal.dwd };
+
         var cursor_pos = area.min;
-        cursor_pos.x += @intCast(self.cursor - self.view_start);
+        cursor_pos.x += @intCast(dw.strWidth(text_to_render[self.view_start..self.cursor]));
         if (cursor_pos.x >= area.max.x) {
             cursor_pos.x = area.max.x - 1;
         }
@@ -112,20 +116,29 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
 }
 
 pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
+    const dw = DisplayWidth{ .data = &internal.dwd };
     if (self.cursor < self.view_start) {
         self.view_start = self.cursor;
     } else {
-        // +1 is for the cursor itself
         const max_width = std.math.clamp(self.layout_properties.max_width, constraints.min_width, constraints.max_width);
-        const visible = self.cursor - self.view_start + 1;
+        // +1 is for the cursor itself
+        const visible_text = self.currentText()[self.view_start..self.cursor];
+        var visible = dw.strWidth(visible_text) + 1;
         if (visible > max_width) {
-            self.view_start += visible - max_width;
+            var iter = grapheme.Iterator.init(visible_text, &internal.gd);
+            while (iter.next()) |gc| {
+                self.view_start += gc.len;
+                visible -= 1;
+                if (visible <= max_width) {
+                    break;
+                }
+            }
         }
     }
 
     const visible = self.visibleText();
     // +1 for the cursor
-    const len = try std.unicode.utf8CountCodepoints(visible) + 1;
+    const len = dw.strWidth(visible) + 1;
 
     var size = Vec2{
         .x = @intCast(len),
@@ -138,6 +151,11 @@ pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
     return size;
 }
 
+// https://github.com/ziglang/zig/pull/19786
+fn handleEvent2(self: *Input, event: events.Event) anyerror!events.EventResult {
+    return self.handleEvent(event);
+}
+
 pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
     if (self.focus_handler.handleEvent(event) == .consumed) {
         return .consumed;
@@ -146,26 +164,39 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
     switch (event) {
         .key, .shift_key => |key| switch (key) {
             .Left => {
-                self.cursor -|= 1;
+                if (self.value.items.len == 0) {
+                    return .consumed;
+                }
+                var left = self.cursor -| 1;
+                while (!std.unicode.utf8ValidateSlice(self.value.items[left..self.cursor])) {
+                    left -= 1;
+                }
+                self.cursor = left;
                 return .consumed;
             },
             .Right => {
-                if (self.cursor < self.value.items.len) {
-                    self.cursor += 1;
+                var right = @min(self.cursor + 1, self.value.items.len);
+                while (right < self.value.items.len and !std.unicode.utf8ValidateSlice(self.value.items[self.cursor..right])) {
+                    right += 1;
                 }
+                self.cursor = right;
                 return .consumed;
             },
             .Backspace => {
-                if (self.cursor > 0) {
-                    _ = self.value.orderedRemove(self.cursor - 1);
+                const old = self.cursor;
+                std.debug.assert(try self.handleEvent2(.{ .key = .Left }) == .consumed);
+                if (self.cursor != old) {
+                    self.value.replaceRangeAssumeCapacity(self.cursor, old - self.cursor, &.{});
                     if (self.on_value_changed) |cb| cb.call(self.value.items);
                 }
-                self.cursor -|= 1;
                 return .consumed;
             },
             .Delete => {
-                if (self.cursor < self.value.items.len) {
-                    _ = self.value.orderedRemove(self.cursor);
+                const old = self.cursor;
+                std.debug.assert(try self.handleEvent2(.{ .key = .Right }) == .consumed);
+                if (self.cursor != old) {
+                    self.value.replaceRangeAssumeCapacity(old, self.cursor - old, &.{});
+                    self.cursor = old;
                     if (self.on_value_changed) |cb| cb.call(self.value.items);
                 }
                 return .consumed;
@@ -174,9 +205,11 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
         },
 
         .char => |char| {
-            try self.value.insert(internal.allocator, self.cursor, char);
+            var cp = std.mem.zeroes([4]u8);
+            const cp_len = try std.unicode.utf8Encode(char, &cp);
+            try self.value.insertSlice(internal.allocator, self.cursor, cp[0..cp_len]);
             if (self.on_value_changed) |cb| cb.call(self.value.items);
-            self.cursor += 1;
+            self.cursor += cp_len;
             return .consumed;
         },
         else => {},

@@ -9,6 +9,8 @@ pub const widgets = @import("widgets.zig");
 pub usingnamespace widgets;
 pub const display = @import("display.zig");
 pub usingnamespace display;
+const grapheme = @import("grapheme");
+const DisplayWidth = @import("DisplayWidth");
 
 const Task = widgets.Callback(void);
 
@@ -52,6 +54,7 @@ pub const Tuile = struct {
     task_queue_mutex: std.Thread.Mutex,
 
     pub fn init(config: Config) !Tuile {
+        try internal.init();
         var self = blk: {
             const backend = if (config.backend) |backend| backend else try backends.createBackend();
             errdefer backend.destroy();
@@ -82,6 +85,7 @@ pub const Tuile = struct {
         self.backend.destroy();
         self.frame_buffer.deinit(internal.allocator);
         self.root.destroy();
+        internal.deinit();
     }
 
     pub fn add(self: *Tuile, child: anytype) !void {

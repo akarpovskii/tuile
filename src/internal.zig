@@ -1,6 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const root = @import("root");
+const grapheme = @import("grapheme");
+const DisplayWidth = @import("DisplayWidth");
 
 const default_allocator = blk: {
     if (@hasDecl(root, "tuile_allocator")) {
@@ -15,3 +17,16 @@ const default_allocator = blk: {
 };
 
 pub const allocator = default_allocator;
+
+pub var gd: grapheme.GraphemeData = undefined;
+pub var dwd: DisplayWidth.DisplayWidthData = undefined;
+
+pub fn init() !void {
+    gd = try grapheme.GraphemeData.init(allocator);
+    dwd = try DisplayWidth.DisplayWidthData.init(allocator);
+}
+
+pub fn deinit() void {
+    dwd.deinit();
+    gd.deinit();
+}

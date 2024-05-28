@@ -4,6 +4,9 @@ const Vec2 = @import("../Vec2.zig");
 const Rect = @import("../Rect.zig");
 const Backend = @import("../backends/Backend.zig");
 const display = @import("../display.zig");
+const grapheme = @import("grapheme");
+const DisplayWidth = @import("DisplayWidth");
+const internal = @import("../internal.zig");
 
 const Frame = @This();
 
@@ -63,34 +66,49 @@ pub fn setSymbol(self: Frame, pos: Vec2, symbol: []const u8) void {
 // Decodes text as UTF-8, writes all code points separately and returns the number of 'characters' written
 // TODO: Use graphemes instead of code points!
 pub fn writeSymbols(self: Frame, start: Vec2, bytes: []const u8, max: ?usize) !usize {
-    const utf8_view = try std.unicode.Utf8View.init(bytes);
-    var iter = utf8_view.iterator();
+    var iter = grapheme.Iterator.init(bytes, &internal.gd);
+    const dw = DisplayWidth{ .data = &internal.dwd };
+
     var limit = max orelse std.math.maxInt(usize);
     var written: usize = 0;
     var cursor = start;
-    while (iter.nextCodepointSlice()) |cp| {
-        if (limit == 0) {
+    while (iter.next()) |gc| {
+        const substr = gc.bytes(bytes);
+        const width = dw.strWidth(substr);
+        if (width > limit) {
             break;
         }
-        self.setSymbol(cursor, cp);
-        cursor.x += 1;
-        limit -= 1;
-        written += 1;
+        self.setSymbol(cursor, substr);
+
+        cursor.x += @intCast(width);
+        limit -= @intCast(width);
+        written += @intCast(width);
     }
     return written;
 }
 
 pub fn render(self: Frame, backend: Backend) !void {
-    for (0..self.size.x) |x| {
-        for (0..self.size.y) |y| {
+    const dw = DisplayWidth{ .data = &internal.dwd };
+    for (0..self.size.y) |y| {
+        // For the characters taking more than 1 column like の
+        var overflow: usize = 0;
+        for (0..self.size.x) |x| {
             const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
             const cell = self.at(pos);
             try backend.enableEffect(cell.effect);
             try backend.useColor(.{ .fg = cell.fg, .bg = cell.bg });
             if (cell.symbol) |symbol| {
                 try backend.printAt(pos, symbol);
+                const width = dw.strWidth(symbol);
+                overflow = width - 1;
             } else {
-                try backend.printAt(pos, " ");
+                if (overflow > 0) {
+                    // Previous character occupies this column, do nothing
+                    overflow -= 1;
+                } else {
+                    // Print whitespace to properly display the background
+                    try backend.printAt(pos, " ");
+                }
             }
             try backend.disableEffect(cell.effect);
         }

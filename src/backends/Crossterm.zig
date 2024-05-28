@@ -187,8 +187,7 @@ fn convertEvent(rust_key: RustKey) ?events.Event {
         .None => return null,
         .Char => blk: {
             const char: u32 = @bitCast(rust_key.code);
-            // TODO: support UTF-8 input
-            break :blk events.Event{ .char = @truncate(char) };
+            break :blk events.Event{ .char = @intCast(char) };
         },
         .Enter => events.Event{ .key = .Enter },
         .Escape => events.Event{ .key = .Escape },

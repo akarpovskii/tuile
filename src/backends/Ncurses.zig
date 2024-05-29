@@ -85,7 +85,14 @@ pub fn pollEvent(_: *Ncurses) !?events.Event {
         else => {},
     }
 
-    return .{ .char = @intCast(ch) };
+    var cp = std.mem.zeroes([4]u8);
+    cp[0] = @intCast(ch);
+    var i: usize = 1;
+    while (!std.unicode.utf8ValidateSlice(&cp) and i < 4) {
+        cp[i] = @intCast(c.getch());
+        i += 1;
+    }
+    return .{ .char = try std.unicode.utf8Decode(cp[0..i]) };
 }
 
 fn parseKey(ch: c_int) ?events.Key {

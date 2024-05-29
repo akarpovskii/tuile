@@ -100,7 +100,7 @@ pub fn render(self: Frame, backend: Backend) !void {
             if (cell.symbol) |symbol| {
                 try backend.printAt(pos, symbol);
                 const width = dw.strWidth(symbol);
-                overflow = width - 1;
+                overflow = width -| 1;
             } else {
                 if (overflow > 0) {
                     // Previous character occupies this column, do nothing

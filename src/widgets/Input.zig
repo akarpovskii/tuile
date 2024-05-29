@@ -85,8 +85,8 @@ pub fn setValue(self: *Input, value: []const u8) !void {
     self.value.deinit(internal.allocator);
     self.value = std.ArrayListUnmanaged(u8){};
     try self.value.appendSlice(internal.allocator, value);
-    self.rebuildGraphemes(0);
-    self.grapheme_cursor = self.graphemes.items.len - 1;
+    try self.rebuildGraphemes(0);
+    self.grapheme_cursor = @intCast(self.graphemes.items.len -| 1);
 }
 
 fn cursor(self: Input) usize {

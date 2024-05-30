@@ -84,3 +84,13 @@ How to implement a custom widget using FPS counter as an example. Can be used to
 
   ![FPS Counter gif](./images/fps_counter.gif)
 </details>
+
+## [`unicode`](./src/unicode.zig)
+
+Demo showcasing Unicode support
+
+<details>
+  <summary>VHS recording</summary>
+
+  ![Unicode table](./images/unicode.png)
+</details>

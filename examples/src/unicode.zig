@@ -100,7 +100,7 @@ pub fn main() !void {
             ),
 
             tuile.block(
-                .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
+                .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 0 } },
                 tuile.label(.{ .id = "unicode-bytes", .text = "" }),
             ),
 

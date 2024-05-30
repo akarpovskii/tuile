@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) void {
     module_options.addOption(Backend, "backend", user_options.backend);
 
     const module = b.addModule("tuile", .{
-        .root_source_file = .{ .path = "src/tuile.zig" },
+        .root_source_file = b.path("src/tuile.zig"),
         .target = target,
         .optimize = optimize,
     });

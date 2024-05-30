@@ -4,10 +4,10 @@ const tuile = @import("tuile");
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
 pub const tuile_allocator = gpa.allocator();
 
-const UserInputState = struct {
+const UnicodeTable = struct {
     tui: *tuile.Tuile,
 
-    pub fn inputChanged(self_opt: ?*UserInputState, value: []const u8) void {
+    pub fn inputChanged(self_opt: ?*UnicodeTable, value: []const u8) void {
         const self = self_opt.?;
         if (value.len > 0) {
             const label = self.tui.findByIdTyped(tuile.Label, "unicode-table") orelse unreachable;
@@ -17,13 +17,14 @@ const UserInputState = struct {
             };
 
             const txt = generateUnicodeTable(start);
+            defer tuile_allocator.free(txt);
             label.setText(txt) catch unreachable;
-            tuile_allocator.free(txt);
         }
     }
 
     fn generateUnicodeTable(start: u21) []const u8 {
         var string = std.ArrayListUnmanaged(u8){};
+        errdefer string.deinit(tuile_allocator);
         const w = 32;
         const h = 32;
         for (0..h) |y| {
@@ -39,11 +40,41 @@ const UserInputState = struct {
     }
 };
 
+const UnicodeBytes = struct {
+    tui: *tuile.Tuile,
+
+    pub fn inputChanged(self_opt: ?*UnicodeTable, value: []const u8) void {
+        const self = self_opt.?;
+        if (value.len > 0) {
+            const label = self.tui.findByIdTyped(tuile.Label, "unicode-bytes") orelse unreachable;
+
+            var text = std.ArrayListUnmanaged(u8){};
+            defer text.deinit(tuile_allocator);
+
+            var iter = std.mem.tokenizeScalar(u8, value, ' ');
+            while (iter.next()) |byte| {
+                const character = std.fmt.parseInt(u8, byte, 0) catch {
+                    label.setText("Invalid hex code") catch unreachable;
+                    return;
+                };
+                text.append(tuile_allocator, character) catch @panic("OOM");
+            }
+
+            if (std.unicode.utf8ValidateSlice(text.items)) {
+                label.setText(text.items) catch unreachable;
+            } else {
+                label.setText("Invalid unicode sequence") catch unreachable;
+            }
+        }
+    }
+};
+
 pub fn main() !void {
     var tui = try tuile.Tuile.init(.{});
     defer tui.deinit();
 
-    var input_state = UserInputState{ .tui = &tui };
+    var unicode_table = UnicodeTable{ .tui = &tui };
+    var unicode_bytes = UnicodeBytes{ .tui = &tui };
 
     const layout = tuile.vertical(
         .{ .layout = .{ .flex = 1 } },
@@ -56,12 +87,36 @@ pub fn main() !void {
             tuile.horizontal(
                 .{},
                 .{
-                    tuile.label(.{ .text = "Starting unicode value: U+" }), tuile.input(.{
-                        .id = "user-input",
+                    tuile.label(.{ .text = "Starting unicode value: U+" }),
+                    tuile.input(.{
+                        .id = "start-input",
                         .layout = .{ .flex = 1 },
                         .on_value_changed = .{
-                            .cb = @ptrCast(&UserInputState.inputChanged),
-                            .payload = &input_state,
+                            .cb = @ptrCast(&UnicodeTable.inputChanged),
+                            .payload = &unicode_table,
+                        },
+                    }),
+                },
+            ),
+
+            tuile.block(
+                .{ .border = tuile.border.Border.all(), .layout = .{ .flex = 1 } },
+                tuile.label(.{ .id = "unicode-bytes", .text = "" }),
+            ),
+
+            tuile.horizontal(
+                .{},
+                .{
+                    tuile.label(.{ .text = "Unicode bytes (hex): " }),
+                    // \xf0\x9f\x91\xa9\xf0\x9f\x8f\xbd
+                    tuile.label(.{ .text = "\xf0\x9f\x91\xa9" }),
+                    tuile.label(.{ .text = "\xf0\x9f\x8f\xbd" }),
+                    tuile.input(.{
+                        .id = "bytes-input",
+                        .layout = .{ .flex = 1 },
+                        .on_value_changed = .{
+                            .cb = @ptrCast(&UnicodeBytes.inputChanged),
+                            .payload = &unicode_bytes,
                         },
                     }),
                 },
@@ -71,9 +126,9 @@ pub fn main() !void {
 
     try tui.add(layout);
 
-    const input = tui.findByIdTyped(tuile.Input, "user-input") orelse unreachable;
+    const input = tui.findByIdTyped(tuile.Input, "start-input") orelse unreachable;
     try input.setValue("1F300");
-    UserInputState.inputChanged(&input_state, "1F300");
+    UnicodeTable.inputChanged(&unicode_table, "1F300");
 
     try tui.run();
 }

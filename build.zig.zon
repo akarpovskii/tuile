@@ -5,7 +5,8 @@
         .@"build.crab" = .{
             .url = "https://github.com/akarpovskii/build.crab/archive/refs/tags/v0.1.5.tar.gz",
             .hash = "1220c7d071bdde500955b0d5b807cb1a66687b915a020c3e87496623243912c77bed",
-            .lazy = true,
+            // Can't use lazy here because tuile-crossterm uses it eagerly
+            // .lazy = true,
         },
         .@"tuile-crossterm" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/archive/refs/tags/v0.1.2.tar.gz",

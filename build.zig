@@ -44,11 +44,7 @@ pub fn build(b: *std.Build) void {
             lib_unit_tests.linkSystemLibrary("ncurses");
         },
         .crossterm => {
-            const build_crab_opt = b.lazyImport(@This(), "build.crab");
-            if (build_crab_opt == null) {
-                return;
-            }
-            const build_crab = build_crab_opt.?;
+            const build_crab = @import("build.crab");
             var crossterm_lib_path: std.Build.LazyPath = undefined;
 
             if (user_options.prebuilt) {
@@ -62,11 +58,11 @@ pub fn build(b: *std.Build) void {
                 const prebuilt = prebuilt_opt.?;
                 crossterm_lib_path = prebuilt.path("libtuile_crossterm.a");
             } else {
-                std.log.info("Building crossterm backend from source", .{});
                 const tuile_crossterm_opt = b.lazyDependency("tuile-crossterm", .{});
                 if (tuile_crossterm_opt == null) {
                     return;
                 }
+                std.log.info("Building crossterm backend from source", .{});
                 const tuile_crossterm = tuile_crossterm_opt.?;
                 crossterm_lib_path = build_crab.addRustStaticlibWithUserOptions(
                     b,

@@ -38,6 +38,10 @@
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.1/libtuile_crossterm-x86_64-unknown-linux-gnu.tar.gz",
             .hash = "12203b342eb4f61aa0e03a95dffd3ae14e31ea1200285ac8e23b813aa6b80faf0243",
         },
+        .zg = .{
+            .url = "https://codeberg.org/dude_the_builder/zg/archive/c425c9c8511bf92e14b8b612d1d16e774b186f2e.tar.gz",
+            .hash = "1220c79009f1e443b015db4de6e5319432538ead2fea10d271f3f35d3ae83c996789",
+        },
     },
     .minimum_zig_version = "0.12.0",
     .paths = .{

@@ -10,6 +10,8 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
+const DisplayWidth = @import("DisplayWidth");
+const grapheme = @import("grapheme");
 
 pub const Config = struct {
     /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
@@ -42,7 +44,9 @@ focus_handler: FocusHandler = .{},
 
 layout_properties: LayoutProperties,
 
-cursor: u32 = 0,
+graphemes: std.ArrayListUnmanaged(grapheme.Grapheme),
+
+grapheme_cursor: u32 = 0,
 
 view_start: usize = 0,
 
@@ -54,12 +58,15 @@ pub fn create(config: Config) !*Input {
         .placeholder = try internal.allocator.dupe(u8, config.placeholder),
         .value = std.ArrayListUnmanaged(u8){},
         .layout_properties = config.layout,
+        .graphemes = std.ArrayListUnmanaged(grapheme.Grapheme){},
     };
+    try self.graphemes.append(internal.allocator, grapheme.Grapheme{ .offset = 0, .len = 0 });
     return self;
 }
 
 pub fn destroy(self: *Input) void {
     self.widget_base.deinit();
+    self.graphemes.deinit(internal.allocator);
     self.value.deinit(internal.allocator);
     internal.allocator.free(self.placeholder);
     internal.allocator.destroy(self);
@@ -78,7 +85,12 @@ pub fn setValue(self: *Input, value: []const u8) !void {
     self.value.deinit(internal.allocator);
     self.value = std.ArrayListUnmanaged(u8){};
     try self.value.appendSlice(internal.allocator, value);
-    self.cursor = value.len;
+    try self.rebuildGraphemes(0);
+    self.grapheme_cursor = @intCast(self.graphemes.items.len -| 1);
+}
+
+fn cursor(self: Input) usize {
+    return self.graphemes.items[self.grapheme_cursor].offset;
 }
 
 pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !void {
@@ -96,8 +108,10 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
     _ = try frame.writeSymbols(area.min, visible, area.width());
 
     if (self.focus_handler.focused) {
+        const dw = DisplayWidth{ .data = &internal.dwd };
+
         var cursor_pos = area.min;
-        cursor_pos.x += @intCast(self.cursor - self.view_start);
+        cursor_pos.x += @intCast(dw.strWidth(text_to_render[self.view_start..self.cursor()]));
         if (cursor_pos.x >= area.max.x) {
             cursor_pos.x = area.max.x - 1;
         }
@@ -112,20 +126,29 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
 }
 
 pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
-    if (self.cursor < self.view_start) {
-        self.view_start = self.cursor;
+    const dw = DisplayWidth{ .data = &internal.dwd };
+    if (self.cursor() < self.view_start) {
+        self.view_start = self.cursor();
     } else {
-        // +1 is for the cursor itself
         const max_width = std.math.clamp(self.layout_properties.max_width, constraints.min_width, constraints.max_width);
-        const visible = self.cursor - self.view_start + 1;
+        // +1 is for the cursor itself
+        const visible_text = self.currentText()[self.view_start..self.cursor()];
+        var visible = dw.strWidth(visible_text) + 1;
         if (visible > max_width) {
-            self.view_start += visible - max_width;
+            var iter = grapheme.Iterator.init(visible_text, &internal.gd);
+            while (iter.next()) |gc| {
+                self.view_start += gc.len;
+                visible -= 1;
+                if (visible <= max_width) {
+                    break;
+                }
+            }
         }
     }
 
     const visible = self.visibleText();
     // +1 for the cursor
-    const len = try std.unicode.utf8CountCodepoints(visible) + 1;
+    const len = dw.strWidth(visible) + 1;
 
     var size = Vec2{
         .x = @intCast(len),
@@ -146,26 +169,51 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
     switch (event) {
         .key, .shift_key => |key| switch (key) {
             .Left => {
-                self.cursor -|= 1;
+                if (self.grapheme_cursor > 0) {
+                    self.grapheme_cursor -= 1;
+                }
                 return .consumed;
             },
             .Right => {
-                if (self.cursor < self.value.items.len) {
-                    self.cursor += 1;
+                if (self.grapheme_cursor + 1 < self.graphemes.items.len) {
+                    self.grapheme_cursor += 1;
                 }
                 return .consumed;
             },
             .Backspace => {
-                if (self.cursor > 0) {
-                    _ = self.value.orderedRemove(self.cursor - 1);
+                if (self.grapheme_cursor > 0) {
+                    // Delete by code points é -> e
+                    const target_idx = self.grapheme_cursor - 1;
+                    const target = self.graphemes.items[target_idx];
+                    var cp_cursor = target.offset + target.len - 1;
+                    while (cp_cursor >= target.offset) {
+                        if (std.unicode.utf8ValidateSlice(self.value.items[cp_cursor .. target.offset + target.len])) {
+                            break;
+                        }
+                        cp_cursor -= 1;
+                    }
+                    const dl: u8 = target.len - @as(u8, @intCast(cp_cursor - target.offset));
+                    self.graphemes.items[target_idx].len -= dl;
+                    self.value.replaceRangeAssumeCapacity(cp_cursor, dl, &.{});
+                    for (self.grapheme_cursor..self.graphemes.items.len) |i| {
+                        self.graphemes.items[i].offset -= dl;
+                    }
+                    if (self.graphemes.items[target_idx].len == 0) {
+                        _ = self.graphemes.orderedRemove(target_idx);
+                        self.grapheme_cursor -= 1;
+                    }
                     if (self.on_value_changed) |cb| cb.call(self.value.items);
                 }
-                self.cursor -|= 1;
                 return .consumed;
             },
             .Delete => {
-                if (self.cursor < self.value.items.len) {
-                    _ = self.value.orderedRemove(self.cursor);
+                if (self.grapheme_cursor < self.graphemes.items.len - 1) {
+                    const gr = self.graphemes.items[self.grapheme_cursor];
+                    self.value.replaceRangeAssumeCapacity(gr.offset, gr.len, &.{});
+                    _ = self.graphemes.orderedRemove(self.grapheme_cursor);
+                    for (self.grapheme_cursor..self.graphemes.items.len) |i| {
+                        self.graphemes.items[i].offset -= gr.len;
+                    }
                     if (self.on_value_changed) |cb| cb.call(self.value.items);
                 }
                 return .consumed;
@@ -174,14 +222,42 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
         },
 
         .char => |char| {
-            try self.value.insert(internal.allocator, self.cursor, char);
+            var cp = std.mem.zeroes([4]u8);
+            const cp_len = try std.unicode.utf8Encode(char, &cp);
+            try self.value.insertSlice(internal.allocator, self.cursor(), cp[0..cp_len]);
+            // TODO: Optimize
+            try self.rebuildGraphemes(self.graphemes.items[self.grapheme_cursor].offset + cp_len);
+
             if (self.on_value_changed) |cb| cb.call(self.value.items);
-            self.cursor += 1;
             return .consumed;
         },
         else => {},
     }
     return .ignored;
+}
+
+fn rebuildGraphemes(self: *Input, byte_cursor_position: u32) !void {
+    // const cursor_offset = self.graphemes.items[self.grapheme_cursor].offset;
+    self.graphemes.deinit(internal.allocator);
+    self.graphemes = std.ArrayListUnmanaged(grapheme.Grapheme){};
+    var iter = grapheme.Iterator.init(self.value.items, &internal.gd);
+    while (iter.next()) |gc| {
+        try self.graphemes.append(internal.allocator, gc);
+    }
+
+    try self.graphemes.append(internal.allocator, grapheme.Grapheme{
+        .offset = if (self.graphemes.getLastOrNull()) |last| last.offset + last.len else 0,
+        .len = 0,
+    });
+
+    self.grapheme_cursor = 0;
+    for (self.graphemes.items, 0..) |gc, i| {
+        if (gc.offset <= byte_cursor_position) {
+            self.grapheme_cursor = @intCast(i);
+        } else {
+            break;
+        }
+    }
 }
 
 fn currentText(self: *Input) []const u8 {

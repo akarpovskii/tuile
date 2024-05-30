@@ -29,6 +29,12 @@ pub fn build(b: *std.Build) void {
     module.addOptions("build_options", module_options);
     lib_unit_tests.root_module.addOptions("build_options", module_options);
 
+    const zg = b.dependency("zg", .{});
+    module.addImport("grapheme", zg.module("grapheme"));
+    module.addImport("DisplayWidth", zg.module("DisplayWidth"));
+    lib_unit_tests.root_module.addImport("grapheme", zg.module("grapheme"));
+    lib_unit_tests.root_module.addImport("DisplayWidth", zg.module("DisplayWidth"));
+
     switch (user_options.backend) {
         .ncurses => {
             module.link_libc = true;

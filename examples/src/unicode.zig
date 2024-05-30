@@ -108,9 +108,6 @@ pub fn main() !void {
                 .{},
                 .{
                     tuile.label(.{ .text = "Unicode bytes (hex): " }),
-                    // \xf0\x9f\x91\xa9\xf0\x9f\x8f\xbd
-                    tuile.label(.{ .text = "\xf0\x9f\x91\xa9" }),
-                    tuile.label(.{ .text = "\xf0\x9f\x8f\xbd" }),
                     tuile.input(.{
                         .id = "bytes-input",
                         .layout = .{ .flex = 1 },

@@ -44,18 +44,30 @@ pub fn build(b: *std.Build) void {
             lib_unit_tests.linkSystemLibrary("ncurses");
         },
         .crossterm => {
-            const build_crab = @import("build.crab");
+            const build_crab_opt = b.lazyImport(@This(), "build.crab");
+            if (build_crab_opt == null) {
+                return;
+            }
+            const build_crab = build_crab_opt.?;
             var crossterm_lib_path: std.Build.LazyPath = undefined;
 
             if (user_options.prebuilt) {
                 const rust_target = build_crab.Target.fromZig(target.result) catch @panic("unable to convert target triple to Rust");
-                std.log.info("Using prebuilt crossterm backend for target {}", .{rust_target});
                 const prebuilt_name = b.fmt("tuile-crossterm-{}", .{rust_target});
-                const prebuilt = b.dependency(prebuilt_name, .{});
+                const prebuilt_opt = b.lazyDependency(prebuilt_name, .{});
+                if (prebuilt_opt == null) {
+                    return;
+                }
+                std.log.info("Using prebuilt crossterm backend for target {}", .{rust_target});
+                const prebuilt = prebuilt_opt.?;
                 crossterm_lib_path = prebuilt.path("libtuile_crossterm.a");
             } else {
                 std.log.info("Building crossterm backend from source", .{});
-                const tuile_crossterm = b.dependency("tuile-crossterm", .{});
+                const tuile_crossterm_opt = b.lazyDependency("tuile-crossterm", .{});
+                if (tuile_crossterm_opt == null) {
+                    return;
+                }
+                const tuile_crossterm = tuile_crossterm_opt.?;
                 crossterm_lib_path = build_crab.addRustStaticlibWithUserOptions(
                     b,
                     .{

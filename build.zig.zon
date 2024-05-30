@@ -5,38 +5,47 @@
         .@"build.crab" = .{
             .url = "https://github.com/akarpovskii/build.crab/archive/refs/tags/v0.1.5.tar.gz",
             .hash = "1220c7d071bdde500955b0d5b807cb1a66687b915a020c3e87496623243912c77bed",
+            .lazy = true,
         },
         .@"tuile-crossterm" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/archive/refs/tags/v0.1.2.tar.gz",
             .hash = "1220c4f186584561dadbeb41a890d9561c9714e7154d501e7e05687215cc6e5559a0",
+            .lazy = true,
         },
         .@"tuile-crossterm-aarch64-apple-darwin" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.2/libtuile_crossterm-aarch64-apple-darwin.tar.gz",
             .hash = "122038ab872234e9a5dc3c8896cb5c54f0923659c6988a4f8ab31a914f069fc61d70",
+            .lazy = true,
         },
         .@"tuile-crossterm-aarch64-unknown-linux-gnu" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.2/libtuile_crossterm-aarch64-unknown-linux-gnu.tar.gz",
             .hash = "1220cfa5811c6a89d8346bd562bd30af290bb67f5b4609530f171ad5b29d0ef22475",
+            .lazy = true,
         },
         .@"tuile-crossterm-i686-pc-windows-gnu" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.2/libtuile_crossterm-i686-pc-windows-gnu.tar.gz",
             .hash = "12204e376590d977b483919dedfbaf17bd884ea35ecc55d3486b02703627887752d2",
+            .lazy = true,
         },
         .@"tuile-crossterm-i686-unknown-linux-gnu" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.2/libtuile_crossterm-i686-unknown-linux-gnu.tar.gz",
             .hash = "1220825aa02bc63ed943a05a2ab92d8e08a1827079a3bbdce74d3fc15374c8be34fa",
+            .lazy = true,
         },
         .@"tuile-crossterm-x86_64-apple-darwin" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.2/libtuile_crossterm-x86_64-apple-darwin.tar.gz",
             .hash = "12201d8ca2a7ea2c2bdfc46ad2d950648707336a352ca81c396283de6793daa8b003",
+            .lazy = true,
         },
         .@"tuile-crossterm-x86_64-pc-windows-gnu" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.2/libtuile_crossterm-x86_64-pc-windows-gnu.tar.gz",
             .hash = "1220a98f1d4195ad5a2594bce385ba49a002a68b469e857f4a5cbdef52da04ae5593",
+            .lazy = true,
         },
         .@"tuile-crossterm-x86_64-unknown-linux-gnu" = .{
             .url = "https://github.com/akarpovskii/tuile-crossterm/releases/download/v0.1.2/libtuile_crossterm-x86_64-unknown-linux-gnu.tar.gz",
             .hash = "12203b342eb4f61aa0e03a95dffd3ae14e31ea1200285ac8e23b813aa6b80faf0243",
+            .lazy = true,
         },
         .zg = .{
             .url = "https://codeberg.org/dude_the_builder/zg/archive/c425c9c8511bf92e14b8b612d1d16e774b186f2e.tar.gz",

@@ -117,6 +117,8 @@ pub fn render(self: Frame, backend: Backend) !void {
                 if (!std.meta.eql(lcolor.fg, cell.fg) or !std.meta.eql(lcolor.bg, cell.bg)) {
                     try backend.useColor(.{ .fg = cell.fg, .bg = cell.bg });
                 }
+            } else {
+                try backend.useColor(.{ .fg = cell.fg, .bg = cell.bg });
             }
             last_color = .{ .fg = cell.fg, .bg = cell.bg };
 

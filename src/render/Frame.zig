@@ -89,14 +89,39 @@ pub fn writeSymbols(self: Frame, start: Vec2, bytes: []const u8, max: ?usize) !u
 
 pub fn render(self: Frame, backend: Backend) !void {
     const dw = DisplayWidth{ .data = &internal.dwd };
+    var last_effect = display.Style.Effect{};
+    var last_color: ?display.ColorPair = null;
+
     for (0..self.size.y) |y| {
         // For the characters taking more than 1 column like の
         var overflow: usize = 0;
         for (0..self.size.x) |x| {
             const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
             const cell = self.at(pos);
-            try backend.enableEffect(cell.effect);
-            try backend.useColor(.{ .fg = cell.fg, .bg = cell.bg });
+            const none = display.Style.Effect{};
+
+            // Effects that are true in last, but false in cell
+            const disable = last_effect.sub(cell.effect);
+            if (!std.meta.eql(disable, none)) {
+                try backend.disableEffect(disable);
+            }
+
+            // Effects that are true in cell, but false in last
+            const enable = cell.effect.sub(last_effect);
+            if (!std.meta.eql(enable, none)) {
+                try backend.enableEffect(enable);
+            }
+            last_effect = cell.effect;
+
+            if (last_color) |lcolor| {
+                if (!std.meta.eql(lcolor.fg, cell.fg) or !std.meta.eql(lcolor.bg, cell.bg)) {
+                    try backend.useColor(.{ .fg = cell.fg, .bg = cell.bg });
+                }
+            } else {
+                try backend.useColor(.{ .fg = cell.fg, .bg = cell.bg });
+            }
+            last_color = .{ .fg = cell.fg, .bg = cell.bg };
+
             if (cell.symbol) |symbol| {
                 try backend.printAt(pos, symbol);
                 const width = dw.strWidth(symbol);
@@ -110,7 +135,6 @@ pub fn render(self: Frame, backend: Backend) !void {
                     try backend.printAt(pos, " ");
                 }
             }
-            try backend.disableEffect(cell.effect);
         }
     }
     try backend.refresh();

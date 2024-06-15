@@ -9,8 +9,6 @@ pub const widgets = @import("widgets.zig");
 pub usingnamespace widgets;
 pub const display = @import("display.zig");
 pub usingnamespace display;
-const grapheme = @import("grapheme");
-const DisplayWidth = @import("DisplayWidth");
 pub const text_clustering = @import("text_clustering.zig");
 
 const Task = widgets.Callback(void);

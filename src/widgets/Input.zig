@@ -10,8 +10,11 @@ const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display.zig");
 const callbacks = @import("callbacks.zig");
-const DisplayWidth = @import("DisplayWidth");
-const grapheme = @import("grapheme");
+const text_clustering = @import("../text_clustering.zig");
+const TextCluster = text_clustering.TextCluster;
+const stringDisplayWidth = text_clustering.stringDisplayWidth;
+const ClusterIterator = text_clustering.ClusterIterator;
+const GraphemeClusterIterator = text_clustering.GraphemeClusterIterator;
 
 pub const Config = struct {
     /// A unique identifier of the widget to be used in `Tuile.findById` and `Widget.findById`.
@@ -44,7 +47,7 @@ focus_handler: FocusHandler = .{},
 
 layout_properties: LayoutProperties,
 
-graphemes: std.ArrayListUnmanaged(grapheme.Grapheme),
+graphemes: std.ArrayListUnmanaged(TextCluster),
 
 grapheme_cursor: u32 = 0,
 
@@ -58,9 +61,9 @@ pub fn create(config: Config) !*Input {
         .placeholder = try internal.allocator.dupe(u8, config.placeholder),
         .value = std.ArrayListUnmanaged(u8){},
         .layout_properties = config.layout,
-        .graphemes = std.ArrayListUnmanaged(grapheme.Grapheme){},
+        .graphemes = std.ArrayListUnmanaged(TextCluster){},
     };
-    try self.graphemes.append(internal.allocator, grapheme.Grapheme{ .offset = 0, .len = 0 });
+    try self.graphemes.append(internal.allocator, TextCluster{ .offset = 0, .len = 0, .display_width = 0 });
     return self;
 }
 
@@ -103,15 +106,15 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
     const render_placeholder = self.value.items.len == 0;
     if (render_placeholder) frame.setStyle(area, .{ .fg = theme.text_secondary });
 
-    const text_to_render = self.currentText();
-    const visible = text_to_render[self.view_start..];
-    _ = try frame.writeSymbols(area.min, visible, area.width());
+    _ = try frame.writeSymbols(area.min, self.visibleText(), area.width());
 
     if (self.focus_handler.focused) {
-        const dw = DisplayWidth{ .data = &internal.dwd };
-
         var cursor_pos = area.min;
-        cursor_pos.x += @intCast(dw.strWidth(text_to_render[self.view_start..self.cursor()]));
+        const current_text = self.currentText();
+        cursor_pos.x += @intCast(try stringDisplayWidth(
+            current_text[self.view_start..self.cursor()],
+            internal.text_clustering_type,
+        ));
         if (cursor_pos.x >= area.max.x) {
             cursor_pos.x = area.max.x - 1;
         }
@@ -126,18 +129,17 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
 }
 
 pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
-    const dw = DisplayWidth{ .data = &internal.dwd };
     if (self.cursor() < self.view_start) {
         self.view_start = self.cursor();
     } else {
         const max_width = std.math.clamp(self.layout_properties.max_width, constraints.min_width, constraints.max_width);
         // +1 is for the cursor itself
         const visible_text = self.currentText()[self.view_start..self.cursor()];
-        var visible = dw.strWidth(visible_text) + 1;
+        var visible = try stringDisplayWidth(visible_text, internal.text_clustering_type) + 1;
         if (visible > max_width) {
-            var iter = grapheme.Iterator.init(visible_text, &internal.gd);
-            while (iter.next()) |gc| {
-                self.view_start += gc.len;
+            var iter = try ClusterIterator.init(internal.text_clustering_type, visible_text);
+            while (iter.next()) |cluster| {
+                self.view_start += cluster.len;
                 visible -= 1;
                 if (visible <= max_width) {
                     break;
@@ -148,7 +150,7 @@ pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
 
     const visible = self.visibleText();
     // +1 for the cursor
-    const len = dw.strWidth(visible) + 1;
+    const len = try stringDisplayWidth(visible, internal.text_clustering_type) + 1;
 
     var size = Vec2{
         .x = @intCast(len),
@@ -236,18 +238,19 @@ pub fn handleEvent(self: *Input, event: events.Event) !events.EventResult {
     return .ignored;
 }
 
-fn rebuildGraphemes(self: *Input, byte_cursor_position: u32) !void {
+fn rebuildGraphemes(self: *Input, byte_cursor_position: usize) !void {
     // const cursor_offset = self.graphemes.items[self.grapheme_cursor].offset;
     self.graphemes.deinit(internal.allocator);
-    self.graphemes = std.ArrayListUnmanaged(grapheme.Grapheme){};
-    var iter = grapheme.Iterator.init(self.value.items, &internal.gd);
+    self.graphemes = std.ArrayListUnmanaged(TextCluster){};
+    var iter = try GraphemeClusterIterator.init(self.value.items);
     while (iter.next()) |gc| {
         try self.graphemes.append(internal.allocator, gc);
     }
 
-    try self.graphemes.append(internal.allocator, grapheme.Grapheme{
+    try self.graphemes.append(internal.allocator, TextCluster{
         .offset = if (self.graphemes.getLastOrNull()) |last| last.offset + last.len else 0,
         .len = 0,
+        .display_width = 0,
     });
 
     self.grapheme_cursor = 0;

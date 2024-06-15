@@ -8,7 +8,8 @@ const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
 const display = @import("../display.zig");
-const DisplayWidth = @import("DisplayWidth");
+const text_clustering = @import("../text_clustering.zig");
+const stringDisplayWidth = text_clustering.stringDisplayWidth;
 
 const PartialChunk = struct {
     orig: usize,
@@ -117,13 +118,12 @@ pub fn render(self: *Label, area: Rect, frame: Frame, _: display.Theme) !void {
 pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
     try self.wrapText(constraints);
 
-    const dw = DisplayWidth{ .data = &internal.dwd };
     var max_len: usize = 0;
     for (self.rows.items) |row| {
         var len: usize = 0;
         for (row.chunks.items) |chunk| {
             const text = self.content.getTextForChunk(chunk.orig)[chunk.start..chunk.end];
-            len += dw.strWidth(text);
+            len += try stringDisplayWidth(text, internal.text_clustering_type);
         }
         max_len = @max(max_len, len);
     }

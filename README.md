@@ -90,7 +90,7 @@ Checkout the other examples [here](./examples/).
 1. Add dependency to your `build.zig.zon`
 
 ```sh
-zig fetch --save https://github.com/akarpovskii/tuile/archive/refs/tags/v0.1.2.tar.gz
+zig fetch --save https://github.com/akarpovskii/tuile/archive/refs/tags/v0.1.3.tar.gz
 ```
 
 2. Import Tuile in `build.zig`:
@@ -162,8 +162,6 @@ In no particular order:
 - [ ] Windows and dialogs
 - [ ] Menu bar
 - [ ] More widgets
-- [ ] Other backends
-- [ ] Unicode support
 
 See the [open issues][issues-url] for a full list of proposed features (and known issues).
 

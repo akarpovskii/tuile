@@ -25,6 +25,7 @@ pub fn create(window_size: Vec2) !*Testing {
             .min = Vec2.zero(),
             .max = window_size,
         },
+        .grapheme_clustering = false,
     };
     frame.clear(display.color("black"), display.color("white"));
 
@@ -80,4 +81,8 @@ pub fn write(self: *Testing, writer: anytype) !void {
         }
         try writer.writeByte('\n');
     }
+}
+
+pub fn requestMode(_: *Testing, _: u32) !Backend.ReportMode {
+    return .not_recognized;
 }

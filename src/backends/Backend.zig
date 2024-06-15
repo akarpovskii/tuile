@@ -2,6 +2,8 @@ const std = @import("std");
 const Vec2 = @import("../Vec2.zig");
 const events = @import("../events.zig");
 const display = @import("../display.zig");
+const internal = @import("../internal.zig");
+const builtin = @import("builtin");
 
 const Backend = @This();
 
@@ -17,6 +19,7 @@ pub const VTable = struct {
     enable_effect: *const fn (context: *anyopaque, effect: display.Style.Effect) anyerror!void,
     disable_effect: *const fn (context: *anyopaque, effect: display.Style.Effect) anyerror!void,
     use_color: *const fn (context: *anyopaque, color: display.ColorPair) anyerror!void,
+    request_mode: *const fn (context: *anyopaque, mode: u32) anyerror!ReportMode,
 };
 
 pub fn init(context: anytype) Backend {
@@ -63,6 +66,11 @@ pub fn init(context: anytype) Backend {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.useColor(self, color);
         }
+
+        pub fn requestMode(pointer: *anyopaque, mode: u32) !ReportMode {
+            const self: T = @ptrCast(@alignCast(pointer));
+            return ptr_info.Pointer.child.requestMode(self, mode);
+        }
     };
 
     return Backend{
@@ -76,6 +84,7 @@ pub fn init(context: anytype) Backend {
             .enable_effect = vtable.enableEffect,
             .disable_effect = vtable.disableEffect,
             .use_color = vtable.useColor,
+            .request_mode = vtable.requestMode,
         },
     };
 }
@@ -110,4 +119,28 @@ pub fn disableEffect(self: Backend, effect: display.Style.Effect) anyerror!void 
 
 pub fn useColor(self: Backend, color: display.ColorPair) anyerror!void {
     return self.vtable.use_color(self.context, color);
+}
+
+pub fn requestMode(self: Backend, mode: u32) !ReportMode {
+    return self.vtable.request_mode(self.context, mode);
+}
+
+pub const ReportMode = enum {
+    not_recognized,
+    set,
+    reset,
+};
+
+pub fn requestModeTty(mode: u32) !ReportMode {
+    if (builtin.os.tag == .windows) {
+        return .not_recognized;
+    } else {
+        const tty = @import("tty.zig");
+        const response = try tty.requestMode(internal.allocator, mode);
+        return switch (response) {
+            .not_recognized => .not_recognized,
+            .set, .permanently_set => .set,
+            .reset, .permanently_reset => .reset,
+        };
+    }
 }

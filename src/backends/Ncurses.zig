@@ -235,3 +235,7 @@ fn colorToInt(color: display.Color) c_short {
 
     return @intCast(res);
 }
+
+pub fn requestMode(_: *Ncurses, mode: u32) !Backend.ReportMode {
+    return Backend.requestModeTty(mode);
+}

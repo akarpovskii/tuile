@@ -227,3 +227,7 @@ fn convertEvent(rust_key: RustKey) ?events.Event {
     }
     return char_or_key;
 }
+
+pub fn requestMode(_: *Crossterm, mode: u32) !Backend.ReportMode {
+    return Backend.requestModeTty(mode);
+}

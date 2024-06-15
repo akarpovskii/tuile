@@ -85,6 +85,8 @@ pub fn render(self: Frame, backend: Backend) !void {
     var last_effect = display.Style.Effect{};
     var last_color: ?display.ColorPair = null;
 
+    try backend.disableEffect(display.Style.Effect.all());
+
     for (0..self.size.y) |y| {
         // For the characters taking more than 1 column like の
         var overflow: usize = 0;

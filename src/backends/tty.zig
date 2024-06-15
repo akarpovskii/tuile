@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 comptime {
-    if (builtin.os.tag) {
+    if (builtin.os.tag == .windows) {
         @compileError("tty is not supported on Windows");
     }
 }

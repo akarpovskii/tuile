@@ -9,14 +9,14 @@ pub const widgets = @import("widgets.zig");
 pub usingnamespace widgets;
 pub const display = @import("display.zig");
 pub usingnamespace display;
-const grapheme = @import("grapheme");
-const DisplayWidth = @import("DisplayWidth");
+pub const text_clustering = @import("text_clustering.zig");
 
 const Task = widgets.Callback(void);
 
 // Make it user-driven?
 const FRAMES_PER_SECOND = 30;
 const FRAME_TIME_NS = std.time.ns_per_s / FRAMES_PER_SECOND;
+const GRAPHEME_CLUSTERING_MODE = 2027; // https://mitchellh.com/writing/grapheme-clusters-in-terminals
 
 pub const EventHandler = struct {
     handler: *const fn (payload: ?*anyopaque, event: events.Event) anyerror!events.EventResult,
@@ -54,10 +54,16 @@ pub const Tuile = struct {
     task_queue_mutex: std.Thread.Mutex,
 
     pub fn init(config: Config) !Tuile {
-        try internal.init();
+        const backend = if (config.backend) |backend| backend else try backends.createBackend();
+        errdefer backend.destroy();
+        const text_clustering_type: text_clustering.ClusteringType =
+            switch (try backend.requestMode(GRAPHEME_CLUSTERING_MODE)) {
+            .not_recognized, .reset => .codepoints,
+            .set => .graphemes,
+        };
+
+        try internal.init(text_clustering_type);
         var self = blk: {
-            const backend = if (config.backend) |backend| backend else try backends.createBackend();
-            errdefer backend.destroy();
             const root = try widgets.StackLayout.create(.{ .orientation = .vertical }, .{});
             errdefer root.destroy();
 

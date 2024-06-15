@@ -24,6 +24,18 @@ pub const Effect = struct {
     bold: bool = false,
     italic: bool = false,
 
+    pub fn all() Effect {
+        return Effect{
+            .highlight = true,
+            .underline = true,
+            .reverse = true,
+            .blink = true,
+            .dim = true,
+            .bold = true,
+            .italic = true,
+        };
+    }
+
     /// Enables the effects in `self` that are enabled in `other`.
     /// This is effectively a `self or other` operation.
     pub fn add(self: Effect, other: Effect) Effect {

@@ -81,3 +81,7 @@ pub fn write(self: *Testing, writer: anytype) !void {
         try writer.writeByte('\n');
     }
 }
+
+pub fn requestMode(_: *Testing, _: u32) !Backend.ReportMode {
+    return .not_recognized;
+}

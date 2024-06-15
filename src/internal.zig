@@ -3,6 +3,7 @@ const builtin = @import("builtin");
 const root = @import("root");
 const grapheme = @import("grapheme");
 const DisplayWidth = @import("DisplayWidth");
+const text_clustering = @import("text_clustering.zig");
 
 const default_allocator = blk: {
     if (@hasDecl(root, "tuile_allocator")) {
@@ -20,10 +21,12 @@ pub const allocator = default_allocator;
 
 pub var gd: grapheme.GraphemeData = undefined;
 pub var dwd: DisplayWidth.DisplayWidthData = undefined;
+pub var text_clustering_type: text_clustering.ClusteringType = undefined;
 
-pub fn init() !void {
+pub fn init(clustering: text_clustering.ClusteringType) !void {
     gd = try grapheme.GraphemeData.init(allocator);
     dwd = try DisplayWidth.DisplayWidthData.init(allocator);
+    text_clustering_type = clustering;
 }
 
 pub fn deinit() void {

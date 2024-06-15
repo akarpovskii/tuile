@@ -6,6 +6,7 @@ comptime {
     _ = @import("widgets/callbacks.zig");
     _ = @import("display/span.zig");
     _ = @import("display/colors.zig");
+    _ = @import("text_clustering.zig");
 }
 
 test {

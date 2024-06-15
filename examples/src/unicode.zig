@@ -43,7 +43,7 @@ const UnicodeTable = struct {
 const UnicodeBytes = struct {
     tui: *tuile.Tuile,
 
-    pub fn inputChanged(self_opt: ?*UnicodeTable, value: []const u8) void {
+    pub fn inputChanged(self_opt: ?*UnicodeBytes, value: []const u8) void {
         const self = self_opt.?;
         if (value.len > 0) {
             const label = self.tui.findByIdTyped(tuile.Label, "unicode-bytes") orelse unreachable;
@@ -123,9 +123,17 @@ pub fn main() !void {
 
     try tui.add(layout);
 
-    const input = tui.findByIdTyped(tuile.Input, "start-input") orelse unreachable;
-    try input.setValue("1F300");
-    UnicodeTable.inputChanged(&unicode_table, "1F300");
+    {
+        const input = tui.findByIdTyped(tuile.Input, "start-input") orelse unreachable;
+        try input.setValue("1F300");
+        UnicodeTable.inputChanged(&unicode_table, "1F300");
+    }
+
+    {
+        const input = tui.findByIdTyped(tuile.Input, "bytes-input") orelse unreachable;
+        try input.setValue("0xF0 0x9F 0x91 0x8D 0xF0 0x9F 0x8F 0xBD");
+        UnicodeBytes.inputChanged(&unicode_bytes, "0xF0 0x9F 0x91 0x8D 0xF0 0x9F 0x8F 0xBD");
+    }
 
     try tui.run();
 }

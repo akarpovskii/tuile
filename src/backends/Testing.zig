@@ -25,7 +25,6 @@ pub fn create(window_size: Vec2) !*Testing {
             .min = Vec2.zero(),
             .max = window_size,
         },
-        .grapheme_clustering = false,
     };
     frame.clear(display.color("black"), display.color("white"));
 

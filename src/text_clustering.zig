@@ -118,32 +118,34 @@ pub fn stringDisplayWidth(bytes: []const u8, clustering: ClusteringType) !usize 
 }
 
 test "codepoints cluster iterator" {
-    try internal.init();
+    try internal.init(.codepoints);
     defer internal.deinit();
-    var iter = try ClusterIterator.init(.codepoints, "\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD");
+    const str = "\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD";
+    var iter = try ClusterIterator.init(.codepoints, str);
     const cp1 = iter.next();
     try std.testing.expect(cp1 != null);
-    try std.testing.expectEqualStrings(cp1.?.bytes, "\xF0\x9F\x91\x8D");
+    try std.testing.expectEqualStrings(cp1.?.bytes(str), "\xF0\x9F\x91\x8D");
 
     const cp2 = iter.next();
     try std.testing.expect(cp2 != null);
-    try std.testing.expectEqualStrings(cp2.?.bytes, "\xF0\x9F\x8F\xBD");
+    try std.testing.expectEqualStrings(cp2.?.bytes(str), "\xF0\x9F\x8F\xBD");
 }
 
 test "graphemes cluster iterator" {
-    try internal.init();
+    try internal.init(.codepoints);
     defer internal.deinit();
-    var iter = try ClusterIterator.init(.graphemes, "\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD");
+    const str = "\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD";
+    var iter = try ClusterIterator.init(.graphemes, str);
     const cp1 = iter.next();
     try std.testing.expect(cp1 != null);
-    try std.testing.expectEqualStrings(cp1.?.bytes, "\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD");
+    try std.testing.expectEqualStrings(cp1.?.bytes(str), str);
 
     const cp2 = iter.next();
     try std.testing.expect(cp2 == null);
 }
 
 test "string display width" {
-    try internal.init();
+    try internal.init(.codepoints);
     defer internal.deinit();
     try std.testing.expectEqual(4, try stringDisplayWidth("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD", .codepoints));
     try std.testing.expectEqual(2, try stringDisplayWidth("\xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD", .graphemes));

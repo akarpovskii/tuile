@@ -1,7 +1,7 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Backend = @import("Backend.zig");
-const Vec2 = @import("../Vec2.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
 const events = @import("../events.zig");
 const display = @import("../display.zig");
 const render = @import("../render.zig");
@@ -126,11 +126,11 @@ pub fn refresh(_: *Crossterm) !void {
     crossterm_refresh();
 }
 
-pub fn printAt(_: *Crossterm, pos: Vec2, text: []const u8) !void {
+pub fn printAt(_: *Crossterm, pos: Vec2u, text: []const u8) !void {
     crossterm_print_at(.{ .x = @intCast(pos.x), .y = @intCast(pos.y) }, text.ptr, @intCast(text.len));
 }
 
-pub fn windowSize(_: *Crossterm) !Vec2 {
+pub fn windowSize(_: *Crossterm) !Vec2u {
     const size = crossterm_window_size();
     return .{ .x = @intCast(size.x), .y = @intCast(size.y) };
 }

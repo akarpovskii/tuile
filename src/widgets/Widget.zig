@@ -1,6 +1,6 @@
 const std = @import("std");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
 const Constraints = @import("Constraints.zig");
@@ -44,12 +44,12 @@ const VTable = struct {
     /// * A parent might set `max_width` or `max_height` to std.math.maxInt(u32)
     ///   if it doesn't have anough information to align the child. In which case
     ///   the child should tell the parent a finite desired size.
-    layout: *const fn (context: *anyopaque, constraints: Constraints) anyerror!Vec2,
+    layout: *const fn (context: *anyopaque, constraints: Constraints) anyerror!Vec2u,
 
     /// Widgets must draw themselves inside of `area`. Writes outside of `area` are ignored.
     /// `theme` is the currently used theme which can be overridden by the `Themed` widget.
     /// `render` is guaranteed to be called after `layout`.
-    render: *const fn (context: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void,
+    render: *const fn (context: *anyopaque, area: Rect(i32), frame: Frame, theme: display.Theme) anyerror!void,
 
     /// If a widget returns .consumed, the event is considered fulfilled and is not propagated further.
     /// If a widget returns .ignored, the event is passed to the next widget in the tree.
@@ -142,14 +142,14 @@ pub fn constructVTable(comptime T: type) VTable {
             return T.destroy(self);
         }
 
-        pub fn render(pointer: *anyopaque, area: Rect, frame: Frame, theme: display.Theme) anyerror!void {
+        pub fn render(pointer: *anyopaque, area: Rect(i32), frame: Frame, theme: display.Theme) anyerror!void {
             std.debug.assert(area.max.x != std.math.maxInt(u32));
             std.debug.assert(area.max.y != std.math.maxInt(u32));
             const self: *T = @ptrCast(@alignCast(pointer));
             return T.render(self, area, frame, theme);
         }
 
-        pub fn layout(pointer: *anyopaque, constraints: Constraints) anyerror!Vec2 {
+        pub fn layout(pointer: *anyopaque, constraints: Constraints) anyerror!Vec2u {
             std.debug.assert(constraints.min_width <= constraints.max_width);
             std.debug.assert(constraints.min_height <= constraints.max_height);
             // std.debug.print("{any} - {any}\n", .{ *T, constraints });
@@ -219,11 +219,11 @@ pub inline fn destroy(self: Widget) void {
     return self.vtable.destroy(self.context);
 }
 
-pub inline fn render(self: Widget, area: Rect, frame: Frame, theme: display.Theme) !void {
+pub inline fn render(self: Widget, area: Rect(i32), frame: Frame, theme: display.Theme) !void {
     return self.vtable.render(self.context, area, frame, theme);
 }
 
-pub inline fn layout(self: Widget, constraints: Constraints) anyerror!Vec2 {
+pub inline fn layout(self: Widget, constraints: Constraints) anyerror!Vec2u {
     return try self.vtable.layout(self.context, constraints);
 }
 

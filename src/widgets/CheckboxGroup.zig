@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const StackLayout = @import("StackLayout.zig");
@@ -111,11 +111,11 @@ pub fn widget(self: *CheckboxGroup) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *CheckboxGroup, area: Rect, frame: Frame, theme: display.Theme) !void {
+pub fn render(self: *CheckboxGroup, area: Rect(i32), frame: Frame, theme: display.Theme) !void {
     try self.view.render(area, frame, theme);
 }
 
-pub fn layout(self: *CheckboxGroup, constraints: Constraints) !Vec2 {
+pub fn layout(self: *CheckboxGroup, constraints: Constraints) !Vec2u {
     return try self.view.layout(constraints);
 }
 

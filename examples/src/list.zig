@@ -11,7 +11,7 @@ pub fn main() !void {
             .{},
             &.{
                 .{
-                    .label = try tuile.label(.{ .text = "Item 1\nNew line" }),
+                    .label = try tuile.label(.{ .text = "Item 1\nNew line 1\nNew line 2" }),
                     .value = null,
                 },
                 .{

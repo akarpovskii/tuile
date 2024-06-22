@@ -1,7 +1,9 @@
 const std = @import("std");
 const Cell = @import("Cell.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const vec2 = @import("../vec2.zig");
+const Vec2u = vec2.Vec2u;
+const Vec2i = vec2.Vec2i;
+const Rect = @import("../rect.zig").Rect;
 const Backend = @import("../backends/Backend.zig");
 const display = @import("../display.zig");
 const internal = @import("../internal.zig");
@@ -13,17 +15,20 @@ const Frame = @This();
 buffer: []Cell,
 
 /// The size of the buffer.
-size: Vec2,
+total_area: Rect(i32),
 
 /// The area on which Frame is allowed to operate.
 /// Any writes outside of the area are ignored.
-area: Rect,
+area: Rect(i32),
 
-pub fn at(self: Frame, pos: Vec2) *Cell {
-    return &self.buffer[pos.y * self.size.x + pos.x];
+pub fn at(self: Frame, pos: Vec2i) *Cell {
+    return &self.buffer[
+        @intCast((pos.y - self.total_area.min.y) * self.total_area.width() +
+            (pos.x - self.total_area.min.x))
+    ];
 }
 
-fn inside(self: Frame, pos: Vec2) bool {
+fn inside(self: Frame, pos: Vec2i) bool {
     return self.area.min.x <= pos.x and pos.x < self.area.max.x and
         self.area.min.y <= pos.y and pos.y < self.area.max.y;
 }
@@ -37,18 +42,21 @@ pub fn clear(self: Frame, fg: display.Color, bg: display.Color) void {
     }
 }
 
-pub fn withArea(self: Frame, area: Rect) Frame {
+pub fn withArea(self: Frame, area: Rect(i32)) Frame {
     return Frame{
         .buffer = self.buffer,
-        .size = self.size,
+        .total_area = self.total_area,
         .area = self.area.intersect(area),
     };
 }
 
-pub fn setStyle(self: Frame, area: Rect, style: display.Style) void {
-    for (area.min.y..area.max.y) |y| {
-        for (area.min.x..area.max.x) |x| {
-            const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
+pub fn setStyle(self: Frame, area: Rect(i32), style: display.Style) void {
+    for (0..@intCast(area.height())) |dy| {
+        for (0..@intCast(area.width())) |dx| {
+            const pos = Vec2i{
+                .x = area.min.x + @as(i32, @intCast(dx)),
+                .y = area.min.y + @as(i32, @intCast(dy)),
+            };
             if (self.inside(pos)) {
                 self.at(pos).setStyle(style);
             }
@@ -56,14 +64,14 @@ pub fn setStyle(self: Frame, area: Rect, style: display.Style) void {
     }
 }
 
-pub fn setSymbol(self: Frame, pos: Vec2, symbol: []const u8) void {
+pub fn setSymbol(self: Frame, pos: Vec2i, symbol: []const u8) void {
     if (self.inside(pos)) {
         self.at(pos).symbol = symbol;
     }
 }
 
 // Decodes text as UTF-8, writes all code points separately and returns the number of 'characters' written
-pub fn writeSymbols(self: Frame, start: Vec2, bytes: []const u8, max: ?usize) !usize {
+pub fn writeSymbols(self: Frame, start: Vec2i, bytes: []const u8, max: ?usize) !usize {
     var iter = try text_clustering.ClusterIterator.init(internal.text_clustering_type, bytes);
     var limit = max orelse std.math.maxInt(usize);
     var written: usize = 0;
@@ -87,11 +95,19 @@ pub fn render(self: Frame, backend: Backend) !void {
 
     try backend.disableEffect(display.Style.Effect.all());
 
-    for (0..self.size.y) |y| {
+    for (0..@intCast(self.area.height())) |dy| {
+        // for (0..self.size.y) |y| {
         // For the characters taking more than 1 column like の
         var overflow: usize = 0;
-        for (0..self.size.x) |x| {
-            const pos = Vec2{ .x = @intCast(x), .y = @intCast(y) };
+        // for (0..self.size.x) |x| {
+        for (0..@intCast(self.area.width())) |dx| {
+            const pos = Vec2i{
+                .x = self.area.min.x + @as(i32, @intCast(dx)),
+                .y = self.area.min.y + @as(i32, @intCast(dy)),
+            };
+            if (pos.x < 0 or pos.y < 0) {
+                continue;
+            }
             const cell = self.at(pos);
             const none = display.Style.Effect{};
 
@@ -118,7 +134,7 @@ pub fn render(self: Frame, backend: Backend) !void {
             last_color = .{ .fg = cell.fg, .bg = cell.bg };
 
             if (cell.symbol) |symbol| {
-                try backend.printAt(pos, symbol);
+                try backend.printAt(pos.as(u32), symbol);
                 const width = try text_clustering.stringDisplayWidth(symbol, internal.text_clustering_type);
                 overflow = width -| 1;
             } else {
@@ -127,7 +143,7 @@ pub fn render(self: Frame, backend: Backend) !void {
                     overflow -= 1;
                 } else {
                     // Print whitespace to properly display the background
-                    try backend.printAt(pos, " ");
+                    try backend.printAt(pos.as(u32), " ");
                 }
             }
         }

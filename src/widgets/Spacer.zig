@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
@@ -53,11 +53,11 @@ pub fn widget(self: *Spacer) Widget {
     return Widget.init(self);
 }
 
-pub fn render(_: *Spacer, _: Rect, _: Frame, _: Theme) !void {}
+pub fn render(_: *Spacer, _: Rect(i32), _: Frame, _: Theme) !void {}
 
-pub fn layout(self: *Spacer, constraints: Constraints) !Vec2 {
+pub fn layout(self: *Spacer, constraints: Constraints) !Vec2u {
     const props = self.layout_properties;
-    const size = Vec2{
+    const size = Vec2u{
         .x = @min(props.max_width, constraints.max_width),
         .y = @min(props.max_height, constraints.max_height),
     };

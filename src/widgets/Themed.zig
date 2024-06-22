@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
@@ -94,7 +94,7 @@ pub fn updateTheme(self: *Themed, update: PartialTheme) void {
     }
 }
 
-pub fn render(self: *Themed, area: Rect, frame: Frame, theme: display.Theme) !void {
+pub fn render(self: *Themed, area: Rect(i32), frame: Frame, theme: display.Theme) !void {
     var new_theme = theme;
     inline for (@typeInfo(display.Theme).Struct.fields) |field| {
         const part = @field(self.theme, field.name);
@@ -108,7 +108,7 @@ pub fn render(self: *Themed, area: Rect, frame: Frame, theme: display.Theme) !vo
     return try self.inner.render(area, frame, new_theme);
 }
 
-pub fn layout(self: *Themed, constraints: Constraints) !Vec2 {
+pub fn layout(self: *Themed, constraints: Constraints) !Vec2u {
     return try self.inner.layout(constraints);
 }
 

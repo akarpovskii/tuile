@@ -1,4 +1,4 @@
-const Rect = @import("../Rect.zig");
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const display = @import("../display.zig");
@@ -23,7 +23,7 @@ pub fn handleEvent(self: *FocusHandler, event: events.Event) events.EventResult 
     }
 }
 
-pub fn render(self: *FocusHandler, area: Rect, frame: Frame, theme: display.Theme) void {
+pub fn render(self: *FocusHandler, area: Rect(i32), frame: Frame, theme: display.Theme) void {
     if (self.focused) {
         frame.setStyle(area, .{ .bg = theme.focused });
     }

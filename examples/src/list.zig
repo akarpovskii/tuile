@@ -6,28 +6,51 @@ pub fn main() !void {
     defer tui.deinit();
 
     const layout = tuile.block(
-        .{ .layout = .{ .max_height = 4 }, .border_type = .solid, .border = tuile.Border.all() },
+        .{ .layout = .{ .max_height = 12 }, .border_type = .solid, .border = tuile.Border.all() },
         tuile.list(
-            .{},
+            .{ .layout = .{ .alignment = tuile.Align.topCenter(), .min_height = 10 } },
             &.{
                 .{
-                    .label = try tuile.label(.{ .text = "Item 1\nNew line 1\nNew line 2" }),
+                    .label = try tuile.label(.{
+                        // .text = "Item 1\nNew line 1\nNew line 2",
+                        .text = "Item 1",
+                        .layout = .{ .alignment = tuile.Align.topLeft() },
+                    }),
                     .value = null,
                 },
                 .{
-                    .label = try tuile.label(.{ .text = "Item 2" }),
+                    .label = try tuile.label(.{
+                        .text = "Item 2 - long line long line long line",
+                        .layout = .{ .alignment = tuile.Align.topLeft() },
+                    }),
                     .value = null,
                 },
                 .{
-                    .label = try tuile.label(.{ .text = "Item 3" }),
+                    .label = try tuile.label(.{
+                        .text = "Item 3",
+                        .layout = .{ .alignment = tuile.Align.topLeft() },
+                    }),
                     .value = null,
                 },
                 .{
-                    .label = try tuile.label(.{ .text = "Item 4" }),
+                    .label = try tuile.label(.{
+                        .text = "Item 4",
+                        .layout = .{ .alignment = tuile.Align.topLeft() },
+                    }),
                     .value = null,
                 },
                 .{
-                    .label = try tuile.label(.{ .text = "Item 5" }),
+                    .label = try tuile.label(.{
+                        .text = "Item 5",
+                        .layout = .{ .alignment = tuile.Align.topLeft() },
+                    }),
+                    .value = null,
+                },
+                .{
+                    .label = try tuile.label(.{
+                        .text = "Item 6",
+                        .layout = .{ .alignment = tuile.Align.topLeft() },
+                    }),
                     .value = null,
                 },
             },

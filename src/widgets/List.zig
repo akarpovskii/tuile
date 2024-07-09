@@ -21,6 +21,8 @@ pub const Config = struct {
 
     /// List will call this when pressed passing the selected value.
     on_press: ?callbacks.Callback(?*anyopaque) = null,
+
+    show_scrollbar: bool = true,
 };
 
 const List = @This();
@@ -46,6 +48,8 @@ on_press: ?callbacks.Callback(?*anyopaque),
 
 item_sizes: std.ArrayListUnmanaged(Vec2u),
 
+show_scrollbar: bool,
+
 pub const Item = struct {
     label: *Label,
 
@@ -60,6 +64,7 @@ pub fn create(config: Config, items: []const Item) !*List {
         .items = std.ArrayListUnmanaged(Item){},
         .item_sizes = std.ArrayListUnmanaged(Vec2u){},
         .on_press = config.on_press,
+        .show_scrollbar = config.show_scrollbar,
     };
     try self.items.appendSlice(internal.allocator, items);
     return self;
@@ -85,14 +90,12 @@ pub fn render(self: *List, area: Rect(i32), frame: Frame, theme: display.Theme) 
     for (self.top_index..self.top_index + self.item_sizes.items.len) |index| {
         const item = self.items.items[index];
         const size = self.item_sizes.items[index - self.top_index];
-        const props = item.label.layoutProps();
-        const alignment = props.alignment;
 
         var item_area = Rect(i32){
             .min = cursor,
             .max = cursor.add(size.as(i32)),
         };
-        item_area = area.alignH(alignment.h, item_area);
+        item_area = area.alignH(LayoutProperties.HAlign.left, item_area);
         const item_frame = frame.withArea(item_area);
 
         if (index == self.selected_index) {
@@ -101,22 +104,51 @@ pub fn render(self: *List, area: Rect(i32), frame: Frame, theme: display.Theme) 
         try item.label.render(item_area, item_frame, theme);
         cursor.y += @intCast(size.y);
     }
+
+    const total_items = self.items.items.len;
+    if (self.show_scrollbar and total_items > 0) {
+        const viewport_height = @as(usize, @intCast(area.height()));
+        const scroll_height = @max(1, (viewport_height + total_items - 1) / total_items);
+        const before_scroll = @min(viewport_height * self.selected_index / total_items, viewport_height -| scroll_height);
+
+        var y = area.min.y;
+        var index: usize = 0;
+        while (y < area.max.y) {
+            const symbol = if (before_scroll <= index and index < before_scroll + scroll_height)
+                "█"
+            else
+                "│";
+            _ = try frame.writeSymbols(.{ .x = area.max.x - 1, .y = y }, symbol, null);
+
+            y += 1;
+            index += 1;
+        }
+    }
 }
 
 pub fn layout(self: *List, constraints: Constraints) !Vec2u {
     const self_constraints = Constraints.fromProps(self.layout_properties);
-    const item_constraints = Constraints{
+    var item_constraints = Constraints{
         .min_height = 0,
         .min_width = 0,
         .max_height = std.math.maxInt(u32),
         .max_width = @min(self_constraints.max_width, constraints.max_width),
     };
 
+    if (self.show_scrollbar and item_constraints.max_width != std.math.maxInt(u32)) {
+        item_constraints.max_width -= 1;
+    }
+
     if (self.selected_index < self.top_index) {
         self.top_index = self.selected_index;
     }
 
-    var total_size = Vec2u.zero();
+    // If set to 0 (first version did this), list will adapt its width depending on the
+    // currently visible elements. It doesn't look natural, but keeping the logic
+    // here for possible future improvements.
+    const total_size_zero_x = item_constraints.max_width;
+    var total_size = Vec2u{ .x = total_size_zero_x, .y = 0 };
+
     const max_height = @min(self_constraints.max_height, constraints.max_height);
     self.item_sizes.clearRetainingCapacity();
     var index = self.top_index;
@@ -138,7 +170,7 @@ pub fn layout(self: *List, constraints: Constraints) !Vec2u {
     self.top_overflow = 0;
     if (index == self.selected_index + 1 and self.selected_index != self.top_index and total_size.y > max_height) {
         var fits: usize = 0;
-        total_size = Vec2u.zero();
+        total_size = Vec2u{ .x = total_size_zero_x, .y = 0 };
         var reverse_iter = std.mem.reverseIterator(self.item_sizes.items);
         while (reverse_iter.next()) |size| {
             total_size.x = @max(total_size.x, size.x);
@@ -154,6 +186,9 @@ pub fn layout(self: *List, constraints: Constraints) !Vec2u {
         self.item_sizes.replaceRangeAssumeCapacity(0, self.item_sizes.items.len - fits, &.{});
     }
 
+    if (self.show_scrollbar and total_size.x != std.math.maxInt(u32)) {
+        total_size.x += 1;
+    }
     total_size = self_constraints.apply(total_size);
     total_size = constraints.apply(total_size);
     return total_size;

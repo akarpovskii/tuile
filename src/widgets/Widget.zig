@@ -205,13 +205,11 @@ pub fn init(context: anytype) Widget {
     };
     const T = std.meta.Child(PtrT);
 
-    const VTableImpl = struct {
-        const vtable = constructVTable(T);
-    };
+    const vtable = comptime constructVTable(T);
 
     return Widget{
         .context = context,
-        .vtable = &VTableImpl.vtable,
+        .vtable = &vtable,
     };
 }
 

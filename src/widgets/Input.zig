@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const FocusHandler = @import("FocusHandler.zig");
@@ -96,7 +96,7 @@ fn cursor(self: Input) usize {
     return self.graphemes.items[self.grapheme_cursor].offset;
 }
 
-pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !void {
+pub fn render(self: *Input, area: Rect(i32), frame: Frame, theme: display.Theme) !void {
     if (area.height() < 1) {
         return;
     }
@@ -106,7 +106,7 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
     const render_placeholder = self.value.items.len == 0;
     if (render_placeholder) frame.setStyle(area, .{ .fg = theme.text_secondary });
 
-    _ = try frame.writeSymbols(area.min, self.visibleText(), area.width());
+    _ = try frame.writeSymbols(area.min, self.visibleText(), @intCast(area.width()));
 
     if (self.focus_handler.focused) {
         var cursor_pos = area.min;
@@ -118,7 +118,7 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
         if (cursor_pos.x >= area.max.x) {
             cursor_pos.x = area.max.x - 1;
         }
-        const end_area = Rect{
+        const end_area = Rect(i32){
             .min = cursor_pos,
             .max = cursor_pos.add(.{ .x = 1, .y = 1 }),
         };
@@ -128,7 +128,7 @@ pub fn render(self: *Input, area: Rect, frame: Frame, theme: display.Theme) !voi
     }
 }
 
-pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
+pub fn layout(self: *Input, constraints: Constraints) !Vec2u {
     if (self.cursor() < self.view_start) {
         self.view_start = self.cursor();
     } else {
@@ -152,7 +152,7 @@ pub fn layout(self: *Input, constraints: Constraints) !Vec2 {
     // +1 for the cursor
     const len = try stringDisplayWidth(visible, internal.text_clustering_type) + 1;
 
-    var size = Vec2{
+    var size = Vec2u{
         .x = @intCast(len),
         .y = 1,
     };

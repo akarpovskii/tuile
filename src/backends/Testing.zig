@@ -1,7 +1,9 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Backend = @import("Backend.zig");
-const Vec2 = @import("../Vec2.zig");
+const vec2 = @import("../vec2.zig");
+const Vec2u = vec2.Vec2u;
+const Vec2i = vec2.Vec2i;
 const events = @import("../events.zig");
 const display = @import("../display.zig");
 const render = @import("../render.zig");
@@ -10,21 +12,22 @@ const Testing = @This();
 
 frame_buffer: std.ArrayListUnmanaged(render.Cell),
 
-window_size: Vec2,
+window_size: Vec2u,
 
 frame: render.Frame,
 
-pub fn create(window_size: Vec2) !*Testing {
+pub fn create(window_size: Vec2u) !*Testing {
     const self = try internal.allocator.create(Testing);
     var buffer = std.ArrayListUnmanaged(render.Cell){};
     try buffer.resize(internal.allocator, window_size.x * window_size.y);
+    const window_area = .{
+        .min = Vec2i.zero(),
+        .max = window_size.as(i32),
+    };
     const frame = render.Frame{
-        .size = window_size,
         .buffer = buffer.items,
-        .area = .{
-            .min = Vec2.zero(),
-            .max = window_size,
-        },
+        .total_area = window_area,
+        .area = window_area,
     };
     frame.clear(display.color("black"), display.color("white"));
 
@@ -51,11 +54,11 @@ pub fn pollEvent(_: *Testing) !?events.Event {
 
 pub fn refresh(_: *Testing) !void {}
 
-pub fn printAt(self: *Testing, pos: Vec2, text: []const u8) !void {
-    self.frame.setSymbol(pos, text);
+pub fn printAt(self: *Testing, pos: Vec2u, text: []const u8) !void {
+    self.frame.setSymbol(pos.as(i32), text);
 }
 
-pub fn windowSize(self: *Testing) !Vec2 {
+pub fn windowSize(self: *Testing) !Vec2u {
     return self.window_size;
 }
 

@@ -13,7 +13,7 @@ test {
     std.testing.refAllDecls(@This());
 }
 
-fn renderWidget(window_size: tuile.Vec2, layout: anytype) !std.ArrayList(u8) {
+fn renderWidget(window_size: tuile.Vec2u, layout: anytype) !std.ArrayList(u8) {
     const backend = try tuile.backends.Testing.create(window_size);
 
     var tui = try tuile.Tuile.init(.{ .backend = backend.backend() });
@@ -27,7 +27,7 @@ fn renderWidget(window_size: tuile.Vec2, layout: anytype) !std.ArrayList(u8) {
     return content;
 }
 
-fn renderAndCompare(window_size: tuile.Vec2, layout: anytype, expected: []const u8) !void {
+fn renderAndCompare(window_size: tuile.Vec2u, layout: anytype, expected: []const u8) !void {
     const content = try renderWidget(window_size, layout);
     defer content.deinit();
     const result = std.testing.expect(std.mem.eql(u8, content.items, expected));

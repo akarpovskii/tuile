@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
@@ -98,24 +98,24 @@ pub fn setSpan(self: *Label, span: display.SpanView) !void {
     self.content = try display.SpanUnmanaged.fromView(internal.allocator, span);
 }
 
-pub fn render(self: *Label, area: Rect, frame: Frame, _: display.Theme) !void {
+pub fn render(self: *Label, area: Rect(i32), frame: Frame, _: display.Theme) !void {
     const rows = self.rows.items;
-    for (0..area.height()) |y| {
+    for (0..@intCast(area.height())) |y| {
         if (y >= rows.len) break;
 
         const row = rows[y];
         var pos = area.min.add(.{ .x = 0, .y = @intCast(y) });
         for (row.chunks.items) |chunk| {
             const text = self.content.getTextForChunk(chunk.orig)[chunk.start..chunk.end];
-            const written: u32 = @intCast(try frame.writeSymbols(pos, text, area.width()));
-            const chunk_area = Rect{ .min = pos, .max = pos.add(.{ .x = written, .y = 1 }) };
+            const written: i32 = @intCast(try frame.writeSymbols(pos, text, @intCast(area.width())));
+            const chunk_area = Rect(i32){ .min = pos, .max = pos.add(.{ .x = written, .y = 1 }) };
             frame.setStyle(chunk_area, self.content.getStyleForChunk(chunk.orig));
             pos.x += written;
         }
     }
 }
 
-pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
+pub fn layout(self: *Label, constraints: Constraints) !Vec2u {
     try self.wrapText(constraints);
 
     var max_len: usize = 0;
@@ -128,7 +128,7 @@ pub fn layout(self: *Label, constraints: Constraints) !Vec2 {
         max_len = @max(max_len, len);
     }
 
-    var size = Vec2{
+    var size = Vec2u{
         .x = @intCast(max_len),
         .y = @intCast(self.rows.items.len),
     };

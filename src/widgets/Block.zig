@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const border = @import("border.zig");
@@ -41,7 +41,7 @@ widget_base: Widget.Base,
 
 inner: Widget,
 
-inner_size: Vec2 = Vec2.zero(),
+inner_size: Vec2u = Vec2u.zero(),
 
 border: border.Border,
 
@@ -82,26 +82,28 @@ pub fn setInner(self: *Block, new_widget: Widget) void {
     self.inner = new_widget;
 }
 
-pub fn render(self: *Block, area: Rect, frame: Frame, theme: display.Theme) !void {
-    var content_area = Rect{
+pub fn render(self: *Block, area: Rect(i32), frame: Frame, theme: display.Theme) !void {
+    var content_area = Rect(i32){
         .min = .{
-            .x = area.min.x + @intFromBool(self.border.left) + self.padding.left,
-            .y = area.min.y + @intFromBool(self.border.top) + self.padding.top,
+            .x = area.min.x + @intFromBool(self.border.left) + @as(i32, @intCast(self.padding.left)),
+            .y = area.min.y + @intFromBool(self.border.top) + @as(i32, @intCast(self.padding.top)),
         },
         .max = .{
-            .x = area.max.x -| (@intFromBool(self.border.right) + self.padding.right),
-            .y = area.max.y -| (@intFromBool(self.border.bottom) + self.padding.bottom),
+            .x = area.max.x - (@intFromBool(self.border.right) + @as(i32, @intCast(self.padding.right))),
+            .y = area.max.y - (@intFromBool(self.border.bottom) + @as(i32, @intCast(self.padding.bottom))),
         },
     };
 
     if (content_area.min.x > content_area.max.x or content_area.min.y > content_area.max.y) {
         self.renderBorder(area, frame, theme);
     } else {
-        var inner_area = Rect{
+        var inner_area = Rect(i32){
             .min = content_area.min,
             .max = .{
-                .x = content_area.min.x + @min(content_area.width(), self.inner_size.x),
-                .y = content_area.min.y + @min(content_area.height(), self.inner_size.y),
+                // inner_size may contain std.math.maxInt(u32), but content_area is always finite.
+                // Cast content_area to u32 first to get a finite value in @min, and then cast it back to i32
+                .x = content_area.min.x + @as(i32, @intCast(@min(@as(u32, @intCast(content_area.width())), self.inner_size.x))),
+                .y = content_area.min.y + @as(i32, @intCast(@min(@as(u32, @intCast(content_area.height())), self.inner_size.y))),
             },
         };
 
@@ -113,7 +115,7 @@ pub fn render(self: *Block, area: Rect, frame: Frame, theme: display.Theme) !voi
     }
 }
 
-pub fn layout(self: *Block, constraints: Constraints) !Vec2 {
+pub fn layout(self: *Block, constraints: Constraints) !Vec2u {
     const props = self.layout_properties;
     const self_constraints = Constraints{
         .min_width = @max(props.min_width, constraints.min_width),
@@ -121,7 +123,7 @@ pub fn layout(self: *Block, constraints: Constraints) !Vec2 {
         .max_width = @min(props.max_width, constraints.max_width),
         .max_height = @min(props.max_height, constraints.max_height),
     };
-    const border_size = Vec2{
+    const border_size = Vec2u{
         .x = @intFromBool(self.border.left) + self.padding.left + @intFromBool(self.border.right) + self.padding.right,
         .y = @intFromBool(self.border.top) + self.padding.top + @intFromBool(self.border.bottom) + self.padding.bottom,
     };
@@ -164,7 +166,7 @@ pub fn layoutProps(self: *Block) LayoutProperties {
     return self.layout_properties;
 }
 
-fn renderBorder(self: *Block, area: Rect, frame: Frame, theme: display.Theme) void {
+fn renderBorder(self: *Block, area: Rect(i32), frame: Frame, theme: display.Theme) void {
     const min = area.min;
     const max = area.max;
     const chars = border.BorderCharacters.fromType(self.border_type);

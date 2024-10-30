@@ -11,6 +11,7 @@ pub const FocusHandler = @import("widgets/FocusHandler.zig");
 pub const Input = @import("widgets/Input.zig");
 pub const Label = @import("widgets/Label.zig");
 pub const LayoutProperties = @import("widgets/LayoutProperties.zig");
+pub const List = @import("widgets/List.zig");
 pub const Align = LayoutProperties.Align;
 pub const HAlign = LayoutProperties.HAlign;
 pub const VAlign = LayoutProperties.VAlign;
@@ -26,6 +27,7 @@ pub const checkbox = Checkbox.create;
 pub const checkbox_group = CheckboxGroup.create;
 pub const input = Input.create;
 pub const label = Label.create;
+pub const list = List.create;
 pub const spacer = Spacer.create;
 pub const stack_layout = StackLayout.create;
 pub fn horizontal(config: StackLayout.Config, children: anytype) !*StackLayout {

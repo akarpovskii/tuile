@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const Label = @import("Label.zig");
@@ -105,7 +105,7 @@ pub fn setSpan(self: *Checkbox, span: display.SpanView) !void {
     self.view.setSpan(label.view());
 }
 
-pub fn render(self: *Checkbox, area: Rect, frame: Frame, theme: display.Theme) !void {
+pub fn render(self: *Checkbox, area: Rect(i32), frame: Frame, theme: display.Theme) !void {
     frame.setStyle(area, .{ .bg = theme.interactive });
     self.focus_handler.render(area, frame, theme);
 
@@ -130,7 +130,7 @@ pub fn render(self: *Checkbox, area: Rect, frame: Frame, theme: display.Theme) !
     try self.view.render(area, frame, theme);
 }
 
-pub fn layout(self: *Checkbox, constraints: Constraints) !Vec2 {
+pub fn layout(self: *Checkbox, constraints: Constraints) !Vec2u {
     return try self.view.layout(constraints);
 }
 

@@ -44,7 +44,7 @@ const FPSCounter = struct {
         return tuile.Widget.init(self);
     }
 
-    pub fn render(self: *FPSCounter, area: tuile.Rect, frame: tuile.render.Frame, _: tuile.Theme) !void {
+    pub fn render(self: *FPSCounter, area: tuile.Rect(i32), frame: tuile.render.Frame, _: tuile.Theme) !void {
         self.frames += 1;
         if (self.frames >= window_size) {
             const now = try std.time.Instant.now();
@@ -63,10 +63,10 @@ const FPSCounter = struct {
             self.frames = 0;
         }
 
-        _ = try frame.writeSymbols(area.min, &self.buffer, area.width());
+        _ = try frame.writeSymbols(area.min, &self.buffer, @intCast(area.width()));
     }
 
-    pub fn layout(self: *FPSCounter, _: tuile.Constraints) !tuile.Vec2 {
+    pub fn layout(self: *FPSCounter, _: tuile.Constraints) !tuile.Vec2u {
         return .{ .x = @intCast(self.buffer.len), .y = 1 };
     }
 

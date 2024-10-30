@@ -1,5 +1,5 @@
 const std = @import("std");
-const Vec2 = @import("../Vec2.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
 const LayoutProperties = @import("LayoutProperties.zig");
 
 const Constraints = @This();
@@ -12,7 +12,7 @@ max_width: u32 = std.math.maxInt(u32),
 
 max_height: u32 = std.math.maxInt(u32),
 
-pub fn apply(self: Constraints, size: Vec2) Vec2 {
+pub fn apply(self: Constraints, size: Vec2u) Vec2u {
     return .{
         .x = self.clampWidth(size.x),
         .y = self.clampHeight(size.y),

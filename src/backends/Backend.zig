@@ -1,5 +1,5 @@
 const std = @import("std");
-const Vec2 = @import("../Vec2.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
 const events = @import("../events.zig");
 const display = @import("../display.zig");
 const internal = @import("../internal.zig");
@@ -14,8 +14,8 @@ pub const VTable = struct {
     destroy: *const fn (context: *anyopaque) void,
     poll_event: *const fn (context: *anyopaque) anyerror!?events.Event,
     refresh: *const fn (context: *anyopaque) anyerror!void,
-    print_at: *const fn (context: *anyopaque, pos: Vec2, text: []const u8) anyerror!void,
-    window_size: *const fn (context: *anyopaque) anyerror!Vec2,
+    print_at: *const fn (context: *anyopaque, pos: Vec2u, text: []const u8) anyerror!void,
+    window_size: *const fn (context: *anyopaque) anyerror!Vec2u,
     enable_effect: *const fn (context: *anyopaque, effect: display.Style.Effect) anyerror!void,
     disable_effect: *const fn (context: *anyopaque, effect: display.Style.Effect) anyerror!void,
     use_color: *const fn (context: *anyopaque, color: display.ColorPair) anyerror!void,
@@ -42,12 +42,12 @@ pub fn init(context: anytype) Backend {
             return ptr_info.Pointer.child.refresh(self);
         }
 
-        pub fn printAt(pointer: *anyopaque, pos: Vec2, text: []const u8) anyerror!void {
+        pub fn printAt(pointer: *anyopaque, pos: Vec2u, text: []const u8) anyerror!void {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.printAt(self, pos, text);
         }
 
-        pub fn windowSize(pointer: *anyopaque) anyerror!Vec2 {
+        pub fn windowSize(pointer: *anyopaque) anyerror!Vec2u {
             const self: T = @ptrCast(@alignCast(pointer));
             return ptr_info.Pointer.child.windowSize(self);
         }
@@ -101,11 +101,11 @@ pub fn refresh(self: Backend) anyerror!void {
     return self.vtable.refresh(self.context);
 }
 
-pub fn printAt(self: Backend, pos: Vec2, text: []const u8) anyerror!void {
+pub fn printAt(self: Backend, pos: Vec2u, text: []const u8) anyerror!void {
     return self.vtable.print_at(self.context, pos, text);
 }
 
-pub fn windowSize(self: Backend) anyerror!Vec2 {
+pub fn windowSize(self: Backend) anyerror!Vec2u {
     return self.vtable.window_size(self.context);
 }
 

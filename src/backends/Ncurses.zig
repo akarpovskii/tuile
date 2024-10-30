@@ -1,7 +1,7 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Backend = @import("Backend.zig");
-const Vec2 = @import("../Vec2.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
 const events = @import("../events.zig");
 const display = @import("../display.zig");
 
@@ -136,11 +136,11 @@ pub fn refresh(_: *Ncurses) !void {
     if (c.refresh() == c.ERR) return error.NcursesError;
 }
 
-pub fn printAt(_: *Ncurses, pos: Vec2, text: []const u8) !void {
+pub fn printAt(_: *Ncurses, pos: Vec2u, text: []const u8) !void {
     _ = c.mvaddnstr(@intCast(pos.y), @intCast(pos.x), text.ptr, @intCast(text.len));
 }
 
-pub fn windowSize(self: *Ncurses) !Vec2 {
+pub fn windowSize(self: *Ncurses) !Vec2u {
     _ = self;
     const x = c.getmaxx(c.stdscr);
     const y = c.getmaxy(c.stdscr);

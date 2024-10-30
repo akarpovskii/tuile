@@ -1,8 +1,8 @@
 const std = @import("std");
 const internal = @import("../internal.zig");
 const Widget = @import("Widget.zig");
-const Vec2 = @import("../Vec2.zig");
-const Rect = @import("../Rect.zig");
+const Vec2u = @import("../vec2.zig").Vec2u;
+const Rect = @import("../rect.zig").Rect;
 const events = @import("../events.zig");
 const Frame = @import("../render/Frame.zig");
 const LayoutProperties = @import("LayoutProperties.zig");
@@ -34,7 +34,7 @@ widget_base: Widget.Base,
 
 widgets: std.ArrayListUnmanaged(Widget),
 
-widget_sizes: std.ArrayListUnmanaged(Vec2),
+widget_sizes: std.ArrayListUnmanaged(Vec2u),
 
 orientation: Orientation,
 
@@ -66,7 +66,7 @@ pub fn create(config: Config, children: anytype) !*StackLayout {
     self.* = StackLayout{
         .widget_base = try Widget.Base.init(config.id),
         .widgets = widgets,
-        .widget_sizes = std.ArrayListUnmanaged(Vec2){},
+        .widget_sizes = std.ArrayListUnmanaged(Vec2u){},
         .orientation = config.orientation,
         .layout_properties = config.layout,
     };
@@ -103,16 +103,16 @@ pub fn widget(self: *StackLayout) Widget {
     return Widget.init(self);
 }
 
-pub fn render(self: *StackLayout, area: Rect, frame: Frame, theme: display.Theme) !void {
+pub fn render(self: *StackLayout, area: Rect(i32), frame: Frame, theme: display.Theme) !void {
     var cursor = area.min;
 
     for (self.widgets.items, self.widget_sizes.items) |w, s| {
         const props = w.layoutProps();
         const alignment = props.alignment;
 
-        var widget_area = Rect{
+        var widget_area = Rect(i32){
             .min = cursor,
-            .max = cursor.add(s),
+            .max = cursor.add(s.as(i32)),
         };
 
         switch (self.orientation) {
@@ -123,23 +123,23 @@ pub fn render(self: *StackLayout, area: Rect, frame: Frame, theme: display.Theme
         try w.render(widget_area, frame.withArea(widget_area), theme);
         switch (self.orientation) {
             .horizontal => {
-                cursor.x += s.x;
+                cursor.x += @intCast(s.x);
             },
             .vertical => {
-                cursor.y += s.y;
+                cursor.y += @intCast(s.y);
             },
         }
     }
 }
 
-pub fn layout(self: *StackLayout, constraints: Constraints) !Vec2 {
+pub fn layout(self: *StackLayout, constraints: Constraints) !Vec2u {
     switch (self.orientation) {
         .vertical => return try self.layoutImpl(constraints, .vertical),
         .horizontal => return try self.layoutImpl(constraints, .horizontal),
     }
 }
 
-pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orientation: Orientation) !Vec2 {
+pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orientation: Orientation) !Vec2u {
     if (self.widgets.items.len == 0) {
         return .{ .x = constraints.min_width, .y = constraints.min_height };
     }
@@ -189,7 +189,7 @@ pub fn layoutImpl(self: *StackLayout, constraints: Constraints, comptime orienta
         }
     }
 
-    var self_size = Vec2.zero();
+    var self_size = Vec2u.zero();
     var fixed_size: u32 = 0;
     for (fixed_indices.items) |idx| {
         const w = &self.widgets.items[idx];

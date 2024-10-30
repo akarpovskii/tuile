@@ -22,6 +22,7 @@ pub fn build(b: *std.Build) void {
         "event_handler",
         "palette",
         "unicode",
+        "list",
     };
     inline for (executables) |name| {
         const exe = b.addExecutable(.{

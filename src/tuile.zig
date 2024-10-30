@@ -1,7 +1,11 @@
 const std = @import("std");
 const internal = @import("internal.zig");
-pub const Vec2 = @import("Vec2.zig");
-pub const Rect = @import("Rect.zig");
+pub const vec2 = @import("vec2.zig");
+pub const Vec2 = vec2.Vec2;
+pub const Vec2u = vec2.Vec2u;
+pub const Vec2i = vec2.Vec2i;
+pub const rect = @import("rect.zig");
+pub const Rect = rect.Rect;
 pub const backends = @import("backends.zig");
 pub const render = @import("render.zig");
 pub const events = @import("events.zig");
@@ -48,7 +52,7 @@ pub const Tuile = struct {
     event_handlers: std.ArrayListUnmanaged(EventHandler),
 
     frame_buffer: std.ArrayListUnmanaged(render.Cell),
-    window_size: Vec2,
+    window_size: Vec2u,
 
     task_queue: std.fifo.LinearFifo(Task, .Dynamic),
     task_queue_mutex: std.Thread.Mutex,
@@ -76,7 +80,7 @@ pub const Tuile = struct {
                 .last_sleep_error = 0,
                 .event_handlers = .{},
                 .frame_buffer = .{},
-                .window_size = Vec2.zero(),
+                .window_size = Vec2u.zero(),
                 .task_queue = std.fifo.LinearFifo(Task, .Dynamic).init(internal.allocator),
                 .task_queue_mutex = .{},
             };
@@ -186,13 +190,14 @@ pub const Tuile = struct {
         };
         _ = try self.root.layout(constraints);
 
+        const window_area = .{
+            .min = Vec2i.zero(),
+            .max = self.window_size.as(i32),
+        };
         var frame = render.Frame{
             .buffer = self.frame_buffer.items,
-            .size = self.window_size,
-            .area = .{
-                .min = Vec2.zero(),
-                .max = self.window_size,
-            },
+            .total_area = window_area,
+            .area = window_area,
         };
         frame.clear(self.theme.text_primary, self.theme.background_primary);
 
